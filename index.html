@@ -207,6 +207,7 @@
       <div class="badge">Thành viên: <b>6</b></div>
       <div class="badge" id="syncBadge">Đồng bộ: <b id="lastUpdate">đang tải...</b></div>
       <div class="badge" id="refreshBtn" style="cursor:pointer;user-select:none">🔄 Làm mới</div>
+      <div class="badge" id="autoRefreshBtn" style="cursor:pointer;user-select:none">⏱️ Tự động: <b id="autoRefreshState">Bật (60s)</b></div>
       <div class="badge" id="exportExcelBtn" style="cursor:pointer;user-select:none">📊 Xuất Excel</div>
     </div>
   </header>
@@ -976,6 +977,48 @@ function renderFooterLinks(){
 
 document.getElementById('refreshBtn').addEventListener('click', loadData);
 document.getElementById('exportExcelBtn').addEventListener('click', exportReportToExcel);
+
+// ==================================================================
+// TỰ ĐỘNG LÀM MỚI DỮ LIỆU (polling)
+// Google Sheet (đọc qua CSV/gviz công khai) không hỗ trợ đẩy sự kiện (push) tới trình
+// duyệt, nên cách khả thi để "thấy dữ liệu mới ngay khi có người nhập" là cho dashboard
+// tự gọi lại loadData() theo chu kỳ. Mặc định 60 giây/lần — đủ nhanh để cảm giác gần
+// như tức thời, nhưng không gọi Google Sheet quá dày gây chậm/giới hạn truy cập.
+// - Bật/tắt được lưu vào localStorage để nhớ lựa chọn giữa các lần mở trang.
+// - Tự tạm dừng khi tab trình duyệt bị ẩn (chuyển tab khác) để tiết kiệm tải, và tự
+//   làm mới ngay + chạy lại lịch khi quay lại tab.
+const AUTO_REFRESH_MS = 60000; // đổi số này nếu muốn chu kỳ khác, ví dụ 30000 = 30 giây
+const AUTO_REFRESH_KEY = 'bmhda_auto_refresh';
+let autoRefreshTimer = null;
+let autoRefreshOn = true;
+try{ const saved = localStorage.getItem(AUTO_REFRESH_KEY); if(saved !== null) autoRefreshOn = saved === '1'; }catch(e){}
+
+function startAutoRefresh(){
+  stopAutoRefresh();
+  autoRefreshTimer = setInterval(()=>{
+    if(document.hidden) return; // tab đang ẩn thì bỏ qua lượt này, chờ quay lại mới tải
+    loadData();
+  }, AUTO_REFRESH_MS);
+}
+function stopAutoRefresh(){
+  if(autoRefreshTimer){ clearInterval(autoRefreshTimer); autoRefreshTimer = null; }
+}
+function updateAutoRefreshLabel(){
+  const el = document.getElementById('autoRefreshState');
+  if(el) el.textContent = autoRefreshOn ? `Bật (${AUTO_REFRESH_MS/1000}s)` : 'Tắt';
+}
+document.getElementById('autoRefreshBtn').addEventListener('click', ()=>{
+  autoRefreshOn = !autoRefreshOn;
+  try{ localStorage.setItem(AUTO_REFRESH_KEY, autoRefreshOn ? '1' : '0'); }catch(e){}
+  updateAutoRefreshLabel();
+  if(autoRefreshOn) startAutoRefresh(); else stopAutoRefresh();
+});
+document.addEventListener('visibilitychange', ()=>{
+  // Quay lại tab sau một lúc rời đi -> làm mới ngay để không phải chờ hết chu kỳ
+  if(!document.hidden && autoRefreshOn) loadData();
+});
+updateAutoRefreshLabel();
+if(autoRefreshOn) startAutoRefresh();
 
 // ==================================================================
 // XUẤT EXCEL (.xlsx) — file báo cáo chuyên nghiệp, nhiều sheet
