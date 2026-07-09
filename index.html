@@ -22,6 +22,9 @@
   .meta{display:flex;gap:10px;flex-wrap:wrap}
   .badge{background:var(--panel);border:1px solid var(--border);padding:8px 14px;border-radius:10px;font-size:12.5px;color:var(--muted)}
   .badge b{color:var(--text)}
+  .badge-export{background:linear-gradient(135deg,#1e4fc4,#7c5cf0);border:none;color:#fff;font-weight:700;cursor:pointer;user-select:none;transition:opacity .15s}
+  .badge-export:hover{opacity:.88}
+  .badge-export b{color:#fff}
 
   .kpi-row{display:grid;grid-template-columns:repeat(7,1fr);gap:14px;margin-bottom:26px}
   .kpi{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:16px;padding:16px 16px;position:relative;overflow:hidden;min-width:0}
@@ -43,7 +46,6 @@
 
   .grid-2{display:grid;grid-template-columns:1.3fr .9fr;gap:18px}
   @media(max-width:980px){.grid-2{grid-template-columns:1fr}}
-  /* Tổng quan: cân đối lại 2 card thay vì để card tiến độ quá dài */
   #panel-overview .grid-2{grid-template-columns:1fr 1fr}
   .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:0 4px 18px rgba(30,50,100,.06)}
   .card h3{margin:0 0 14px;font-size:15px;color:var(--text);display:flex;align-items:center;gap:8px}
@@ -54,7 +56,6 @@
   td{padding:11px 10px;border-bottom:1px solid #eef1f8}
   tr:hover td{background:rgba(47,111,237,.05)}
 
-  /* Bảng phân công & tiến độ chi tiết: giãn cột cho dễ nhìn + cho phép cuộn ngang trên màn nhỏ */
   .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px;border:1px solid var(--border);box-shadow:0 3px 14px rgba(30,50,100,.07);background:var(--panel)}
   .assign-table{min-width:1530px;table-layout:fixed;background:var(--panel);border-radius:0}
   .assign-table th, .assign-table td{padding:12px 16px;white-space:normal;word-wrap:break-word;overflow-wrap:break-word;vertical-align:top}
@@ -110,10 +111,8 @@
   th.sortable:hover{color:var(--text)}
   .sort-arrow{margin-left:4px;font-size:9px;color:var(--blue)}
 
-  /* .avatar vẫn dùng cho dòng phân tách theo thành viên trong bảng Phân công & tiến độ */
   .avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
 
-  /* Bộ lọc chung: dùng cho toàn bộ các tab (Tổng quan, Phân công & Tiến độ, Theo thành viên, Biểu đồ, Đánh giá hiệu suất) */
   #assignFilterBar{margin-bottom:18px}
   #assignFilterBar .filter-title{font-size:12.5px;font-weight:700;color:var(--blue-d);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
 
@@ -145,7 +144,34 @@
   .footer-note a{text-decoration:none}
   .footer-note a code{transition:background .15s ease}
   .footer-note a:hover code{background:var(--blue)}
-  /* ===== In ấn / Xuất PDF: chỉ in nội dung tab đang xem, ẩn phần điều khiển ===== */
+
+  /* ===== Export Modal ===== */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,18,40,.55);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+  .modal-overlay.open{display:flex;animation:fadeIn .2s ease}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal-box{background:#fff;border-radius:20px;padding:32px 36px;max-width:520px;width:92%;box-shadow:0 24px 80px rgba(10,18,40,.22);position:relative}
+  .modal-title{font-size:20px;font-weight:700;color:var(--text);margin:0 0 6px}
+  .modal-sub{color:var(--muted);font-size:13.5px;margin:0 0 24px}
+  .export-options{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+  .export-opt{border:2px solid var(--border);border-radius:14px;padding:18px 16px;cursor:pointer;transition:border-color .15s,background .15s;text-align:center;position:relative}
+  .export-opt:hover{border-color:var(--blue);background:#f0f5ff}
+  .export-opt.selected{border-color:var(--blue);background:#eef4ff}
+  .export-opt .opt-icon{font-size:32px;margin-bottom:8px}
+  .export-opt .opt-name{font-weight:700;font-size:14px;color:var(--text)}
+  .export-opt .opt-desc{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5}
+  .export-opt .opt-badge{position:absolute;top:10px;right:10px;background:var(--green);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end}
+  .btn-cancel{padding:9px 20px;border:1px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;font-size:13.5px;color:var(--muted);font-weight:600;transition:background .15s}
+  .btn-cancel:hover{background:var(--panel2)}
+  .btn-export-go{padding:9px 26px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;font-weight:700;font-size:13.5px;cursor:pointer;transition:opacity .15s}
+  .btn-export-go:hover{opacity:.88}
+  .btn-export-go:disabled{opacity:.5;cursor:not-allowed}
+  .modal-progress{margin-bottom:16px;display:none}
+  .modal-progress-bar{height:6px;background:#e6ebf7;border-radius:6px;overflow:hidden;margin-top:6px}
+  .modal-progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--blue),var(--purple));border-radius:6px;transition:width .3s ease}
+  .modal-progress-label{font-size:12px;color:var(--muted)}
+
+  /* ===== In ấn ===== */
   @media print{
     body{background:#fff !important}
     .wrap{max-width:none;padding:0}
@@ -157,16 +183,13 @@
     .table-scroll{overflow:visible !important;border:1px solid #ccc}
     .assign-table{min-width:0 !important}
     .assign-table th, .assign-table td{white-space:normal !important}
-    .footer-note{display:none}
+    .footer-note, .modal-overlay{display:none}
   }
 
-  /* ===== Responsive: máy tính bảng / màn hình vừa (giữa mobile và desktop) ===== */
   @media (max-width:1100px) and (min-width:641px){
     .kpi-row{grid-template-columns:repeat(4,1fr)}
     .member-grid{grid-template-columns:repeat(2,1fr)}
   }
-
-  /* ===== Responsive: điện thoại / màn hình nhỏ ===== */
   @media (max-width:640px){
     .wrap{padding:16px 14px 44px}
     header{margin-bottom:16px}
@@ -197,6 +220,7 @@
     table{font-size:12px}
     th, td{padding:9px 8px}
     #kpiTable, #panel-kpi table{display:block;overflow-x:auto}
+    .export-options{grid-template-columns:1fr}
   }
 </style>
 </head>
@@ -213,12 +237,12 @@
       <div class="badge" id="syncBadge">Đồng bộ: <b id="lastUpdate">đang tải...</b></div>
       <div class="badge" id="refreshBtn" style="cursor:pointer;user-select:none">🔄 Làm mới</div>
       <div class="badge" id="autoRefreshBtn" style="cursor:pointer;user-select:none">⏱️ Tự động: <b id="autoRefreshState">Bật (60s)</b></div>
-      <div class="badge" id="exportExcelBtn" style="cursor:pointer;user-select:none">📊 Xuất Excel</div>
+      <div class="badge badge-export" id="exportBtn">📤 Xuất báo cáo</div>
     </div>
   </header>
 
   <div class="kpi-row">
-    <div class="kpi"><div class="label">Tổng đầu việc</div><div class="value black" id="kpiTotal">0</div></div>
+    <div class="kpi"><div class="label">Tổng đầu việc</div><div class="value" id="kpiTotal">0</div></div>
     <div class="kpi"><div class="label">Đang thực hiện</div><div class="value blue" id="kpiProgress">0</div></div>
     <div class="kpi"><div class="label">Hoàn thành</div><div class="value green" id="kpiDone">0</div></div>
     <div class="kpi"><div class="label">Sắp đến hạn</div><div class="value amber" id="kpiDueSoon">0</div></div>
@@ -292,7 +316,7 @@
         <thead><tr>
           <th class="sortable" data-field="ten">Tên công việc</th>
           <th class="sortable" data-field="ma">Mã CV</th>
-          <th class="sortable" data-field="loai">Loạic</th>
+          <th class="sortable" data-field="loai">Loại</th>
           <th class="sortable" data-field="ngayBatDau">Ngày bắt đầu</th>
           <th class="sortable" data-field="han">Deadline</th>
           <th class="sortable" data-field="ngayXong">Ngày xong</th>
@@ -339,44 +363,63 @@
 
   <div class="footer-note" id="footerNote">
     Nguồn dữ liệu: <span id="footerSheetLink"></span> — dashboard tự động lấy dữ liệu mới nhất từ sheet việc riêng
-    của từng thành viên
-    Mỗi người chỉ chỉnh sửa trên sheet của riêng mình — thay đổi sẽ hiện ra ở đây trong vài giây.
+    của từng thành viên. Mỗi người chỉ chỉnh sửa trên sheet của riêng mình — thay đổi sẽ hiện ra ở đây trong vài giây.
     <br><br>
     Author: PHAM DANG TRI
   </div>
 </div>
 
+<!-- ===== Export Modal ===== -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal-box">
+    <div class="modal-title">📤 Xuất báo cáo</div>
+    <div class="modal-sub">Chọn định dạng báo cáo bạn muốn xuất</div>
+    <div class="export-options">
+      <div class="export-opt selected" data-type="pptx" onclick="selectExportType('pptx')">
+        <div class="opt-icon">📊</div>
+        <div class="opt-name">PowerPoint (.pptx)</div>
+        <div class="opt-desc">Slide trình bày chuyên nghiệp — Cover, KPI, Phân công, Hiệu suất, Cảnh báo</div>
+        <span class="opt-badge">Mới</span>
+      </div>
+      <div class="export-opt" data-type="xlsx" onclick="selectExportType('xlsx')">
+        <div class="opt-icon">📋</div>
+        <div class="opt-name">Excel (.xlsx)</div>
+        <div class="opt-desc">Bảng dữ liệu đầy đủ có màu sắc, AutoFilter và nhiều sheet</div>
+      </div>
+    </div>
+    <div class="modal-progress" id="exportProgress">
+      <div class="modal-progress-label" id="exportProgressLabel">Đang xuất...</div>
+      <div class="modal-progress-bar"><div class="modal-progress-fill" id="exportProgressFill"></div></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeExportModal()">Huỷ</button>
+      <button class="btn-export-go" id="btnExportGo" onclick="doExport()">Xuất ngay</button>
+    </div>
+  </div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <script>
 // ===== DATA SOURCE =====
-// Dashboard tự động lấy dữ liệu trực tiếp từ Google Sheet công khai (CSV) mỗi lần mở/làm mới.
-// Google Sheet ID: xem SHEET_ID bên dưới. Sheet phải bật chia sẻ "Anyone with the link - Viewer".
 const SHEET_ID = "12QtQ6jJftAwRHx31DcqQn6gf8r-WQQokTjmiaKtVLj8";
 const csvUrl = (sheetName) => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
 
 const members = ["Chị Trang","Chị Ngọc","Anh Trí","Anh Sang","Anh Hòa","Chị Phúc","Anh Đạt"];
 const roles = {"Chị Trang":"Trưởng phòng"};
-// Mỗi thành viên có 1 sheet việc riêng (không có cột "Người phụ trách" — người phụ trách
-// được suy ra từ chính sheet chứa dòng đó).
 const memberSheetMap = {
   "Chị Trang":"PC_Trang", "Chị Ngọc":"PC_Ngoc", "Anh Trí":"PC_Tri",
   "Anh Sang":"PC_Sang", "Anh Hòa":"PC_Hoa", "Chị Phúc":"PC_Phuc", "Anh Đạt":"PC_Dat"
 };
-let tasks = []; // {ma, ten, loai, nguoi, han, tienDo, trangThai, capNhat}
-let results = []; // {nguoi, ketQua, giaTri, ngay, dungHan}
+let tasks = [];
+let results = [];
 let chartByMember, chartByLoai;
 
-// Bộ lọc riêng của bảng "Phân công & tiến độ chi tiết" (không ảnh hưởng các tab khác)
-// - capNhatFrom/capNhatTo: lọc theo khoảng Ngày báo cáo
-// - hanCutoff: lọc Hạn hoàn thành <= ngày được chọn (mốc "trở về trước")
 let assignFilters = {ma:'', ten:'', loai:'', trangThai:'', dapUng:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null};
-let lastAssignTasks = []; // tasks gốc, dùng lại mỗi khi bộ lọc/sắp xếp trong bảng thay đổi
-let assignSort = {field:null, dir:1}; // dir: 1 = tăng dần, -1 = giảm dần
+let lastAssignTasks = [];
+let assignSort = {field:null, dir:1};
 
-// CSV parser đơn giản, hỗ trợ dấu phẩy/nháy kép trong ô
 function parseCSV(text){
   const rows = [];
   let row = [], field = '', inQuotes = false;
@@ -404,7 +447,6 @@ function toPercent(v){
   return isNaN(n) ? 0 : n;
 }
 
-// Hỗ trợ dd/mm/yyyy, dd-mm-yyyy, yyyy-mm-dd
 function parseVNDate(v){
   if(!v) return null;
   const s = String(v).trim();
@@ -416,8 +458,6 @@ function parseVNDate(v){
   return isNaN(d.getTime()) ? null : d;
 }
 
-// Chỉ hiển thị phần ngày (dd/mm/yyyy). Nếu không parse được thì giữ nguyên chuỗi gốc
-// để không làm mất dữ liệu hiển thị.
 function formatDateOnly(v){
   const d = parseVNDate(v);
   if(!d) return v || '';
@@ -431,8 +471,6 @@ function escapeHtml(str){
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
-// Nhảy từ 1 dòng trong "Tiến độ các đầu việc" (tab Tổng quan) sang tab
-// "Phân công & Tiến độ" và tự động lọc đúng Mã CV vừa bấm vào.
 function goToAssignFilterByMa(ma){
   const maInput = document.getElementById('filterMa');
   if(maInput){
@@ -444,10 +482,6 @@ function goToAssignFilterByMa(ma){
 }
 
 function isOverdue(t){
-  // Chỉ coi là "quá hạn / trễ hạn" khi công việc còn đang diễn ra (Đang thực hiện hoặc
-  // chưa xác định trạng thái). Các trạng thái đã kết thúc theo hướng khác — Hoàn thành,
-  // Hủy bỏ, Hoãn lại — KHÔNG được tính là trễ hạn, vì bản thân Đáp ứng của các dòng này
-  // đang để trống (không áp dụng), nên không được highlight đỏ như Trễ hạn.
   if(t.trangThai === "Hoàn thành" || t.trangThai === "Hủy bỏ" || t.trangThai === "Hoãn lại") return false;
   const d = parseVNDate(t.han);
   if(!d) return false;
@@ -455,8 +489,6 @@ function isOverdue(t){
   return d.getTime() < today.getTime();
 }
 
-// Sắp đến hạn: còn <=3 ngày (và >=0, chưa quá hạn) tính tới Deadline, áp dụng cho công
-// việc còn đang diễn ra (không tính Hoàn thành / Hủy bỏ / Hoãn lại / đã trễ hạn).
 function isDueSoon(t){
   if(t.trangThai === "Hoàn thành" || t.trangThai === "Hủy bỏ" || t.trangThai === "Hoãn lại") return false;
   const d = parseVNDate(t.han);
@@ -466,10 +498,6 @@ function isDueSoon(t){
   return diffDays >= 0 && diffDays <= 3;
 }
 
-// Xác định class màu cho thanh tiến độ của 1 đầu việc:
-// - Hoàn thành -> xanh lá; Trễ hạn (quá hạn & đang thực hiện) -> đỏ
-// - Đang thực hiện + Đáp ứng = Sắp đến hạn -> cam
-// - Hoãn lại + chưa có Đáp ứng -> tím; Hủy bỏ + chưa có Đáp ứng -> xám
 function progressFillClass(t){
   if(t.trangThai === "Hoàn thành") return 'done-fill';
   if(t.trangThai === "Hoãn lại" && !t.dapUng) return 'pending-fill';
@@ -479,11 +507,6 @@ function progressFillClass(t){
   return '';
 }
 
-// Đọc Google Sheet công khai bằng JSONP (chèn thẻ <script>) thay vì fetch().
-// Lý do: gviz endpoint của Google không trả header CORS cho phép fetch() gọi trực tiếp
-// từ trình duyệt ở origin khác (kể cả khi Sheet đã bật "Anyone with link"), nên fetch()
-// luôn báo lỗi dù dữ liệu đọc được bình thường ở phía server. Thẻ <script> không bị CORS
-// chặn nên đây là cách chuẩn để đọc Google Sheet công khai từ web page tĩnh.
 function fetchSheetJSONP(name){
   return new Promise((resolve, reject) => {
     const cbName = 'gvizCB_' + Math.random().toString(36).slice(2);
@@ -518,20 +541,10 @@ function fetchSheetJSONP(name){
   });
 }
 
-async function fetchSheet(name){
-  // Dữ liệu JSON trả về từ gviz đã KHÔNG bao gồm dòng tiêu đề (header nằm riêng ở resp.table.cols),
-  // nên không cần bỏ dòng đầu như khi parse CSV thô.
-  return fetchSheetJSONP(name);
-}
+async function fetchSheet(name){ return fetchSheetJSONP(name); }
 
-// Sheet riêng của từng thành viên (đã cập nhật cấu trúc cột theo Google Sheet mới nhất):
-// A Mã CV | B Tên công việc | C Loại công việc | D Ngày bắt đầu | E Deadline |
-// F Ngày xong | G Tiến độ (%) | H Trạng thái | I Đáp ứng (công thức: "Chưa tới hạn" /
-// "Đúng hạn" / "Trễ hạn") | J Ngày cập nhật gần nhất | K Báo cáo chi tiết
 async function fetchMemberTasks(nguoi, sheetName){
   const rows = await fetchSheet(sheetName);
-  // Lọc an toàn: bỏ dòng tiêu đề nếu gviz lỡ trả về (r[0]==='Mã CV'), và bỏ dòng
-  // mẫu/trống chưa có Tên công việc (r[1]) — đây là nguyên nhân đếm dư trước đây.
   return rows.filter(r=>r[0] && String(r[0]).trim()!=='Mã CV' && r[1] && String(r[1]).trim()!=='').map(r=>({
     ma:r[0]||'', ten:r[1]||'', loai:r[2]||'', nguoi,
     ngayBatDau:r[3]||'', han:r[4]||'', ngayXong:r[5]||'',
@@ -541,7 +554,6 @@ async function fetchMemberTasks(nguoi, sheetName){
   }));
 }
 
-// Map giá trị cột "Đáp ứng" (lấy nguyên văn từ công thức Google Sheet) sang màu badge phù hợp.
 const dapUngMap = {
   "Đúng hạn":"st-done", "Chưa tới hạn":"st-inprogress", "Trễ hạn":"st-late"
 };
@@ -569,8 +581,7 @@ async function loadData(){
     badge.textContent = new Date().toLocaleString('vi-VN');
     document.getElementById('syncBadge').style.borderColor = 'var(--green)';
   }catch(e){
-    badge.textContent = 'Lỗi tải dữ liệu: ' + (e && e.message ? e.message : 'không xác định') +
-      ' — kiểm tra quyền chia sẻ Google Sheet (Anyone with link)';
+    badge.textContent = 'Lỗi tải dữ liệu: ' + (e && e.message ? e.message : 'không xác định');
     document.getElementById('syncBadge').style.borderColor = 'var(--red)';
     console.error(e);
   }
@@ -587,8 +598,6 @@ function initials(name){
   return p.slice(0,2).toUpperCase();
 }
 
-// Cập nhật danh sách lựa chọn của dropdown Loại/Trạng thái/Thành viên dựa trên dữ liệu
-// hiện có, đồng thời giữ nguyên lựa chọn đang chọn nếu vẫn còn hợp lệ.
 function populateAssignFilterOptions(tasks){
   const loaiSel = document.getElementById('filterLoai');
   const curLoai = loaiSel.value;
@@ -620,7 +629,6 @@ function populateAssignFilterOptions(tasks){
   }
 }
 
-// Áp dụng bộ lọc riêng của bảng phân công lên danh sách task (không đụng tới `tasks`/`results` gốc)
 function applyAssignFilters(list){
   return list.filter(t=>{
     if(assignFilters.ma && !String(t.ma||'').toLowerCase().includes(assignFilters.ma.toLowerCase())) return false;
@@ -629,7 +637,6 @@ function applyAssignFilters(list){
     if(assignFilters.trangThai && t.trangThai !== assignFilters.trangThai) return false;
     if(assignFilters.dapUng && t.dapUng !== assignFilters.dapUng) return false;
     if(assignFilters.nguoi && t.nguoi !== assignFilters.nguoi) return false;
-    // Lọc theo khoảng Ngày báo cáo
     if(assignFilters.capNhatFrom || assignFilters.capNhatTo){
       const d = parseVNDate(t.capNhat);
       if(d){
@@ -637,10 +644,7 @@ function applyAssignFilters(list){
         if(assignFilters.capNhatFrom && d.getTime() < assignFilters.capNhatFrom.getTime()) return false;
         if(assignFilters.capNhatTo && d.getTime() > assignFilters.capNhatTo.getTime()) return false;
       }
-      // không rõ ngày thì không loại, tránh mất dữ liệu do sai định dạng
     }
-    // Lọc Hạn hoàn thành: chỉ hiển thị các mốc <= ngày được chọn (ví dụ chọn 03/07/2026
-    // thì hiển thị cả 01/07, 02/07, 03/07/2026 — "trở về trước")
     if(assignFilters.hanCutoff){
       const d = parseVNDate(t.han);
       if(d){
@@ -674,8 +678,6 @@ function setupAssignFilterBar(){
     assignFilters.capNhatFrom = capNhatFromInput.value ? new Date(capNhatFromInput.value+'T00:00:00') : null;
     assignFilters.capNhatTo = capNhatToInput.value ? new Date(capNhatToInput.value+'T00:00:00') : null;
     assignFilters.hanCutoff = hanCutoffInput.value ? new Date(hanCutoffInput.value+'T00:00:00') : null;
-    // Bộ lọc chung áp dụng cho toàn bộ tab: gọi lại render() (không chỉ renderAssignTable)
-    // để Tổng quan, Theo thành viên, Biểu đồ, Đánh giá hiệu suất cùng cập nhật theo bộ lọc.
     render();
   };
 
@@ -696,12 +698,8 @@ function setupAssignFilterBar(){
   });
 }
 
-// So sánh 2 task theo field được chọn để sắp xếp (chuỗi: theo bảng chữ cái tiếng Việt,
-// ngày: theo thời gian thực, tiến độ: theo số). Thiếu dữ liệu luôn xếp xuống cuối.
 function compareForSort(a, b, field){
-  if(field === 'tienDo'){
-    return (a.tienDo||0) - (b.tienDo||0);
-  }
+  if(field === 'tienDo') return (a.tienDo||0) - (b.tienDo||0);
   if(field === 'han' || field === 'capNhat' || field === 'ngayBatDau' || field === 'ngayXong'){
     const da = parseVNDate(a[field]);
     const db = parseVNDate(b[field]);
@@ -713,8 +711,6 @@ function compareForSort(a, b, field){
   return String(a[field]||'').localeCompare(String(b[field]||''), 'vi');
 }
 
-// Gắn sự kiện click để sắp xếp lên các cột có thể sort trong bảng phân công.
-// Click lần 1: tăng dần, lần 2: giảm dần, lần 3: bỏ sắp xếp (quay về thứ tự gốc).
 function setupAssignSort(){
   document.querySelectorAll('#panel-assign thead th.sortable').forEach(th=>{
     th.dataset.label = th.textContent.trim();
@@ -740,14 +736,8 @@ function updateSortArrows(){
   });
 }
 
-function render(){
-  renderInner(tasks, results);
-}
+function render(){ renderInner(tasks, results); }
 
-// Bộ lọc chung (#assignFilterBar) áp dụng cho TOÀN BỘ các tab: Tổng quan, Phân công &
-// Tiến độ, Theo thành viên, Biểu đồ, Đánh giá hiệu suất. `tasks`/`results` tham số dưới đây
-// luôn là dữ liệu GỐC (chưa lọc) — mọi tab tự lọc lại từ `filteredTasks`/`filteredResults`
-// mỗi lần render, để khi đổi bộ lọc thì toàn bộ các tab cùng cập nhật đồng bộ.
 function renderInner(tasks, results){
   const filteredTasks = applyAssignFilters(tasks);
   const filteredResults = assignFilters.nguoi ? results.filter(r=>r.nguoi===assignFilters.nguoi) : results;
@@ -760,15 +750,10 @@ function renderInner(tasks, results){
   document.getElementById('kpiOnTime').textContent = filteredTasks.filter(t=>t.trangThai==="Hoãn lại").length;
   document.getElementById('kpiCancel').textContent = filteredTasks.filter(t=>t.trangThai==="Hủy bỏ").length;
 
-  // assign table — nhóm theo từng thành viên, có dòng phân tách, Tên đứng trước Mã CV
-  // (dùng danh sách gốc `tasks` vì renderAssignTable tự áp bộ lọc bên trong nó)
   lastAssignTasks = tasks;
   populateAssignFilterOptions(tasks);
   renderAssignTable(tasks);
 
-  // overview list — mỗi Mã CV chỉ hiển thị DUY NHẤT 1 dòng (không lặp lại), lấy theo
-  // dòng có Ngày báo cáo gần với hôm nay nhất trong số các lần báo cáo của chính mã đó
-  // (mỗi công việc có thể được báo cáo nhiều lần với % khác nhau — ta chỉ lấy bản mới nhất).
   const ov = document.getElementById('overviewList');
   const dateLabel = document.getElementById('overviewDateLabel');
   const today = new Date(); today.setHours(0,0,0,0);
@@ -777,8 +762,8 @@ function renderInner(tasks, results){
     const d = parseVNDate(t.capNhat);
     if(!d) return;
     d.setHours(0,0,0,0);
-    if(d.getTime() > today.getTime()) return; // bỏ qua báo cáo có ngày trong tương lai
-    const key = t.ma || t.ten; // dùng Mã CV làm khóa duy nhất, dự phòng theo tên nếu thiếu mã
+    if(d.getTime() > today.getTime()) return;
+    const key = t.ma || t.ten;
     const existing = latestByMa.get(key);
     if(!existing || d.getTime() > existing.date.getTime()){
       latestByMa.set(key, {task:t, date:d});
@@ -787,7 +772,6 @@ function renderInner(tasks, results){
   const latestTasks = Array.from(latestByMa.values())
     .sort((a,b)=>b.date.getTime()-a.date.getTime())
     .map(x=>x.task);
-
   dateLabel.textContent = latestTasks.length ? '— theo báo cáo mới nhất của từng Mã CV' : '';
 
   if(latestTasks.length){
@@ -823,8 +807,6 @@ function renderInner(tasks, results){
     rl.textContent = 'Chưa có dữ liệu.';
   }
 
-  // Theo thành viên — thiết kế mới, không dùng avatar. Nếu bộ lọc chung đang chọn 1
-  // thành viên cụ thể thì chỉ hiển thị đúng thành viên đó (đồng bộ với các tab khác).
   const mg = document.getElementById('memberGrid');
   const membersToShow = assignFilters.nguoi ? [assignFilters.nguoi] : members;
   mg.innerHTML = membersToShow.map(m=>{
@@ -859,11 +841,8 @@ function renderInner(tasks, results){
       </div>
     </div>`;
   }).join('');
-  if(!membersToShow.length){
-    mg.innerHTML = '<div class="empty-note">Chưa có dữ liệu.</div>';
-  }
+  if(!membersToShow.length) mg.innerHTML = '<div class="empty-note">Chưa có dữ liệu.</div>';
 
-  // kpi table
   const kt = document.getElementById('kpiTable');
   const kpiMembersToShow = assignFilters.nguoi ? [assignFilters.nguoi] : members;
   kt.innerHTML = kpiMembersToShow.map(m=>{
@@ -872,9 +851,7 @@ function renderInner(tasks, results){
     const onTime = mr.filter(r=>r.dungHan).length;
     const pct = total? Math.round(onTime/total*100) : null;
     let rank = "Chưa có dữ liệu";
-    if(pct!==null){
-      rank = pct>=90?"Xuất sắc":pct>=75?"Tốt":pct>=60?"Đạt":"Cần cải thiện";
-    }
+    if(pct!==null) rank = pct>=90?"Xuất sắc":pct>=75?"Tốt":pct>=60?"Đạt":"Cần cải thiện";
     return `<tr><td>${m}</td><td>${total}</td><td>${onTime}</td><td>${pct!==null?pct+'%':'—'}</td><td>${rank}</td></tr>`;
   }).join('');
 
@@ -889,9 +866,7 @@ function renderAssignTable(tasksIn){
     members.forEach(m=>{
       const mt = tasks.filter(t=>t.nguoi===m);
       if(!mt.length) return;
-      if(assignSort.field){
-        mt.sort((a,b) => compareForSort(a,b,assignSort.field) * assignSort.dir);
-      }
+      if(assignSort.field) mt.sort((a,b) => compareForSort(a,b,assignSort.field) * assignSort.dir);
       html += `<tr class="member-sep-row" style="background:rgba(47,111,237,.07)">
         <td colspan="11" style="font-weight:700;color:var(--blue-d);padding:8px 10px">
           ${m} <span style="font-weight:500;color:var(--muted);font-size:12px">(${mt.length} đầu việc)</span>
@@ -919,19 +894,16 @@ function renderAssignTable(tasksIn){
 function renderCharts(tasks){
   if(typeof Chart === 'undefined') return;
   const palette = ['#2f6fed','#7c5cf0','#0ea968','#c8790a','#e0424a','#0aa7c8','#e07f2f'];
-
   const byMemberCounts = members.map(m => tasks.filter(t=>t.nguoi===m).length);
   const ctxM = document.getElementById('chartByMember');
   if(ctxM){
     if(chartByMember) chartByMember.destroy();
     chartByMember = new Chart(ctxM, {
       type:'bar',
-      data:{ labels: members, datasets:[{ label:'Số đầu việc', data: byMemberCounts,
-        backgroundColor: palette, borderRadius:6 }] },
+      data:{ labels: members, datasets:[{ label:'Số đầu việc', data: byMemberCounts, backgroundColor: palette, borderRadius:6 }] },
       options:{ plugins:{legend:{display:false}}, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } } }
     });
   }
-
   const loaiCounts = {};
   tasks.forEach(t=>{ const l = t.loai || 'Khác'; loaiCounts[l] = (loaiCounts[l]||0)+1; });
   const loaiLabels = Object.keys(loaiCounts);
@@ -940,14 +912,12 @@ function renderCharts(tasks){
     if(chartByLoai) chartByLoai.destroy();
     chartByLoai = new Chart(ctxL, {
       type:'pie',
-      data:{ labels: loaiLabels, datasets:[{ data: loaiLabels.map(l=>loaiCounts[l]),
-        backgroundColor: palette }] },
+      data:{ labels: loaiLabels, datasets:[{ data: loaiLabels.map(l=>loaiCounts[l]), backgroundColor: palette }] },
       options:{ plugins:{legend:{position:'bottom'}} }
     });
   }
 }
 
-// Lưu lại tab đang xem để khi F5/refresh trang vẫn ở đúng tab đó (không quay về "Tổng quan")
 const TAB_STORAGE_KEY = 'bmhda_active_tab';
 function activateTab(tabName){
   const tabEl = document.querySelector(`.tab[data-tab="${tabName}"]`);
@@ -966,8 +936,6 @@ document.querySelectorAll('.tab').forEach(tab=>{
     try{ localStorage.setItem(TAB_STORAGE_KEY, tab.dataset.tab); }catch(e){}
   });
 });
-
-// Khôi phục tab đã lưu ngay khi trang vừa tải (trước cả khi loadData chạy xong)
 (function restoreActiveTab(){
   let saved = null;
   try{ saved = localStorage.getItem(TAB_STORAGE_KEY); }catch(e){}
@@ -975,27 +943,16 @@ document.querySelectorAll('.tab').forEach(tab=>{
 })();
 
 function renderFooterLinks(){
-  // Chỉ link tới toàn bộ Google Sheet (Google không lộ mã gid từng tab qua các công cụ hiện có,
-  // nên không thể tự động nhảy đúng tab — anh cần tự chọn tab sau khi mở).
   const el = document.getElementById('footerSheetLink');
-  if(el){
-    el.innerHTML = `<a href="https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit" target="_blank" rel="noopener">Google Sheet "Ke Hoach Bao Cao Ban Mua Hang"</a>`;
-  }
+  if(el) el.innerHTML = `<a href="https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit" target="_blank" rel="noopener">Google Sheet "Ke Hoach Bao Cao Ban Mua Hang"</a>`;
 }
 
 document.getElementById('refreshBtn').addEventListener('click', loadData);
-document.getElementById('exportExcelBtn').addEventListener('click', exportReportToExcel);
 
-// ==================================================================
-// TỰ ĐỘNG LÀM MỚI DỮ LIỆU (polling)
-// Google Sheet (đọc qua CSV/gviz công khai) không hỗ trợ đẩy sự kiện (push) tới trình
-// duyệt, nên cách khả thi để "thấy dữ liệu mới ngay khi có người nhập" là cho dashboard
-// tự gọi lại loadData() theo chu kỳ. Mặc định 60 giây/lần — đủ nhanh để cảm giác gần
-// như tức thời, nhưng không gọi Google Sheet quá dày gây chậm/giới hạn truy cập.
-// - Bật/tắt được lưu vào localStorage để nhớ lựa chọn giữa các lần mở trang.
-// - Tự tạm dừng khi tab trình duyệt bị ẩn (chuyển tab khác) để tiết kiệm tải, và tự
-//   làm mới ngay + chạy lại lịch khi quay lại tab.
-const AUTO_REFRESH_MS = 60000; // đổi số này nếu muốn chu kỳ khác, ví dụ 30000 = 30 giây
+// ======================================================================
+// TỰ ĐỘNG LÀM MỚI DỮ LIỆU
+// ======================================================================
+const AUTO_REFRESH_MS = 60000;
 const AUTO_REFRESH_KEY = 'bmhda_auto_refresh';
 let autoRefreshTimer = null;
 let autoRefreshOn = true;
@@ -1003,10 +960,7 @@ try{ const saved = localStorage.getItem(AUTO_REFRESH_KEY); if(saved !== null) au
 
 function startAutoRefresh(){
   stopAutoRefresh();
-  autoRefreshTimer = setInterval(()=>{
-    if(document.hidden) return; // tab đang ẩn thì bỏ qua lượt này, chờ quay lại mới tải
-    loadData();
-  }, AUTO_REFRESH_MS);
+  autoRefreshTimer = setInterval(()=>{ if(document.hidden) return; loadData(); }, AUTO_REFRESH_MS);
 }
 function stopAutoRefresh(){
   if(autoRefreshTimer){ clearInterval(autoRefreshTimer); autoRefreshTimer = null; }
@@ -1022,34 +976,292 @@ document.getElementById('autoRefreshBtn').addEventListener('click', ()=>{
   if(autoRefreshOn) startAutoRefresh(); else stopAutoRefresh();
 });
 document.addEventListener('visibilitychange', ()=>{
-  // Quay lại tab sau một lúc rời đi -> làm mới ngay để không phải chờ hết chu kỳ
   if(!document.hidden && autoRefreshOn) loadData();
 });
 updateAutoRefreshLabel();
 if(autoRefreshOn) startAutoRefresh();
 
-// ==================================================================
-// XUẤT EXCEL (.xlsx) — file báo cáo chuyên nghiệp, nhiều sheet
-// - Dùng xlsx-js-style (tách từ SheetJS, có hỗ trợ style)
-// - Đọc dữ liệu trực tiếp từ DOM đang hiển thị, KHÔNG đổi state/logic
-// ==================================================================
+// ======================================================================
+// EXPORT MODAL LOGIC
+// ======================================================================
+let selectedExportType = 'pptx';
+
+function selectExportType(type){
+  selectedExportType = type;
+  document.querySelectorAll('.export-opt').forEach(el=>{
+    el.classList.toggle('selected', el.dataset.type === type);
+  });
+}
+
+function openExportModal(){
+  document.getElementById('exportModal').classList.add('open');
+  document.getElementById('exportProgress').style.display = 'none';
+  document.getElementById('btnExportGo').disabled = false;
+  document.getElementById('btnExportGo').textContent = 'Xuất ngay';
+}
+function closeExportModal(){
+  document.getElementById('exportModal').classList.remove('open');
+}
+document.getElementById('exportBtn').addEventListener('click', openExportModal);
+document.getElementById('exportModal').addEventListener('click', function(e){ if(e.target===this) closeExportModal(); });
+
+function setExportProgress(pct, label){
+  const bar = document.getElementById('exportProgressFill');
+  const lbl = document.getElementById('exportProgressLabel');
+  const wrap = document.getElementById('exportProgress');
+  wrap.style.display = 'block';
+  bar.style.width = pct + '%';
+  lbl.textContent = label;
+}
+
+async function doExport(){
+  document.getElementById('btnExportGo').disabled = true;
+  document.getElementById('btnExportGo').textContent = 'Đang xuất...';
+  try{
+    if(selectedExportType === 'pptx') await exportToPptx();
+    else await exportToExcel();
+    closeExportModal();
+  }catch(err){
+    console.error(err);
+    alert('Xuất thất bại: ' + (err && err.message ? err.message : 'lỗi không xác định'));
+    document.getElementById('btnExportGo').disabled = false;
+    document.getElementById('btnExportGo').textContent = 'Xuất ngay';
+  }
+}
+
+// ======================================================================
+// ======================================================================
+// XUẤT POWERPOINT (.pptx) — Bố cục 1 slide duy nhất theo đúng mẫu:
+// Tiêu đề "KPI Tổng quan" + ngày + dòng phụ đề
+// → 7 thẻ KPI ngang (Tổng đầu việc, Đang thực hiện, Hoàn thành, Sắp đến hạn,
+//   Trễ hạn, Hoãn lại, Huỷ bỏ)
+// → Bảng chi tiết đầy đủ, nhóm theo từng thành viên, đúng 11 cột như bảng
+//   "Phân công & tiến độ chi tiết" trên dashboard.
+// Nếu dữ liệu quá dài để vừa 1 slide ở cỡ chữ đọc được, bảng sẽ tự động
+// tràn tiếp sang (các) slide kế tiếp — vẫn giữ tiêu đề + cùng cột, chỉ bỏ
+// hàng KPI ở các slide tiếp theo để dành chỗ cho bảng.
+// ======================================================================
+async function exportToPptx(){
+  if(typeof PptxGenJS === 'undefined') throw new Error('Thư viện PptxGenJS chưa tải. Vui lòng kiểm tra kết nối mạng.');
+
+  const filteredTasks = applyAssignFilters(tasks);
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('vi-VN');
+  const dateFile = today.toISOString().slice(0,10);
+
+  const pptx = new PptxGenJS();
+  pptx.layout = 'LAYOUT_WIDE';
+  pptx.title = 'Báo cáo Ban Mua Hàng Dự Án';
+  pptx.author = 'Ban Mua Hàng Dự Án';
+
+  const C = {
+    text:'1A2236', muted:'6B7690', border:'DDE3F0', card:'FFFFFF', stripe:'F7F9FD',
+    headerBg:'2952CC', slideBg:'EEF2FB',
+    groupBg:'E8EEFF', groupTx:'2952CC',
+    colBlack:'1A2236', colBlue:'2952CC', colGreen:'0BA360', colAmber:'C8790A',
+    colRed:'D93025', colPurpl:'7C5CF0', colGray:'8B95A8',
+    bgBlack:'E8EAF2', bgBlue:'E8EEFF', bgGreen:'E6F7EF', bgAmber:'FFF4E0', bgRed:'FDEAEA',
+    bgPurpl:'F0ECFF', bgGray:'F0F1F4',
+    overdueBg:'FFF5F5'
+  };
+  const FF = 'Segoe UI';
+
+  setExportProgress(5, 'Đang tính KPI...');
+
+  // ── KPI tổng ──────────────────────────────────────────────
+  const kTotal  = filteredTasks.length;
+  const kProg   = filteredTasks.filter(t=>t.trangThai==="Đang thực hiện").length;
+  const kDone   = filteredTasks.filter(t=>t.trangThai==="Hoàn thành").length;
+  const kSoon   = filteredTasks.filter(t=>t.dueSoon).length;
+  const kLate   = filteredTasks.filter(t=>t.trangThai==="Trễ hạn"||t.overdue).length;
+  const kPost   = filteredTasks.filter(t=>t.trangThai==="Hoãn lại").length;
+  const kCancel = filteredTasks.filter(t=>t.trangThai==="Hủy bỏ").length;
+
+  // ── Badge màu cho Trạng thái / Đáp ứng (khớp màu trên dashboard) ──
+  function badgeColors(st){
+    if(!st) return {txt:C.muted,bg:C.bgGray};
+    if(/Hoàn thành/.test(st)) return {txt:C.colGreen,bg:C.bgGreen};
+    if(/Đang thực hiện/.test(st)) return {txt:C.colBlue,bg:C.bgBlue};
+    if(/Trễ hạn/.test(st)) return {txt:C.colRed,bg:C.bgRed};
+    if(/Sắp đến hạn/.test(st)) return {txt:C.colAmber,bg:C.bgAmber};
+    if(/Hoãn lại/.test(st)) return {txt:C.colPurpl,bg:C.bgPurpl};
+    if(/Hủy bỏ/.test(st)) return {txt:C.colGray,bg:C.bgGray};
+    if(/Đúng hạn/.test(st)) return {txt:C.colGreen,bg:C.bgGreen};
+    if(/Chưa tới hạn/.test(st)) return {txt:C.colBlue,bg:C.bgBlue};
+    return {txt:C.muted,bg:C.bgGray};
+  }
+  function addBadge(sl, x, y, w, h, text, txtColor, bgColor){
+    if(!text) { sl.addText('—',{x,y,w,h,fontSize:8.5,color:C.muted,fontFace:FF,align:'center',valign:'middle'}); return; }
+    sl.addShape(pptx.ShapeType.roundRect,{x,y,w,h,rectRadius:0.06,fill:{type:'solid',color:bgColor},line:{color:bgColor,pt:0}});
+    sl.addText(text,{x,y,w,h,fontSize:8,bold:true,color:txtColor,fontFace:FF,align:'center',valign:'middle'});
+  }
+
+  // ── Thẻ KPI nổi bật: bóng đổ nhẹ, nền tint theo màu số, viền đậm màu ──
+  function addKpiCard(sl, x, y, w, h, label, val, numColor, tint){
+    // bóng đổ giả (shape nhạt lệch nhẹ phía sau)
+    sl.addShape(pptx.ShapeType.roundRect,{x:x+0.04,y:y+0.055,w,h,rectRadius:0.12,fill:{type:'solid',color:'CBD3E8'},line:{color:'CBD3E8',pt:0}});
+    // card nền tint theo màu số, viền đậm màu số
+    sl.addShape(pptx.ShapeType.roundRect,{x,y,w,h,rectRadius:0.12,fill:{type:'solid',color:tint||'FFFFFF'},line:{color:numColor,pt:1.5}});
+    // số KPI
+    sl.addText(String(val),{x,y:y+0.08,w,h:h*0.56,fontSize:32,bold:true,color:numColor,fontFace:FF,align:'center',valign:'middle'});
+    // label
+    sl.addText(label,{x:x+0.05,y:y+h*0.62,w:w-0.1,h:h*0.34,fontSize:9.5,bold:true,color:C.text,fontFace:FF,align:'center',valign:'top'});
+  }
+
+  // ── Chuẩn bị danh sách hàng: xen kẽ hàng "tiêu đề nhóm" và hàng dữ liệu,
+  //    đúng thứ tự member -> mt (giống renderAssignTable trên dashboard) ──
+  const rows = [];
+  const mList = assignFilters.nguoi ? [assignFilters.nguoi] : members;
+  mList.forEach(m=>{
+    const mt = filteredTasks.filter(t=>t.nguoi===m);
+    if(!mt.length) return;
+    rows.push({ isGroup:true, label: `${m} (${mt.length} đầu việc)` });
+    mt.forEach(t=>rows.push({ isGroup:false, t }));
+  });
+
+  // ── Cột bảng: đúng 11 cột như bảng chi tiết trên dashboard ──
+  const cols = [
+    {key:'ten',    label:'Tên công việc',   w:2.05, align:'left'},
+    {key:'ma',     label:'Mã CV',           w:0.68, align:'left'},
+    {key:'loai',   label:'Loại',            w:0.62, align:'left'},
+    {key:'batdau', label:'Ngày bắt đầu',    w:0.95, align:'center'},
+    {key:'han',    label:'Deadline',        w:0.88, align:'center'},
+    {key:'xong',   label:'Ngày xong',       w:0.88, align:'center'},
+    {key:'tiendo', label:'Tiến độ (%)',     w:0.65, align:'center'},
+    {key:'trangthai', label:'Trạng thái',   w:1.05, align:'center'},
+    {key:'dapung', label:'Đáp ứng',         w:1.0,  align:'center'},
+    {key:'capnhat',label:'Ngày cập nhật',   w:0.95, align:'center'},
+    {key:'baocao', label:'Báo cáo chi tiết',w:2.82, align:'left'}
+  ];
+  const tableX = 0.4;
+  const tableW = cols.reduce((s,c)=>s+c.w,0);
+  const TABLE_Y_FIRST = 2.32;     // slide đầu: bảng nằm dưới tiêu đề + hàng KPI
+  const TABLE_Y_CONT  = 0.95;     // các slide tràn tiếp theo: bảng nằm ngay dưới tiêu đề nhỏ
+
+  function fmtD(v){ return v ? formatDateOnly(v) : ''; }
+
+  function drawHeaderTitle(sl, isFirst, pageNo){
+    if(isFirst){
+      sl.addText('KPI Tổng quan',{x:0.4,y:0.22,w:8,h:0.5,fontSize:24,bold:true,color:C.text,fontFace:FF});
+      sl.addText(`Tổng hợp ${kTotal} đầu việc – trạng thái hiện tại`,{x:0.4,y:0.68,w:8,h:0.3,fontSize:12,color:C.muted,fontFace:FF});
+    } else {
+      sl.addText(`KPI Tổng quan (tiếp theo ${pageNo})`,{x:0.4,y:0.22,w:8,h:0.4,fontSize:16,bold:true,color:C.text,fontFace:FF});
+    }
+    sl.addText('Ngày: '+dateStr,{x:9.9,y:0.22,w:3.03,h:0.4,fontSize:10.5,color:C.muted,fontFace:FF,align:'right',valign:'middle'});
+  }
+
+  function drawKpiRow(sl){
+    const cards=[
+      {l:'Tổng đầu việc',   v:kTotal,  c:C.colBlack, t:C.bgBlack},
+      {l:'Đang thực hiện',  v:kProg,   c:C.colBlue,  t:C.bgBlue},
+      {l:'Hoàn thành',      v:kDone,   c:C.colGreen, t:C.bgGreen},
+      {l:'Sắp đến hạn',     v:kSoon,   c:C.colAmber, t:C.bgAmber},
+      {l:'Trễ hạn',         v:kLate,   c:C.colRed,   t:C.bgRed},
+      {l:'Hoãn lại',        v:kPost,   c:C.colPurpl, t:C.bgPurpl},
+      {l:'Huỷ bỏ',          v:kCancel, c:C.colGray,  t:C.bgGray}
+    ];
+    const cW=1.73, cH=1.08, cY=1.02, gap=0.08;
+    const totalW=cards.length*(cW+gap)-gap;
+    const startX=(13.33-totalW)/2;
+    cards.forEach((k,i)=> addKpiCard(sl, startX+i*(cW+gap), cY, cW, cH, k.l, k.v, k.c, k.t));
+  }
+
+  function pageBg(sl){
+    sl.background = { color: C.slideBg };
+    sl.addShape(pptx.ShapeType.rect,{x:0,y:0,w:'100%',h:0.07,fill:{type:'solid',color:C.headerBg}});
+  }
+
+  // ── Xây dữ liệu bảng PowerPoint GỐC (addTable) — PowerPoint sẽ tự tính chiều
+  //    cao từng hàng theo nội dung (không cắt bớt) và tự tạo thêm slide khi
+  //    bảng dài hơn 1 trang (autoPage), thay vì tự ước lượng số dòng thủ công. ──
+  const tableRows = [];
+
+  // Hàng tiêu đề cột
+  tableRows.push(cols.map(c => ({
+    text: c.label,
+    options: { bold:true, color:'FFFFFF', fill:{color:C.headerBg}, align:'center', valign:'middle', fontSize:8.5 }
+  })));
+
+  let stripeToggle = false;
+  rows.forEach(r=>{
+    if(r.isGroup){
+      stripeToggle = false;
+      const cell = { text:r.label, options:{ colspan:cols.length, bold:true, color:C.groupTx, fill:{color:C.groupBg}, align:'left', valign:'middle', fontSize:9, margin:[2,4,2,6] } };
+      tableRows.push([cell]);
+      return;
+    }
+    const t = r.t;
+    const rowBg = t.overdue ? C.overdueBg : (stripeToggle ? C.stripe : C.card);
+    stripeToggle = !stripeToggle;
+    const stBadge = badgeColors(t.trangThai);
+    const duBadge = badgeColors(t.dapUng);
+    tableRows.push(cols.map(c=>{
+      const base = { fontFace:FF, fontSize:8, color:C.text, fill:{color:rowBg}, valign:'middle', align:c.align, margin:[2,4,2,4] };
+      if(c.key==='ten')     return { text:t.ten||'', options:base };
+      if(c.key==='ma')      return { text:t.ma||'', options:base };
+      if(c.key==='loai')    return { text:t.loai||'', options:base };
+      if(c.key==='batdau')  return { text:fmtD(t.ngayBatDau), options:base };
+      if(c.key==='han')     return { text:fmtD(t.han), options:base };
+      if(c.key==='xong')    return { text:fmtD(t.ngayXong), options:base };
+      if(c.key==='tiendo')  return { text:(t.tienDo||0)+'%', options:base };
+      if(c.key==='trangthai') return { text:t.trangThai||'', options:{...base, bold:true, color:stBadge.txt, fill:{color:stBadge.bg}, align:'center', fontSize:8} };
+      if(c.key==='dapung')  return { text:t.dapUng||'—', options:{...base, bold:true, color:duBadge.txt, fill:{color:duBadge.bg}, align:'center', fontSize:8} };
+      if(c.key==='capnhat') return { text:fmtD(t.capNhat), options:base };
+      if(c.key==='baocao')  return { text:t.baoCaoChiTiet||'—', options:{...base, fontSize:7.3, color:t.baoCaoChiTiet?C.text:C.muted} };
+      return { text:'', options:base };
+    }));
+  });
+
+  // Slide đầu tiên: nền + tiêu đề + hàng KPI, sau đó chèn bảng — bảng tự lo
+  // phần còn lại: tự tính chiều cao hàng theo nội dung và tự "tràn" sang các
+  // slide kế tiếp (autoPage) nếu dài hơn 1 trang.
+  setExportProgress(15, 'Đang dựng bảng dữ liệu...');
+  const firstSlide = pptx.addSlide();
+  pageBg(firstSlide);
+  drawHeaderTitle(firstSlide, true);
+  drawKpiRow(firstSlide);
+
+  const slidesBefore = pptx.slides.length; // = 1 (slide vừa tạo)
+  firstSlide.addTable(tableRows, {
+    x: tableX, y: TABLE_Y_FIRST, w: tableW,
+    colW: cols.map(c=>c.w),
+    border: { type:'solid', color:C.border, pt:0.5 },
+    autoPage: true,
+    autoPageRepeatHeader: true,
+    autoPageHeaderRows: 1,
+    newSlideStartY: TABLE_Y_CONT
+  });
+  const slidesAfter = pptx.slides.length; // tổng số slide sau khi bảng tự tràn trang
+
+  setExportProgress(70, 'Đang hoàn thiện các slide...');
+  // Các slide được autoPage tự tạo thêm (nếu có) chưa có nền/tiêu đề riêng —
+  // bổ sung cho từng slide đó (đặt nền TRƯỚC khi thêm chữ để không đè lên bảng).
+  try{
+    for(let i = slidesBefore; i < slidesAfter; i++){
+      const sl = pptx.slides[i];
+      if(!sl) continue;
+      pageBg(sl);
+      drawHeaderTitle(sl, false, i - slidesBefore + 2);
+    }
+  }catch(e){ console.warn('Không thể tuỳ biến thêm các slide tràn trang tự động:', e); }
+
+  setExportProgress(96, 'Đang lưu file...');
+  await new Promise(r=>setTimeout(r,20));
+  await pptx.writeFile({ fileName: `BanMuaHang_BaoCao_${dateFile}.pptx` });
+  setExportProgress(100, 'Hoàn thành!');
+}
+
+
+// ======================================================================
+// XUẤT EXCEL (.xlsx) — nhiều sheet chuyên nghiệp
+// ======================================================================
 (function(){
-  // ---------- Helpers style ----------
   const CLR = {
-    header:   '2F6FED',
-    headerTx: 'FFFFFF',
-    title:    '1E4FC4',
-    zebra:    'F7F9FD',
-    border:   'E2E8F4',
-    text:     '1A2236',
-    muted:    '6B7690',
-    green:    '0EA968',
-    red:      'E0424A',
-    amber:    'C8790A',
-    blue:     '2F6FED',
-    purple:   '7C5CF0',
-    overdueBg:'FDECEE',
-    groupBg:  'EEF2FB'
+    header:'2F6FED', headerTx:'FFFFFF', title:'1E4FC4',
+    zebra:'F7F9FD', border:'E2E8F4', text:'1A2236', muted:'6B7690',
+    green:'0EA968', red:'E0424A', amber:'C8790A', blue:'2F6FED', purple:'7C5CF0',
+    overdueBg:'FDECEE', groupBg:'EEF2FB', coverBg:'1E4FC4', coverTx:'FFFFFF',
+    kpiGreen:'EDFAF3', kpiBg:'EEF4FF', kpiAmber:'FFF8EE', kpiRed:'FFF0F0'
   };
   const FONT = 'Segoe UI';
 
@@ -1078,25 +1290,15 @@ if(autoRefreshOn) startAutoRefresh();
   function headerCell(v){
     return baseCell(v, { bold:true, color:CLR.headerTx, fill:CLR.header, align:'center', sz:11 });
   }
+  function titleCell(v, ncols){
+    return baseCell(v, { bold:true, sz:14, color:CLR.headerTx, fill:CLR.coverBg, align:'center', noBorder:true });
+  }
   function statusColor(v){
     if(!v) return null;
     if(/Hoàn thành|Đúng hạn/i.test(v)) return CLR.green;
     if(/Trễ hạn/i.test(v)) return CLR.red;
     if(/Đang thực hiện|Chưa tới hạn/i.test(v)) return CLR.blue;
     return null;
-  }
-  function autoColWidths(rows, minW, maxW){
-    minW = minW||8; maxW = maxW||50;
-    const w = [];
-    rows.forEach(r=>{
-      (r||[]).forEach((c,i)=>{
-        const v = c && c.v != null ? String(c.v) : '';
-        // độ dài mỗi dòng lớn nhất
-        const maxLine = v.split('\n').reduce((m,l)=>Math.max(m,l.length),0);
-        w[i] = Math.max(w[i]||minW, Math.min(maxW, maxLine + 2));
-      });
-    });
-    return w.map(x=>({ wch:x }));
   }
   function sheetFromAOA(aoa, opts){
     opts = opts || {};
@@ -1112,61 +1314,77 @@ if(autoRefreshOn) startAutoRefresh();
     if(opts.cols) ws['!cols'] = opts.cols;
     if(opts.merges) ws['!merges'] = opts.merges;
     if(opts.rows) ws['!rows'] = opts.rows;
-    if(opts.freeze) ws['!freeze'] = opts.freeze;
     if(opts.freeze) ws['!views'] = [{ state:'frozen', ySplit: opts.freeze.ySplit||1, xSplit: opts.freeze.xSplit||0 }];
     if(opts.autoFilter) ws['!autofilter'] = { ref: opts.autoFilter };
-    // In ấn chuyên nghiệp: lề mỏng, canh giữa theo chiều ngang, tự co vừa chiều rộng trang.
     ws['!margins'] = { left:0.3, right:0.3, top:0.5, bottom:0.5, header:0.2, footer:0.2 };
     ws['!pageSetup'] = Object.assign({ orientation:'landscape', fitToWidth:1, fitToHeight:0, horizontalCentered:true }, opts.pageSetup||{});
     return ws;
   }
-  function applyZebra(aoa, startRow){
-    // tô nền dòng chẵn (không đè cell đã có fill)
-    for(let r=startRow; r<aoa.length; r++){
-      if(((r-startRow)%2)===1){
-        (aoa[r]||[]).forEach(cell=>{
-          if(cell && cell.s && !cell.s.fill){
-            cell.s.fill = { patternType:'solid', fgColor:{rgb:CLR.zebra} };
-          }
-        });
-      }
-    }
-  }
 
-  // ---------- Sheet: Phân công chi tiết (sheet duy nhất được xuất) ----------
-  function buildAssignSheet(){
-    const table = document.querySelector('#panel-assign .assign-table');
-    if(!table){
-      return sheetFromAOA([[ baseCell('Chưa có dữ liệu.', { color:CLR.muted }) ]]);
-    }
+  // Sheet 1 — Tổng quan KPI
+  function buildKpiSheet(filteredTasks, filteredResults){
+    const today = new Date().toLocaleDateString('vi-VN');
     const aoa = [];
     const merges = [];
-    // Header từ thead
+    const NCOLS = 4;
+    // Title
+    aoa.push([titleCell(`BÁO CÁO BAN MUA HÀNG DỰ ÁN — ${today}`, NCOLS), null, null, null]);
+    merges.push({s:{r:0,c:0},e:{r:0,c:NCOLS-1}});
+    aoa.push([baseCell('', {noBorder:true}), null, null, null]);
+    merges.push({s:{r:1,c:0},e:{r:1,c:NCOLS-1}});
+    aoa.push([headerCell('CHỈ SỐ'), headerCell('GIÁ TRỊ'), headerCell('TỶ LỆ'), headerCell('GHI CHÚ')]);
+    const rows = [
+      ['Tổng đầu việc',    filteredTasks.length,                                           '',    ''],
+      ['Đang thực hiện',   filteredTasks.filter(t=>t.trangThai==="Đang thực hiện").length, '',    ''],
+      ['Hoàn thành',       filteredTasks.filter(t=>t.trangThai==="Hoàn thành").length,     '',    ''],
+      ['Sắp đến hạn',      filteredTasks.filter(t=>t.dueSoon).length,                      '',    '≤ 3 ngày tới deadline'],
+      ['Trễ hạn',          filteredTasks.filter(t=>t.trangThai==="Trễ hạn"||t.overdue).length, '', 'Quá deadline, chưa hoàn thành'],
+      ['Hoãn lại',         filteredTasks.filter(t=>t.trangThai==="Hoãn lại").length,       '',    ''],
+      ['Huỷ bỏ',           filteredTasks.filter(t=>t.trangThai==="Hủy bỏ").length,        '',    '']
+    ];
+    const total = filteredTasks.length || 1;
+    rows.forEach((r,i)=>{
+      const pct = typeof r[1]==='number' ? (r[1]/total*100).toFixed(1)+'%' : '';
+      const fill = i%2===0 ? '' : CLR.zebra;
+      const vColor = r[0]==='Trễ hạn' ? CLR.red : r[0]==='Hoàn thành' ? CLR.green : r[0]==='Sắp đến hạn' ? CLR.amber : '';
+      aoa.push([
+        baseCell(r[0], {fill, bold:true, color:CLR.title}),
+        baseCell(r[1], {fill, bold:true, color:vColor||CLR.text, align:'center', type:'n'}),
+        baseCell(pct, {fill, align:'center', color:vColor||CLR.muted}),
+        baseCell(r[3], {fill, color:CLR.muted})
+      ]);
+    });
+    return sheetFromAOA(aoa, {
+      cols:[{wch:28},{wch:14},{wch:14},{wch:36}],
+      merges, rows:[{hpt:28},{hpt:8},{hpt:22}],
+      freeze:{ySplit:3}, pageSetup:{orientation:'portrait'}
+    });
+  }
+
+  // Sheet 2 — Phân công chi tiết
+  function buildAssignSheet(){
+    const table = document.querySelector('#panel-assign .assign-table');
+    if(!table) return sheetFromAOA([[baseCell('Chưa có dữ liệu.', {color:CLR.muted})]]);
+    const aoa = [];
+    const merges = [];
     const theadTrs = table.querySelectorAll('thead tr');
     let headerCols = 0;
     theadTrs.forEach(tr=>{
       const cells = [];
-      tr.querySelectorAll('th,td').forEach(th=>{
-        cells.push(headerCell(th.textContent.trim().replace(/\s+/g,' ')));
-      });
+      tr.querySelectorAll('th,td').forEach(th=>{ cells.push(headerCell(th.textContent.trim().replace(/\s+/g,' '))); });
       headerCols = Math.max(headerCols, cells.length);
       aoa.push(cells);
     });
-    // Body
     const bodyRows = table.querySelectorAll('tbody tr');
     const dataStart = aoa.length;
     bodyRows.forEach(tr=>{
       const tds = tr.querySelectorAll('th,td');
-      // Dòng nhóm (colspan lớn)
       if(tds.length===1 && tds[0].colSpan && tds[0].colSpan>1){
-        const cell = baseCell(tds[0].textContent.trim().replace(/\s+/g,' '), {
-          bold:true, sz:11, color:CLR.title, fill:CLR.groupBg, align:'left'
-        });
+        const cell = baseCell(tds[0].textContent.trim().replace(/\s+/g,' '), {bold:true, sz:11, color:CLR.title, fill:CLR.groupBg, align:'left'});
         const rowIdx = aoa.length;
-        const arr = [cell];
-        for(let i=1;i<headerCols;i++) arr.push(null);
+        const arr = [cell]; for(let i=1;i<headerCols;i++) arr.push(null);
         aoa.push(arr);
-        merges.push({ s:{r:rowIdx,c:0}, e:{r:rowIdx,c:headerCols-1} });
+        merges.push({s:{r:rowIdx,c:0},e:{r:rowIdx,c:headerCols-1}});
         return;
       }
       const isOverdue = tr.classList && tr.classList.contains('row-overdue');
@@ -1174,87 +1392,161 @@ if(autoRefreshOn) startAutoRefresh();
       tds.forEach((td,idx)=>{
         let v = td.textContent.trim().replace(/\s+/g,' ');
         let opts = {};
-        // Cột Tiến độ (index 6) — đọc %
         if(idx===6){
           const fill = td.querySelector('.progress-fill');
           if(fill && fill.style && fill.style.width){
             const pct = parseFloat(fill.style.width);
-            if(!isNaN(pct)){
-              cells.push(baseCell(pct/100, { fmt:'0%', align:'center', type:'n' }));
-              return;
-            }
+            if(!isNaN(pct)){ cells.push(baseCell(pct/100, {fmt:'0%', align:'center', type:'n'})); return; }
           }
         }
-        // Trạng thái / Đáp ứng
-        if(idx===7 || idx===8){
-          opts.align = 'center';
-          opts.bold = true;
-          const col = statusColor(v);
-          if(col) opts.color = col;
-        }
+        if(idx===7||idx===8){ opts.align='center'; opts.bold=true; const col=statusColor(v); if(col) opts.color=col; }
         cells.push(baseCell(v, opts));
       });
-      if(isOverdue){
-        cells.forEach(c=>{ if(c && c.s) c.s.fill = { patternType:'solid', fgColor:{rgb:CLR.overdueBg} }; });
-      }
-      // pad
+      if(isOverdue) cells.forEach(c=>{ if(c&&c.s) c.s.fill={patternType:'solid',fgColor:{rgb:CLR.overdueBg}}; });
       while(cells.length<headerCols) cells.push(baseCell(''));
       aoa.push(cells);
     });
-    // Zebra: bỏ qua dòng đã có fill (group / overdue)
     for(let r=dataStart; r<aoa.length; r++){
       if(((r-dataStart)%2)===1){
-        (aoa[r]||[]).forEach(cell=>{
-          if(cell && cell.s && !cell.s.fill) cell.s.fill = { patternType:'solid', fgColor:{rgb:CLR.zebra} };
-        });
+        (aoa[r]||[]).forEach(cell=>{ if(cell&&cell.s&&!cell.s.fill) cell.s.fill={patternType:'solid',fgColor:{rgb:CLR.zebra}}; });
       }
     }
-    // Cột width
-    const widths = [30, 16, 14, 18, 18, 18, 12, 18, 16, 18, 40];
-    const cols = [];
-    for(let i=0;i<headerCols;i++) cols.push({ wch: widths[i] || 16 });
-
-    const lastCol = headerCols-1;
-    const lastRow = aoa.length-1;
-    const ref = XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:lastRow, c:lastCol}});
-    const filterRef = XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:lastRow, c:lastCol}});
-    const ws = sheetFromAOA(aoa, { cols, merges, freeze:{ ySplit:aoa.length && dataStart ? dataStart : 1 }, autoFilter: filterRef });
-    return ws;
+    const widths = [30,16,14,18,18,18,12,18,16,18,40];
+    const cols = []; for(let i=0;i<headerCols;i++) cols.push({wch:widths[i]||16});
+    const lastCol = headerCols-1; const lastRow = aoa.length-1;
+    const filterRef = XLSX.utils.encode_range({s:{r:0,c:0},e:{r:lastRow,c:lastCol}});
+    return sheetFromAOA(aoa, {cols, merges, freeze:{ySplit:dataStart}, autoFilter:filterRef});
   }
 
-  // ---------- Build workbook (chỉ xuất duy nhất sheet "Phân công chi tiết") ----------
+  // Sheet 3 — Theo thành viên
+  function buildMembersSheet(filteredTasks){
+    const aoa = [];
+    const merges = [];
+    const today = new Date().toLocaleDateString('vi-VN');
+    aoa.push([titleCell(`THEO THÀNH VIÊN — ${today}`), null, null, null, null, null, null, null]);
+    merges.push({s:{r:0,c:0},e:{r:0,c:7}});
+    aoa.push([null]);
+    const hdr = ['Thành viên','Vai trò','Tổng CV','Đang TH','Hoàn thành','Sắp hạn','Trễ hạn','% HT'];
+    aoa.push(hdr.map(h=>headerCell(h)));
+    const membersToShow = assignFilters.nguoi ? [assignFilters.nguoi] : members;
+    membersToShow.forEach((m,i)=>{
+      const mt = filteredTasks.filter(t=>t.nguoi===m);
+      const done  = mt.filter(t=>t.trangThai==="Hoàn thành").length;
+      const late  = mt.filter(t=>t.trangThai==="Trễ hạn"||t.overdue).length;
+      const ds    = mt.filter(t=>t.dueSoon).length;
+      const ip    = mt.filter(t=>t.trangThai==="Đang thực hiện").length;
+      const pct   = mt.length ? Math.round(done/mt.length*100) : 0;
+      const fill  = i%2===0 ? '' : CLR.zebra;
+      const isLead = !!roles[m];
+      aoa.push([
+        baseCell(m, {fill, bold:true, color:isLead?CLR.purple:CLR.title}),
+        baseCell(roles[m]||'Nhân viên', {fill, color:CLR.muted}),
+        baseCell(mt.length, {fill, type:'n', align:'center'}),
+        baseCell(ip, {fill, type:'n', align:'center', color:CLR.blue}),
+        baseCell(done, {fill, type:'n', align:'center', color:CLR.green}),
+        baseCell(ds, {fill, type:'n', align:'center', color:CLR.amber}),
+        baseCell(late, {fill, type:'n', align:'center', color:late>0?CLR.red:CLR.text}),
+        baseCell(pct+'%', {fill, align:'center', bold:true, color:pct>=80?CLR.green:pct>=50?CLR.amber:CLR.red})
+      ]);
+    });
+    return sheetFromAOA(aoa, {
+      cols:[{wch:20},{wch:18},{wch:10},{wch:12},{wch:14},{wch:12},{wch:10},{wch:10}],
+      merges, rows:[{hpt:28},{hpt:8},{hpt:22}], freeze:{ySplit:3}, pageSetup:{orientation:'portrait'}
+    });
+  }
+
+  // Sheet 4 — Đánh giá hiệu suất
+  function buildKpiEvalSheet(filteredResults){
+    const aoa = [];
+    const merges = [];
+    const today = new Date().toLocaleDateString('vi-VN');
+    aoa.push([titleCell(`ĐÁNH GIÁ HIỆU SUẤT — ${today}`), null, null, null, null]);
+    merges.push({s:{r:0,c:0},e:{r:0,c:4}});
+    aoa.push([null]);
+    aoa.push(['Thành viên','Tổng CV HT','Đúng hạn','Tỷ lệ','Xếp loại'].map(h=>headerCell(h)));
+    const kpiMembersToShow = assignFilters.nguoi ? [assignFilters.nguoi] : members;
+    kpiMembersToShow.forEach((m,i)=>{
+      const mr = filteredResults.filter(r=>r.nguoi===m && r.dungHan!==undefined);
+      const total = mr.length; const onTime = mr.filter(r=>r.dungHan).length;
+      const pct = total ? Math.round(onTime/total*100) : null;
+      let rank = "Chưa có dữ liệu";
+      if(pct!==null) rank = pct>=90?"Xuất sắc":pct>=75?"Tốt":pct>=60?"Đạt":"Cần cải thiện";
+      const rankColor = rank==="Xuất sắc"?CLR.green:rank==="Tốt"?CLR.blue:rank==="Đạt"?CLR.amber:rank==="Cần cải thiện"?CLR.red:CLR.muted;
+      const fill = i%2===0?'':CLR.zebra;
+      const isLead = !!roles[m];
+      aoa.push([
+        baseCell(m, {fill, bold:true, color:isLead?CLR.purple:CLR.title}),
+        baseCell(total, {fill, type:'n', align:'center'}),
+        baseCell(onTime, {fill, type:'n', align:'center', color:CLR.green}),
+        baseCell(pct!==null?pct+'%':'—', {fill, align:'center', bold:true, color:pct!==null?(pct>=75?CLR.green:pct>=60?CLR.amber:CLR.red):CLR.muted}),
+        baseCell(rank, {fill, bold:true, color:rankColor, align:'center'})
+      ]);
+    });
+    return sheetFromAOA(aoa, {
+      cols:[{wch:20},{wch:16},{wch:12},{wch:10},{wch:16}],
+      merges, rows:[{hpt:28},{hpt:8},{hpt:22}], freeze:{ySplit:3}, pageSetup:{orientation:'portrait'}
+    });
+  }
+
+  // Sheet 5 — Kết quả nổi bật
+  function buildResultsSheet(filteredResults){
+    const aoa = [];
+    const merges = [];
+    const today = new Date().toLocaleDateString('vi-VN');
+    aoa.push([titleCell(`KẾT QUẢ NỔI BẬT — ${today}`), null, null, null, null]);
+    merges.push({s:{r:0,c:0},e:{r:0,c:4}});
+    aoa.push([null]);
+    aoa.push(['Thành viên','Kết quả','Giá trị','Ngày','Đúng hạn'].map(h=>headerCell(h)));
+    if(filteredResults.length){
+      filteredResults.forEach((r,i)=>{
+        const fill = i%2===0?'':CLR.zebra;
+        aoa.push([
+          baseCell(r.nguoi, {fill, bold:true, color:CLR.blueD||CLR.blue}),
+          baseCell(r.ketQua, {fill}),
+          baseCell(r.giaTri, {fill, color:CLR.green}),
+          baseCell(r.ngay, {fill, align:'center'}),
+          baseCell(r.dungHan===true?'Có':r.dungHan===false?'Không':'—', {fill, align:'center', color:r.dungHan===true?CLR.green:r.dungHan===false?CLR.red:CLR.muted})
+        ]);
+      });
+    } else {
+      aoa.push([baseCell('Chưa có dữ liệu kết quả.',{color:CLR.muted}),null,null,null,null]);
+      merges.push({s:{r:3,c:0},e:{r:3,c:4}});
+    }
+    return sheetFromAOA(aoa, {
+      cols:[{wch:18},{wch:40},{wch:16},{wch:14},{wch:10}],
+      merges, rows:[{hpt:28},{hpt:8},{hpt:22}], freeze:{ySplit:3}, pageSetup:{orientation:'portrait'}
+    });
+  }
+
   window.__buildReportWorkbook = function(){
     if(typeof XLSX === 'undefined') throw new Error('Thư viện XLSX chưa tải xong.');
+    const filteredTasks   = applyAssignFilters(tasks);
+    const filteredResults = assignFilters.nguoi ? results.filter(r=>r.nguoi===assignFilters.nguoi) : results;
     const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, buildKpiSheet(filteredTasks, filteredResults), 'Tổng quan KPI');
     XLSX.utils.book_append_sheet(wb, buildAssignSheet(), 'Phân công chi tiết');
-    wb.Props = {
-      Title: 'Báo cáo Ban Mua Hàng Dự Án',
-      Author: 'Ban Mua Hàng Dự Án',
-      CreatedDate: new Date()
-    };
+    XLSX.utils.book_append_sheet(wb, buildMembersSheet(filteredTasks), 'Theo thành viên');
+    XLSX.utils.book_append_sheet(wb, buildKpiEvalSheet(filteredResults), 'Đánh giá hiệu suất');
+    XLSX.utils.book_append_sheet(wb, buildResultsSheet(filteredResults), 'Kết quả nổi bật');
+    wb.Props = { Title:'Báo cáo Ban Mua Hàng Dự Án', Author:'Ban Mua Hàng Dự Án', CreatedDate:new Date() };
     return wb;
   };
 })();
 
-async function exportReportToExcel(){
-  const btn = document.getElementById('exportExcelBtn');
-  const original = btn.innerHTML;
-  btn.innerHTML = '⏳ Đang xuất Excel...';
-  btn.style.pointerEvents = 'none';
-  try{
-    const wb = window.__buildReportWorkbook();
-    const dateStr = new Date().toISOString().slice(0,10);
-    XLSX.writeFile(wb, `BanMuaHangDuAn_BaoCao_${dateStr}.xlsx`, { bookType:'xlsx', cellStyles:true });
-  }catch(err){
-    console.error(err);
-    alert('Xuất Excel thất bại: ' + (err && err.message ? err.message : 'lỗi không xác định'));
-  }finally{
-    btn.innerHTML = original;
-    btn.style.pointerEvents = '';
-  }
+async function exportToExcel(){
+  setExportProgress(10, 'Đang tạo 5 sheet...');
+  await new Promise(r=>setTimeout(r,30));
+  setExportProgress(60, 'Đang định dạng và xuất file...');
+  await new Promise(r=>setTimeout(r,10));
+  const wb = window.__buildReportWorkbook();
+  const dateStr = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `BanMuaHang_BaoCao_${dateStr}.xlsx`, {bookType:'xlsx', cellStyles:true});
+  setExportProgress(100, 'Hoàn thành!');
 }
 
-
+// ======================================================================
+// KHỞI ĐỘNG
+// ======================================================================
 setupAssignFilterBar();
 setupAssignSort();
 renderFooterLinks();
