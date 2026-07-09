@@ -23,11 +23,11 @@
   .badge{background:var(--panel);border:1px solid var(--border);padding:8px 14px;border-radius:10px;font-size:12.5px;color:var(--muted)}
   .badge b{color:var(--text)}
 
-  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:26px}
-  .kpi{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:16px;padding:18px 20px;position:relative;overflow:hidden}
+  .kpi-row{display:grid;grid-template-columns:repeat(7,1fr);gap:14px;margin-bottom:26px}
+  .kpi{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:16px;padding:16px 16px;position:relative;overflow:hidden;min-width:0}
   .kpi::before{content:"";position:absolute;top:-30%;right:-30%;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(79,140,255,.25),transparent 70%)}
-  .kpi .label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.6px}
-  .kpi .value{font-size:30px;font-weight:700;margin-top:6px}
+  .kpi .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .kpi .value{font-size:26px;font-weight:700;margin-top:6px}
   .kpi .value.blue{color:var(--blue)}
   .kpi .value.green{color:var(--green)}
   .kpi .value.amber{color:var(--amber)}
@@ -111,18 +111,19 @@
   #assignFilterBar{margin-bottom:18px}
   #assignFilterBar .filter-title{font-size:12.5px;font-weight:700;color:var(--blue-d);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
 
-  .member-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+  .member-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
   .member-card-v2{background:var(--panel);border:1px solid var(--border);border-left:4px solid var(--blue);border-radius:14px;padding:18px 20px;box-shadow:0 4px 18px rgba(30,50,100,.06);display:flex;flex-direction:column;gap:14px}
   .member-card-v2.is-lead{border-left-color:var(--purple)}
   .member-v2-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
   .member-v2-name{font-weight:700;font-size:16px;color:var(--text)}
   .member-v2-role{color:var(--muted);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
-  .member-v2-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .member-v2-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
   .member-v2-stat{background:var(--panel2);border-radius:10px;padding:10px 8px;text-align:center}
   .member-v2-stat b{display:block;font-size:20px;font-weight:700;color:var(--text)}
   .member-v2-stat span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
   .member-v2-stat.green b{color:var(--green)}
   .member-v2-stat.red b{color:var(--red)}
+  .member-v2-stat.amber b{color:var(--amber)}
   .member-v2-progress{display:flex;align-items:center;gap:10px}
   .member-v2-progress .progress-bar{flex:1}
   .member-v2-progress span{font-size:12px;color:var(--muted);white-space:nowrap;font-weight:600}
@@ -148,6 +149,12 @@
     .footer-note{display:none}
   }
 
+  /* ===== Responsive: máy tính bảng / màn hình vừa (giữa mobile và desktop) ===== */
+  @media (max-width:1100px) and (min-width:641px){
+    .kpi-row{grid-template-columns:repeat(4,1fr)}
+    .member-grid{grid-template-columns:repeat(2,1fr)}
+  }
+
   /* ===== Responsive: điện thoại / màn hình nhỏ ===== */
   @media (max-width:640px){
     .wrap{padding:16px 14px 44px}
@@ -170,7 +177,7 @@
     #assignFilterBar input, #assignFilterBar select{width:100% !important}
     .assign-table{min-width:1180px}
     .member-grid{grid-template-columns:1fr}
-    .member-v2-stats{gap:6px}
+    .member-v2-stats{grid-template-columns:repeat(2,1fr);gap:6px}
     .member-v2-stat{padding:8px 4px}
     .member-v2-stat b{font-size:17px}
     table{font-size:12px}
@@ -199,6 +206,7 @@
     <div class="kpi"><div class="label">Tổng đầu việc</div><div class="value black" id="kpiTotal">0</div></div>
     <div class="kpi"><div class="label">Đang thực hiện</div><div class="value blue" id="kpiProgress">0</div></div>
     <div class="kpi"><div class="label">Hoàn thành</div><div class="value green" id="kpiDone">0</div></div>
+    <div class="kpi"><div class="label">Sắp đến hạn</div><div class="value dark purple" id="kpiDueSoon">0</div></div>
     <div class="kpi"><div class="label">Trễ hạn</div><div class="value red" id="kpiLate">0</div></div>
     <div class="kpi"><div class="label">Hoãn lại</div><div class="value amber" id="kpiOnTime">0</div></div>
     <div class="kpi"><div class="label">Huỷ bỏ</div><div class="value" style="color:var(--muted)" id="kpiCancel">0</div></div>
@@ -316,8 +324,9 @@
 
   <div class="footer-note" id="footerNote">
     Nguồn dữ liệu: <span id="footerSheetLink"></span> — dashboard tự động lấy dữ liệu mới nhất từ sheet việc riêng
-    của từng thành viên.
-    Mỗi người chỉ chỉnh sửa trên sheet của riêng mình — thay đổi sẽ hiện ra ở đây trong vài giây.
+    của từng thành viên
+    Mỗi người chỉ chỉnh sửa trên sheet của riêng mình — thay đổi sẽ hiện ra ở đây trong vài giây.\n
+	Author: PHAM DANG TRI
   </div>
 </div>
 
@@ -419,11 +428,26 @@ function goToAssignFilterByMa(ma){
 }
 
 function isOverdue(t){
-  if(t.trangThai === "Hoàn thành" || t.trangThai === "Hủy bỏ") return false;
+  // Chỉ coi là "quá hạn / trễ hạn" khi công việc còn đang diễn ra (Đang thực hiện hoặc
+  // chưa xác định trạng thái). Các trạng thái đã kết thúc theo hướng khác — Hoàn thành,
+  // Hủy bỏ, Hoãn lại — KHÔNG được tính là trễ hạn, vì bản thân Đáp ứng của các dòng này
+  // đang để trống (không áp dụng), nên không được highlight đỏ như Trễ hạn.
+  if(t.trangThai === "Hoàn thành" || t.trangThai === "Hủy bỏ" || t.trangThai === "Hoãn lại") return false;
   const d = parseVNDate(t.han);
   if(!d) return false;
   const today = new Date(); today.setHours(0,0,0,0);
   return d.getTime() < today.getTime();
+}
+
+// Sắp đến hạn: còn <=3 ngày (và >=0, chưa quá hạn) tính tới Deadline, áp dụng cho công
+// việc còn đang diễn ra (không tính Hoàn thành / Hủy bỏ / Hoãn lại / đã trễ hạn).
+function isDueSoon(t){
+  if(t.trangThai === "Hoàn thành" || t.trangThai === "Hủy bỏ" || t.trangThai === "Hoãn lại") return false;
+  const d = parseVNDate(t.han);
+  if(!d) return false;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diffDays = Math.round((d.getTime() - today.getTime()) / 86400000);
+  return diffDays >= 0 && diffDays <= 3;
 }
 
 // Xác định class màu cho thanh tiến độ của 1 đầu việc:
@@ -518,7 +542,7 @@ async function loadData(){
       fetchSheet('KetQua')
     ]);
     tasks = memberResults.flat();
-    tasks.forEach(t=>{ t.overdue = isOverdue(t); });
+    tasks.forEach(t=>{ t.overdue = isOverdue(t); t.dueSoon = isDueSoon(t); });
     results = kqRows.filter(r=>r[1]).map(r=>({
       nguoi:r[1]||'', ketQua:r[2]||'', giaTri:r[3]||'', ngay:r[4]||'',
       dungHan: r[5]==='Có' ? true : (r[5]==='Không' ? false : undefined)
@@ -712,6 +736,7 @@ function renderInner(tasks, results){
   document.getElementById('kpiTotal').textContent = filteredTasks.length;
   document.getElementById('kpiProgress').textContent = filteredTasks.filter(t=>t.trangThai==="Đang thực hiện").length;
   document.getElementById('kpiDone').textContent = filteredTasks.filter(t=>t.trangThai==="Hoàn thành").length;
+  document.getElementById('kpiDueSoon').textContent = filteredTasks.filter(t=>t.dueSoon).length;
   document.getElementById('kpiLate').textContent = filteredTasks.filter(t=>t.trangThai==="Trễ hạn" || t.overdue).length;
   document.getElementById('kpiOnTime').textContent = filteredTasks.filter(t=>t.trangThai==="Hoãn lại").length;
   document.getElementById('kpiCancel').textContent = filteredTasks.filter(t=>t.trangThai==="Hủy bỏ").length;
@@ -785,8 +810,12 @@ function renderInner(tasks, results){
   const membersToShow = assignFilters.nguoi ? [assignFilters.nguoi] : members;
   mg.innerHTML = membersToShow.map(m=>{
     const mt = filteredTasks.filter(t=>t.nguoi===m);
+    const inProgress = mt.filter(t=>t.trangThai==="Đang thực hiện").length;
     const done = mt.filter(t=>t.trangThai==="Hoàn thành").length;
+    const dueSoon = mt.filter(t=>t.dueSoon).length;
     const late = mt.filter(t=>t.trangThai==="Trễ hạn" || t.overdue).length;
+    const postponed = mt.filter(t=>t.trangThai==="Hoãn lại").length;
+    const cancelled = mt.filter(t=>t.trangThai==="Hủy bỏ").length;
     const pct = mt.length ? Math.round(done/mt.length*100) : 0;
     const isLead = !!roles[m];
     return `<div class="member-card-v2${isLead?' is-lead':''}">
@@ -796,8 +825,12 @@ function renderInner(tasks, results){
       </div>
       <div class="member-v2-stats">
         <div class="member-v2-stat"><b>${mt.length}</b><span>Tổng CV</span></div>
+        <div class="member-v2-stat"><b>${inProgress}</b><span>Đang thực hiện</span></div>
         <div class="member-v2-stat green"><b>${done}</b><span>Hoàn thành</span></div>
+        <div class="member-v2-stat amber"><b>${dueSoon}</b><span>Sắp đến hạn</span></div>
         <div class="member-v2-stat red"><b>${late}</b><span>Trễ hạn</span></div>
+        <div class="member-v2-stat amber"><b>${postponed}</b><span>Hoãn lại</span></div>
+        <div class="member-v2-stat"><b>${cancelled}</b><span>Huỷ bỏ</span></div>
       </div>
       <div class="member-v2-progress">
         <div class="progress-bar"><div class="progress-fill ${pct===100?'done-fill':''}" style="width:${pct}%"></div></div>
@@ -840,7 +873,6 @@ function renderAssignTable(tasksIn){
       }
       html += `<tr class="member-sep-row" style="background:rgba(47,111,237,.07)">
         <td colspan="11" style="font-weight:700;color:var(--blue-d);padding:8px 10px">
-          <span class="avatar" style="width:22px;height:22px;font-size:10px;display:inline-flex;vertical-align:middle;margin-right:8px">${initials(m)}</span>
           ${m} <span style="font-weight:500;color:var(--muted);font-size:12px">(${mt.length} đầu việc)</span>
         </td></tr>`;
       html += mt.map(t=>`
