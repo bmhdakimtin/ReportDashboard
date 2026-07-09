@@ -174,14 +174,17 @@
           <th class="sortable" data-field="ten">Tên công việc</th>
           <th class="sortable" data-field="ma">Mã CV</th>
           <th class="sortable" data-field="loai">Loại</th>
+          <th class="sortable" data-field="ngayBatDau">Ngày bắt đầu</th>
           <th class="sortable" data-field="han">Hạn hoàn thành</th>
+          <th class="sortable" data-field="ngayXong">Ngày xong</th>
           <th class="sortable" data-field="tienDo">Tiến độ</th>
           <th class="sortable" data-field="trangThai">Trạng thái</th>
+          <th>Đúng hạn?</th>
           <th class="sortable" data-field="capNhat">Ngày báo cáo</th>
-          <th>Note</th>
+          <th>Báo cáo chi tiết</th>
         </tr></thead>
         <tbody id="assignTable">
-          <tr><td colspan="8" class="empty-note">Chưa có dữ liệu.</td></tr>
+          <tr><td colspan="11" class="empty-note">Chưa có dữ liệu.</td></tr>
         </tbody>
       </table>
     </div>
@@ -374,15 +377,20 @@ async function fetchSheet(name){
   return fetchSheetJSONP(name);
 }
 
-// Sheet riêng của từng thành viên: Mã CV, Tên CV/ĐNMH, Loại, Ngày giao việc,
-// Hạn hoàn thành, Tiến độ(%), Trạng thái, Ngày cập nhật gần nhất, Ghi chú
+// Sheet riêng của từng thành viên (đã cập nhật cấu trúc cột theo Google Sheet mới nhất):
+// A Mã CV | B Tên công việc | C Loại công việc | D Ngày bắt đầu | E Deadline |
+// F Ngày xong | G Tiến độ (%) | H Trạng thái | I Hoàn thành đúng hạn? |
+// J Ngày cập nhật gần nhất | K Báo cáo chi tiết
 async function fetchMemberTasks(nguoi, sheetName){
   const rows = await fetchSheet(sheetName);
   // Lọc an toàn: bỏ dòng tiêu đề nếu gviz lỡ trả về (r[0]==='Mã CV'), và bỏ dòng
   // mẫu/trống chưa có Tên công việc (r[1]) — đây là nguyên nhân đếm dư trước đây.
   return rows.filter(r=>r[0] && String(r[0]).trim()!=='Mã CV' && r[1] && String(r[1]).trim()!=='').map(r=>({
     ma:r[0]||'', ten:r[1]||'', loai:r[2]||'', nguoi,
-    han:r[4]||'', tienDo:toPercent(r[5]), trangThai:r[6]||'', capNhat:r[7]||''
+    ngayBatDau:r[3]||'', han:r[4]||'', ngayXong:r[5]||'',
+    tienDo:toPercent(r[6]), trangThai:r[7]||'',
+    hoanThanhDungHan: r[8]==='Có' ? true : (r[8]==='Không' ? false : undefined),
+    capNhat:r[9]||'', baoCaoChiTiet:r[10]||''
   }));
 }
 
@@ -524,7 +532,7 @@ function compareForSort(a, b, field){
   if(field === 'tienDo'){
     return (a.tienDo||0) - (b.tienDo||0);
   }
-  if(field === 'han' || field === 'capNhat'){
+  if(field === 'han' || field === 'capNhat' || field === 'ngayBatDau' || field === 'ngayXong'){
     const da = parseVNDate(a[field]);
     const db = parseVNDate(b[field]);
     if(!da && !db) return 0;
@@ -697,23 +705,26 @@ function renderAssignTable(tasksIn){
         mt.sort((a,b) => compareForSort(a,b,assignSort.field) * assignSort.dir);
       }
       html += `<tr class="member-sep-row" style="background:rgba(47,111,237,.07)">
-        <td colspan="8" style="font-weight:700;color:var(--blue-d);padding:8px 10px">
+        <td colspan="11" style="font-weight:700;color:var(--blue-d);padding:8px 10px">
           <span class="avatar" style="width:22px;height:22px;font-size:10px;display:inline-flex;vertical-align:middle;margin-right:8px">${initials(m)}</span>
           ${m} <span style="font-weight:500;color:var(--muted);font-size:12px">(${mt.length} đầu việc)</span>
         </td></tr>`;
       html += mt.map(t=>`
         <tr class="${t.overdue?'row-overdue':''}">
           <td>${t.ten}</td><td>${t.ma}</td><td>${t.loai||''}</td>
+          <td>${formatDateOnly(t.ngayBatDau)}</td>
           <td>${formatDateOnly(t.han)}</td>
+          <td>${formatDateOnly(t.ngayXong)}</td>
           <td style="min-width:120px"><div class="progress-bar"><div class="progress-fill ${t.trangThai === "Hoàn thành" ? 'done-fill' : (t.overdue && t.trangThai==="Đang thực hiện")?'overdue-fill':''}" style="width:${t.tienDo||0}%"></div></div></td>
           <td><span class="status ${statusMap[t.trangThai]||''}">${t.trangThai||''}</span></td>
+          <td>${t.hoanThanhDungHan===true?'<span class="status st-done">Có</span>':t.hoanThanhDungHan===false?'<span class="status st-late">Không</span>':''}</td>
           <td>${formatDateOnly(t.capNhat)}</td>
-          <td>${t.overdue?'<span class="status st-late">Quá hạn</span>':''}</td>
+          <td>${escapeHtml(t.baoCaoChiTiet||'')}${t.overdue?' <span class="status st-late">Quá hạn</span>':''}</td>
         </tr>`).join('');
     });
-    tbody.innerHTML = html || '<tr><td colspan="8" class="empty-note">Không có công việc nào khớp bộ lọc đã chọn.</td></tr>';
+    tbody.innerHTML = html || '<tr><td colspan="11" class="empty-note">Không có công việc nào khớp bộ lọc đã chọn.</td></tr>';
   } else {
-    tbody.innerHTML = '<tr><td colspan="8" class="empty-note">Chưa có dữ liệu.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" class="empty-note">Chưa có dữ liệu.</td></tr>';
   }
   updateSortArrows();
 }
