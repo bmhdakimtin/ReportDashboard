@@ -81,6 +81,8 @@
   .progress-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--blue),var(--purple))}
   .progress-fill.overdue-fill{background:linear-gradient(90deg,var(--red),#ff8f93)}
   .progress-fill.done-fill{background:linear-gradient(90deg,var(--green),#5fd6a5)}
+  .progress-fill.pending-fill{background:linear-gradient(90deg,var(--amber),#ffd07a)}
+  .progress-fill.cancel-fill{background:linear-gradient(90deg,#8b95a8,#c3c9d6)}
   .card-compact{padding:14px 16px}
   .card-compact h3{font-size:13.5px;margin-bottom:10px}
   #overviewList{max-height:250px;overflow-y:auto;padding-right:4px}
@@ -198,7 +200,8 @@
     <div class="kpi"><div class="label">Đang thực hiện</div><div class="value amber" id="kpiProgress">0</div></div>
     <div class="kpi"><div class="label">Hoàn thành</div><div class="value green" id="kpiDone">0</div></div>
     <div class="kpi"><div class="label">Trễ hạn</div><div class="value red" id="kpiLate">0</div></div>
-    <div class="kpi"><div class="label">Tỷ lệ đúng hạn TB</div><div class="value blue" id="kpiOnTime">—</div></div>
+    <div class="kpi"><div class="label">Hoãn lại</div><div class="value amber" id="kpiOnTime">0</div></div>
+    <div class="kpi"><div class="label">Huỷ bỏ</div><div class="value" style="color:var(--muted)" id="kpiCancel">0</div></div>
   </div>
 
   <div class="tabs">
@@ -220,6 +223,9 @@
       </select>
       <select id="filterTrangThai" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
         <option value="">Trạng thái: Tất cả</option>
+      </select>
+      <select id="filterDapUng" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+        <option value="">Đáp ứng: Tất cả</option>
       </select>
       <select id="filterNguoi" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
         <option value="">Thành viên: Tất cả</option>
@@ -341,7 +347,7 @@ let chartByMember, chartByLoai;
 // Bộ lọc riêng của bảng "Phân công & tiến độ chi tiết" (không ảnh hưởng các tab khác)
 // - capNhatFrom/capNhatTo: lọc theo khoảng Ngày báo cáo
 // - hanCutoff: lọc Hạn hoàn thành <= ngày được chọn (mốc "trở về trước")
-let assignFilters = {ma:'', ten:'', loai:'', trangThai:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null};
+let assignFilters = {ma:'', ten:'', loai:'', trangThai:'', dapUng:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null};
 let lastAssignTasks = []; // tasks gốc, dùng lại mỗi khi bộ lọc/sắp xếp trong bảng thay đổi
 let assignSort = {field:null, dir:1}; // dir: 1 = tăng dần, -1 = giảm dần
 
@@ -418,6 +424,17 @@ function isOverdue(t){
   if(!d) return false;
   const today = new Date(); today.setHours(0,0,0,0);
   return d.getTime() < today.getTime();
+}
+
+// Xác định class màu cho thanh tiến độ của 1 đầu việc:
+// - Hoàn thành -> xanh lá; Trễ hạn (quá hạn & đang thực hiện) -> đỏ
+// - Hoãn lại + chưa có Đáp ứng -> cam; Hủy bỏ + chưa có Đáp ứng -> xám
+function progressFillClass(t){
+  if(t.trangThai === "Hoàn thành") return 'done-fill';
+  if(t.trangThai === "Hoãn lại" && !t.dapUng) return 'pending-fill';
+  if(t.trangThai === "Hủy bỏ" && !t.dapUng) return 'cancel-fill';
+  if(t.overdue && t.trangThai === "Đang thực hiện") return 'overdue-fill';
+  return '';
 }
 
 // Đọc Google Sheet công khai bằng JSONP (chèn thẻ <script>) thay vì fetch().
@@ -542,6 +559,12 @@ function populateAssignFilterOptions(tasks){
   ttSel.innerHTML = '<option value="">Trạng thái: Tất cả</option>' + ttSet.map(s=>`<option value="${s}">${s}</option>`).join('');
   ttSel.value = ttSet.includes(curTT) ? curTT : '';
 
+  const duSel = document.getElementById('filterDapUng');
+  const curDu = duSel.value;
+  const duSet = Object.keys(dapUngMap);
+  duSel.innerHTML = '<option value="">Đáp ứng: Tất cả</option>' + duSet.map(s=>`<option value="${s}">${s}</option>`).join('');
+  duSel.value = duSet.includes(curDu) ? curDu : '';
+
   const ngSel = document.getElementById('filterNguoi');
   const curNg = ngSel.value;
   ngSel.innerHTML = '<option value="">Thành viên: Tất cả</option>' + members.map(m=>`<option value="${m}">${m}</option>`).join('');
@@ -561,6 +584,7 @@ function applyAssignFilters(list){
     if(assignFilters.ten && !String(t.ten||'').toLowerCase().includes(assignFilters.ten.toLowerCase())) return false;
     if(assignFilters.loai && t.loai !== assignFilters.loai) return false;
     if(assignFilters.trangThai && t.trangThai !== assignFilters.trangThai) return false;
+    if(assignFilters.dapUng && t.dapUng !== assignFilters.dapUng) return false;
     if(assignFilters.nguoi && t.nguoi !== assignFilters.nguoi) return false;
     // Lọc theo khoảng Ngày báo cáo
     if(assignFilters.capNhatFrom || assignFilters.capNhatTo){
@@ -590,6 +614,7 @@ function setupAssignFilterBar(){
   const tenInput = document.getElementById('filterTen');
   const loaiSel = document.getElementById('filterLoai');
   const ttSel = document.getElementById('filterTrangThai');
+  const duSel = document.getElementById('filterDapUng');
   const ngSel = document.getElementById('filterNguoi');
   const capNhatFromInput = document.getElementById('filterCapNhatFrom');
   const capNhatToInput = document.getElementById('filterCapNhatTo');
@@ -601,6 +626,7 @@ function setupAssignFilterBar(){
     assignFilters.ten = tenInput.value.trim();
     assignFilters.loai = loaiSel.value;
     assignFilters.trangThai = ttSel.value;
+    assignFilters.dapUng = duSel.value;
     assignFilters.nguoi = ngSel.value;
     assignFilters.capNhatFrom = capNhatFromInput.value ? new Date(capNhatFromInput.value+'T00:00:00') : null;
     assignFilters.capNhatTo = capNhatToInput.value ? new Date(capNhatToInput.value+'T00:00:00') : null;
@@ -614,14 +640,15 @@ function setupAssignFilterBar(){
   tenInput.addEventListener('input', applyAndRender);
   loaiSel.addEventListener('change', applyAndRender);
   ttSel.addEventListener('change', applyAndRender);
+  duSel.addEventListener('change', applyAndRender);
   ngSel.addEventListener('change', applyAndRender);
   capNhatFromInput.addEventListener('change', applyAndRender);
   capNhatToInput.addEventListener('change', applyAndRender);
   hanCutoffInput.addEventListener('change', applyAndRender);
   resetBtn.addEventListener('click', () => {
-    maInput.value=''; tenInput.value=''; loaiSel.value=''; ttSel.value=''; ngSel.value='';
+    maInput.value=''; tenInput.value=''; loaiSel.value=''; ttSel.value=''; duSel.value=''; ngSel.value='';
     capNhatFromInput.value=''; capNhatToInput.value=''; hanCutoffInput.value='';
-    assignFilters = {ma:'', ten:'', loai:'', trangThai:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null};
+    assignFilters = {ma:'', ten:'', loai:'', trangThai:'', dapUng:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null};
     render();
   });
 }
@@ -686,14 +713,8 @@ function renderInner(tasks, results){
   document.getElementById('kpiProgress').textContent = filteredTasks.filter(t=>t.trangThai==="Đang thực hiện").length;
   document.getElementById('kpiDone').textContent = filteredTasks.filter(t=>t.trangThai==="Hoàn thành").length;
   document.getElementById('kpiLate').textContent = filteredTasks.filter(t=>t.trangThai==="Trễ hạn" || t.overdue).length;
-
-  const doneResults = filteredResults.filter(r=>r.dungHan!==undefined);
-  if(doneResults.length){
-    const onTime = doneResults.filter(r=>r.dungHan).length;
-    document.getElementById('kpiOnTime').textContent = Math.round(onTime/doneResults.length*100)+"%";
-  } else {
-    document.getElementById('kpiOnTime').textContent = '—';
-  }
+  document.getElementById('kpiOnTime').textContent = filteredTasks.filter(t=>t.trangThai==="Hoãn lại").length;
+  document.getElementById('kpiCancel').textContent = filteredTasks.filter(t=>t.trangThai==="Hủy bỏ").length;
 
   // assign table — nhóm theo từng thành viên, có dòng phân tách, Tên đứng trước Mã CV
   // (dùng danh sách gốc `tasks` vì renderAssignTable tự áp bộ lọc bên trong nó)
@@ -728,8 +749,7 @@ function renderInner(tasks, results){
   if(latestTasks.length){
     ov.className='';
     ov.innerHTML = latestTasks.map(t=>{
-      const fillClass = t.trangThai === "Hoàn thành" ? 'done-fill'
-        : (t.overdue && t.trangThai === "Đang thực hiện") ? 'overdue-fill' : '';
+      const fillClass = progressFillClass(t);
       return `
       <div class="overview-item" data-ma="${escapeHtml(t.ma||'')}">
         <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
@@ -829,7 +849,7 @@ function renderAssignTable(tasksIn){
           <td>${formatDateOnly(t.ngayBatDau)}</td>
           <td>${formatDateOnly(t.han)}</td>
           <td>${formatDateOnly(t.ngayXong)}</td>
-          <td style="min-width:120px"><div class="progress-bar"><div class="progress-fill ${t.trangThai === "Hoàn thành" ? 'done-fill' : (t.overdue && t.trangThai==="Đang thực hiện")?'overdue-fill':''}" style="width:${t.tienDo||0}%"></div></div></td>
+          <td style="min-width:120px"><div class="progress-bar"><div class="progress-fill ${progressFillClass(t)}" style="width:${t.tienDo||0}%"></div></div></td>
           <td style="white-space:normal"><span class="status ${statusMap[t.trangThai]||''}">${t.trangThai||''}</span></td>
           <td>${renderDapUng(t.dapUng)}</td>
           <td>${formatDateOnly(t.capNhat)}</td>
@@ -970,15 +990,6 @@ document.getElementById('exportExcelBtn').addEventListener('click', exportReport
     if(/Đang thực hiện|Chưa tới hạn/i.test(v)) return CLR.blue;
     return null;
   }
-  function ratingColor(v){
-    if(!v) return null;
-    v = v.trim();
-    if(v==='Xuất sắc') return CLR.green;
-    if(v==='Tốt') return CLR.blue;
-    if(v==='Đạt') return CLR.amber;
-    if(v==='Cần cải thiện') return CLR.red;
-    return null;
-  }
   function autoColWidths(rows, minW, maxW){
     minW = minW||8; maxW = maxW||50;
     const w = [];
@@ -1027,117 +1038,7 @@ document.getElementById('exportExcelBtn').addEventListener('click', exportReport
     }
   }
 
-  // ---------- Sheet 1: Tổng quan ----------
-  function buildOverviewSheet(){
-    const aoa = [];
-    const merges = [];
-    const rows = [];
-
-    // Row 0: Title
-    aoa.push([ baseCell('BAN MUA HÀNG DỰ ÁN — BÁO CÁO CÔNG VIỆC', {
-      bold:true, sz:16, color:'FFFFFF', fill:CLR.header, align:'center', noBorder:true
-    }), null, null, null, null ]);
-    merges.push({ s:{r:0,c:0}, e:{r:0,c:4} });
-    rows.push({ hpt: 30 });
-
-    // Row 1: meta
-    const leader = document.querySelector('header .meta .badge b')?.textContent || '—';
-    const sync = document.getElementById('lastUpdate')?.textContent || '—';
-    const now = new Date().toLocaleString('vi-VN');
-    aoa.push([ baseCell(`Trưởng phòng: ${leader}    ·    Đồng bộ: ${sync}    ·    Ngày xuất: ${now}`, {
-      color:CLR.muted, align:'center', noBorder:true
-    }), null, null, null, null ]);
-    merges.push({ s:{r:1,c:0}, e:{r:1,c:4} });
-    rows.push({ hpt: 20 });
-
-    // Row 2: blank
-    aoa.push([null,null,null,null,null]);
-
-    // Row 3: KPI labels
-    const kpis = [
-      ['Tổng đầu việc',  document.getElementById('kpiTotal')?.textContent||'0', CLR.blue],
-      ['Đang thực hiện', document.getElementById('kpiProgress')?.textContent||'0', CLR.amber],
-      ['Hoàn thành',     document.getElementById('kpiDone')?.textContent||'0', CLR.green],
-      ['Trễ hạn',        document.getElementById('kpiLate')?.textContent||'0', CLR.red],
-      ['Đúng hạn TB',    document.getElementById('kpiOnTime')?.textContent||'—', CLR.blue]
-    ];
-    aoa.push(kpis.map(k=>baseCell(k[0].toUpperCase(), { bold:true, color:CLR.muted, align:'center', sz:9, fill:'FFFFFF' })));
-    // Row 4: KPI values — số dạng % được lưu thành number thật với format '0%' để
-    // Excel hiển thị và tính toán đúng kiểu dữ liệu (chuyên nghiệp hơn so với chuỗi text).
-    aoa.push(kpis.map(k=>{
-      const raw = String(k[1]).trim();
-      const isPct = raw.includes('%');
-      if(isPct){
-        const num = parseFloat(raw.replace('%','').replace(',','.'));
-        if(!isNaN(num)){
-          return baseCell(num/100, { fmt:'0%', bold:true, sz:20, color:k[2], align:'center', fill:'FFFFFF' });
-        }
-      }
-      const num = parseFloat(raw.replace(',','.'));
-      const isNum = !isNaN(num) && /^[\d.,]+$/.test(raw);
-      return baseCell(isNum ? num : raw, {
-        bold:true, sz:20, color:k[2], align:'center', fill:'FFFFFF'
-      });
-    }));
-    rows.push(undefined);
-    rows.push({ hpt: 34 });
-
-    // Row 5: blank
-    aoa.push([]);
-
-    // Section: Tiến độ các đầu việc
-    aoa.push([ baseCell('TIẾN ĐỘ CÁC ĐẦU VIỆC', { bold:true, sz:12, color:CLR.title, noBorder:true }), null,null,null,null ]);
-    merges.push({ s:{r:aoa.length-1,c:0}, e:{r:aoa.length-1,c:4} });
-    const headerRowIdx1 = aoa.length;
-    aoa.push([ headerCell('Đầu việc'), headerCell('Trạng thái'), null, null, null ]);
-    merges.push({ s:{r:headerRowIdx1,c:0}, e:{r:headerRowIdx1,c:3} });
-    merges.push({ s:{r:headerRowIdx1,c:4}, e:{r:headerRowIdx1,c:4} });
-    // Note: for simplicity keep 2 columns only (merge col 0-3 as name)
-    const items = document.querySelectorAll('#overviewList .overview-item');
-    const startProgress = aoa.length;
-    items.forEach(it=>{
-      const name = (it.querySelector('div')?.textContent||'').trim().replace(/\s+/g,' ');
-      const status = (it.querySelector('.status')?.textContent||'').trim();
-      const nameCell = baseCell(name);
-      const stCell = baseCell(status, { align:'center', bold:true, color: statusColor(status) || CLR.text });
-      aoa.push([ nameCell, null,null,null, stCell ]);
-      merges.push({ s:{r:aoa.length-1,c:0}, e:{r:aoa.length-1,c:3} });
-    });
-    if(items.length===0){
-      aoa.push([ baseCell('Chưa có dữ liệu.', { color:CLR.muted, align:'center' }), null,null,null,null ]);
-      merges.push({ s:{r:aoa.length-1,c:0}, e:{r:aoa.length-1,c:4} });
-    }
-    applyZebra(aoa, startProgress);
-
-    aoa.push([]);
-    // Section: Kết quả nổi bật
-    aoa.push([ baseCell('KẾT QUẢ NỔI BẬT GẦN ĐÂY', { bold:true, sz:12, color:CLR.title, noBorder:true }), null,null,null,null ]);
-    merges.push({ s:{r:aoa.length-1,c:0}, e:{r:aoa.length-1,c:4} });
-    const headerRowIdx2 = aoa.length;
-    aoa.push([ (function(){ const h=headerCell('Nội dung'); h.s.fill.fgColor.rgb = CLR.green; return h; })(), null,null,null,null ]);
-    merges.push({ s:{r:headerRowIdx2,c:0}, e:{r:headerRowIdx2,c:4} });
-    const results = document.querySelectorAll('#resultsList .overview-item, #resultsList > div');
-    const startRes = aoa.length;
-    let hasRes = false;
-    results.forEach(it=>{
-      const t = it.textContent.trim().replace(/\s+/g,' ');
-      if(t && t!=='Chưa có dữ liệu.'){
-        hasRes = true;
-        aoa.push([ baseCell(t), null,null,null,null ]);
-        merges.push({ s:{r:aoa.length-1,c:0}, e:{r:aoa.length-1,c:4} });
-      }
-    });
-    if(!hasRes){
-      aoa.push([ baseCell('Chưa có dữ liệu.', { color:CLR.muted, align:'center' }), null,null,null,null ]);
-      merges.push({ s:{r:aoa.length-1,c:0}, e:{r:aoa.length-1,c:4} });
-    }
-    applyZebra(aoa, startRes);
-
-    const cols = [{wch:38},{wch:22},{wch:22},{wch:22},{wch:22}];
-    return sheetFromAOA(aoa, { cols, merges, rows });
-  }
-
-  // ---------- Sheet 2: Phân công chi tiết ----------
+  // ---------- Sheet: Phân công chi tiết (sheet duy nhất được xuất) ----------
   function buildAssignSheet(){
     const table = document.querySelector('#panel-assign .assign-table');
     if(!table){
@@ -1226,92 +1127,11 @@ document.getElementById('exportExcelBtn').addEventListener('click', exportReport
     return ws;
   }
 
-  // ---------- Sheet 3: Theo thành viên ----------
-  function buildMembersSheet(){
-    const cards = document.querySelectorAll('#memberGrid .member-card-v2');
-    const aoa = [];
-    aoa.push([ headerCell('Thành viên'), headerCell('Vai trò'), headerCell('Tổng CV'), headerCell('Hoàn thành'), headerCell('Trễ hạn'), headerCell('% Hoàn thành') ]);
-    const rows = [{ hpt:26 }];
-    const dataStart = aoa.length;
-    if(cards.length===0){
-      aoa.push([ baseCell('Chưa có dữ liệu.', { color:CLR.muted }), baseCell(''), baseCell(''), baseCell(''), baseCell(''), baseCell('') ]);
-    } else {
-      cards.forEach(c=>{
-        const name = (c.querySelector('.member-v2-name')?.textContent||'').trim();
-        const role = (c.querySelector('.member-v2-role')?.textContent||'').trim();
-        const stats = [...c.querySelectorAll('.member-v2-stat b')].map(b=>b.textContent.trim());
-        const pctTxt = (c.querySelector('.member-v2-progress span')?.textContent||'').trim();
-        const pctNum = parseFloat(pctTxt.replace('%',''));
-        aoa.push([
-          baseCell(name, { bold:true }),
-          baseCell(role, { color:CLR.muted }),
-          baseCell(parseFloat(stats[0])||0, { align:'center', type:'n' }),
-          baseCell(parseFloat(stats[1])||0, { align:'center', type:'n', color:CLR.green }),
-          baseCell(parseFloat(stats[2])||0, { align:'center', type:'n', color:CLR.red }),
-          !isNaN(pctNum) ? baseCell(pctNum/100, { fmt:'0%', align:'center', type:'n', bold:true }) : baseCell('—', { align:'center' })
-        ]);
-        rows.push({ hpt: 22 });
-      });
-    }
-    applyZebra(aoa, dataStart);
-    const cols = [{wch:26},{wch:20},{wch:12},{wch:14},{wch:12},{wch:14}];
-    return sheetFromAOA(aoa, { cols, rows, freeze:{ySplit:1}, autoFilter: XLSX.utils.encode_range({s:{r:0,c:0},e:{r:aoa.length-1,c:5}}) });
-  }
-
-  // ---------- Sheet 4: KPI đúng hạn ----------
-  function buildKpiSheet(){
-    const table = document.querySelector('#panel-kpi table');
-    if(!table){
-      return sheetFromAOA([[ baseCell('Chưa có dữ liệu.', { color:CLR.muted }) ]]);
-    }
-    const aoa = [];
-    const trs = table.querySelectorAll('tr');
-    let headerCols = 0;
-    trs.forEach((tr, rIdx)=>{
-      const isHead = tr.parentElement && tr.parentElement.tagName === 'THEAD';
-      const cells = [];
-      tr.querySelectorAll('th,td').forEach((cell, cIdx)=>{
-        const txt = cell.textContent.trim().replace(/\s+/g,' ');
-        if(isHead || rIdx===0 && cell.tagName==='TH'){
-          cells.push(headerCell(txt));
-        } else {
-          let opts = {};
-          if(cIdx===0){ opts.bold = true; }
-          if(cIdx===1 || cIdx===2 || cIdx===3){ opts.align='center'; }
-          if(cIdx===4){
-            opts.bold = true; opts.align='center';
-            const col = ratingColor(txt);
-            if(col) opts.color = col;
-          }
-          // Cột % (index 1) — thử parse số
-          if(cIdx===1){
-            const m = txt.match(/([\d.,]+)\s*%/);
-            if(m){
-              cells.push(baseCell(parseFloat(m[1].replace(',','.'))/100, Object.assign(opts, { fmt:'0.0%', type:'n' })));
-              return;
-            }
-          }
-          cells.push(baseCell(txt, opts));
-        }
-      });
-      headerCols = Math.max(headerCols, cells.length);
-      aoa.push(cells);
-    });
-    // pad
-    aoa.forEach(row=>{ while(row.length<headerCols) row.push(baseCell('')); });
-    applyZebra(aoa, 1);
-    const cols = [{wch:28},{wch:16},{wch:14},{wch:14},{wch:22}];
-    return sheetFromAOA(aoa, { cols, freeze:{ySplit:1}, autoFilter: XLSX.utils.encode_range({s:{r:0,c:0},e:{r:aoa.length-1,c:headerCols-1}}) });
-  }
-
-  // ---------- Build workbook ----------
+  // ---------- Build workbook (chỉ xuất duy nhất sheet "Phân công chi tiết") ----------
   window.__buildReportWorkbook = function(){
     if(typeof XLSX === 'undefined') throw new Error('Thư viện XLSX chưa tải xong.');
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, buildOverviewSheet(), 'Tổng quan');
-    XLSX.utils.book_append_sheet(wb, buildAssignSheet(),   'Phân công chi tiết');
-    XLSX.utils.book_append_sheet(wb, buildMembersSheet(),  'Theo thành viên');
-    XLSX.utils.book_append_sheet(wb, buildKpiSheet(),      'KPI đúng hạn');
+    XLSX.utils.book_append_sheet(wb, buildAssignSheet(), 'Phân công chi tiết');
     wb.Props = {
       Title: 'Báo cáo Ban Mua Hàng Dự Án',
       Author: 'Ban Mua Hàng Dự Án',
