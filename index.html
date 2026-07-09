@@ -32,6 +32,7 @@
   .kpi .value.green{color:var(--green)}
   .kpi .value.amber{color:var(--amber)}
   .kpi .value.red{color:var(--red)}
+  .kpi .value.purple{color:var(--purple)}
 
   .tabs{display:flex;gap:8px;margin-bottom:18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
   .tab{padding:10px 18px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;font-size:14px;font-weight:600;user-select:none}
@@ -81,7 +82,7 @@
   .progress-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--blue),var(--purple))}
   .progress-fill.overdue-fill{background:linear-gradient(90deg,var(--red),#ff8f93)}
   .progress-fill.done-fill{background:linear-gradient(90deg,var(--green),#5fd6a5)}
-  .progress-fill.pending-fill{background:linear-gradient(90deg,var(--amber),#ffd07a)}
+  .progress-fill.pending-fill{background:linear-gradient(90deg,var(--purple),#b9a4fb)}
   .progress-fill.cancel-fill{background:linear-gradient(90deg,#8b95a8,#c3c9d6)}
   .card-compact{padding:14px 16px}
   .card-compact h3{font-size:13.5px;margin-bottom:10px}
@@ -117,13 +118,18 @@
   .member-v2-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
   .member-v2-name{font-weight:700;font-size:16px;color:var(--text)}
   .member-v2-role{color:var(--muted);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
-  .member-v2-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-  .member-v2-stat{background:var(--panel2);border-radius:10px;padding:10px 8px;text-align:center}
+  .member-v2-stats{display:grid;grid-template-columns:1fr 2fr;gap:8px;align-items:stretch}
+  .member-v2-stat-big{background:var(--panel2);border-radius:10px;padding:10px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+  .member-v2-stat-big b{display:block;font-size:34px;font-weight:700;color:var(--text);line-height:1}
+  .member-v2-stat-big span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+  .member-v2-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:8px}
+  .member-v2-stat{background:var(--panel2);border-radius:10px;padding:10px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center}
   .member-v2-stat b{display:block;font-size:20px;font-weight:700;color:var(--text)}
   .member-v2-stat span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
   .member-v2-stat.green b{color:var(--green)}
   .member-v2-stat.red b{color:var(--red)}
   .member-v2-stat.amber b{color:var(--amber)}
+  .member-v2-stat.purple b{color:var(--purple)}
   .member-v2-progress{display:flex;align-items:center;gap:10px}
   .member-v2-progress .progress-bar{flex:1}
   .member-v2-progress span{font-size:12px;color:var(--muted);white-space:nowrap;font-weight:600}
@@ -177,7 +183,10 @@
     #assignFilterBar input, #assignFilterBar select{width:100% !important}
     .assign-table{min-width:1180px}
     .member-grid{grid-template-columns:1fr}
-    .member-v2-stats{grid-template-columns:repeat(2,1fr);gap:6px}
+    .member-v2-stats{grid-template-columns:1fr;gap:6px}
+    .member-v2-stat-big{flex-direction:row;justify-content:center;gap:8px;padding:10px}
+    .member-v2-stat-big b{font-size:26px}
+    .member-v2-stat-grid{grid-template-columns:repeat(3,1fr);gap:6px}
     .member-v2-stat{padding:8px 4px}
     .member-v2-stat b{font-size:17px}
     table{font-size:12px}
@@ -206,9 +215,9 @@
     <div class="kpi"><div class="label">Tổng đầu việc</div><div class="value black" id="kpiTotal">0</div></div>
     <div class="kpi"><div class="label">Đang thực hiện</div><div class="value blue" id="kpiProgress">0</div></div>
     <div class="kpi"><div class="label">Hoàn thành</div><div class="value green" id="kpiDone">0</div></div>
-    <div class="kpi"><div class="label">Sắp đến hạn</div><div class="value purple" id="kpiDueSoon">0</div></div>
+    <div class="kpi"><div class="label">Sắp đến hạn</div><div class="value amber" id="kpiDueSoon">0</div></div>
     <div class="kpi"><div class="label">Trễ hạn</div><div class="value red" id="kpiLate">0</div></div>
-    <div class="kpi"><div class="label">Hoãn lại</div><div class="value amber" id="kpiOnTime">0</div></div>
+    <div class="kpi"><div class="label">Hoãn lại</div><div class="value purple" id="kpiOnTime">0</div></div>
     <div class="kpi"><div class="label">Huỷ bỏ</div><div class="value" style="color:var(--muted)" id="kpiCancel">0</div></div>
   </div>
 
@@ -825,13 +834,15 @@ function renderInner(tasks, results){
         <span class="member-v2-role">${escapeHtml(roles[m]||"Nhân viên mua hàng")}</span>
       </div>
       <div class="member-v2-stats">
-        <div class="member-v2-stat"><b>${mt.length}</b><span>Tổng CV</span></div>
-        <div class="member-v2-stat"><b>${inProgress}</b><span>Đang thực hiện</span></div>
-        <div class="member-v2-stat green"><b>${done}</b><span>Hoàn thành</span></div>
-        <div class="member-v2-stat purple"><b>${dueSoon}</b><span>Sắp đến hạn</span></div>
-        <div class="member-v2-stat red"><b>${late}</b><span>Trễ hạn</span></div>
-        <div class="member-v2-stat amber"><b>${postponed}</b><span>Hoãn lại</span></div>
-        <div class="member-v2-stat"><b>${cancelled}</b><span>Huỷ bỏ</span></div>
+        <div class="member-v2-stat-big"><b>${mt.length}</b><span>Tổng CV</span></div>
+        <div class="member-v2-stat-grid">
+          <div class="member-v2-stat amber"><b>${inProgress}</b><span>Đang thực hiện</span></div>
+          <div class="member-v2-stat green"><b>${done}</b><span>Hoàn thành</span></div>
+          <div class="member-v2-stat amber"><b>${dueSoon}</b><span>Sắp đến hạn</span></div>
+          <div class="member-v2-stat red"><b>${late}</b><span>Trễ hạn</span></div>
+          <div class="member-v2-stat purple"><b>${postponed}</b><span>Hoãn lại</span></div>
+          <div class="member-v2-stat"><b>${cancelled}</b><span>Huỷ bỏ</span></div>
+        </div>
       </div>
       <div class="member-v2-progress">
         <div class="progress-bar"><div class="progress-fill ${pct===100?'done-fill':''}" style="width:${pct}%"></div></div>
