@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Dashboard — Ban Mua Hàng Dự Án</title>
+<title>Báo Cáo Ban Mua Hàng Dự Án</title>
 <style>
   :root{
     --bg:#f4f6fb; --panel:#ffffff; --panel2:#f7f9fd; --border:#e2e8f4;
@@ -53,6 +53,9 @@
 
   .progress-bar{width:100%;height:8px;background:#e6ebf7;border-radius:6px;overflow:hidden}
   .progress-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--blue),var(--purple))}
+  .progress-fill.overdue-fill{background:linear-gradient(90deg,var(--red),#ff8f93)}
+  .overview-item{cursor:pointer;transition:background .15s ease;padding:6px;border-radius:8px;margin:-6px -6px 8px -6px}
+  .overview-item:hover{background:rgba(47,111,237,.08)}
   .status{padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap}
   .st-notstarted{background:rgba(139,152,184,.15);color:var(--muted)}
   .st-inprogress{background:rgba(79,140,255,.15);color:var(--blue)}
@@ -280,6 +283,28 @@ function formatDateOnly(v){
   if(!d) return v || '';
   const p = n => String(n).padStart(2,'0');
   return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()}`;
+}
+
+function escapeHtml(str){
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// Nhảy từ 1 dòng trong "Tiến độ các đầu việc" (tab Tổng quan) sang tab
+// "Phân công & Tiến độ" và tự động lọc đúng Mã CV vừa bấm vào.
+function goToAssignFilterByMa(ma){
+  const maInput = document.getElementById('filterMa');
+  if(maInput){
+    maInput.value = ma;
+    maInput.dispatchEvent(new Event('input', {bubbles:true}));
+  }
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  const assignTab = document.querySelector('.tab[data-tab="assign"]');
+  if(assignTab) assignTab.classList.add('active');
+  const assignPanel = document.getElementById('panel-assign');
+  if(assignPanel) assignPanel.classList.add('active');
 }
 
 function isOverdue(t){
@@ -545,43 +570,45 @@ function renderInner(tasks, results){
   populateAssignFilterOptions(tasks);
   renderAssignTable(tasks);
 
-  // overview list — chỉ hiển thị các công việc có Ngày báo cáo mới nhất (so với hôm nay),
-  // tức là tìm mốc ngày báo cáo gần hiện tại nhất trong dữ liệu rồi chỉ lọc đúng mốc đó.
+  // overview list — mỗi Mã CV chỉ hiển thị DUY NHẤT 1 dòng (không lặp lại), lấy theo
+  // dòng có Ngày báo cáo gần với hôm nay nhất trong số các lần báo cáo của chính mã đó
+  // (mỗi công việc có thể được báo cáo nhiều lần với % khác nhau — ta chỉ lấy bản mới nhất).
   const ov = document.getElementById('overviewList');
   const dateLabel = document.getElementById('overviewDateLabel');
   const today = new Date(); today.setHours(0,0,0,0);
-  let latestReportDate = null;
+  const latestByMa = new Map();
   tasks.forEach(t=>{
     const d = parseVNDate(t.capNhat);
     if(!d) return;
     d.setHours(0,0,0,0);
-    if(d.getTime() <= today.getTime() && (!latestReportDate || d.getTime() > latestReportDate.getTime())){
-      latestReportDate = d;
+    if(d.getTime() > today.getTime()) return; // bỏ qua báo cáo có ngày trong tương lai
+    const key = t.ma || t.ten; // dùng Mã CV làm khóa duy nhất, dự phòng theo tên nếu thiếu mã
+    const existing = latestByMa.get(key);
+    if(!existing || d.getTime() > existing.date.getTime()){
+      latestByMa.set(key, {task:t, date:d});
     }
   });
-  const latestTasks = latestReportDate
-    ? tasks.filter(t=>{
-        const d = parseVNDate(t.capNhat);
-        if(!d) return false;
-        d.setHours(0,0,0,0);
-        return d.getTime() === latestReportDate.getTime();
-      })
-    : [];
-  if(latestReportDate){
-    const p = n => String(n).padStart(2,'0');
-    dateLabel.textContent = `— báo cáo ngày ${p(latestReportDate.getDate())}/${p(latestReportDate.getMonth()+1)}/${latestReportDate.getFullYear()}`;
-  } else {
-    dateLabel.textContent = '';
-  }
+  const latestTasks = Array.from(latestByMa.values())
+    .sort((a,b)=>b.date.getTime()-a.date.getTime())
+    .map(x=>x.task);
+
+  dateLabel.textContent = latestTasks.length ? '— theo báo cáo mới nhất của từng Mã CV' : '';
+
   if(latestTasks.length){
     ov.className='';
-    ov.innerHTML = latestTasks.map(t=>`
-      <div style="margin-bottom:14px">
+    ov.innerHTML = latestTasks.map(t=>{
+      const isRedFill = (t.overdue && t.trangThai === "Đang thực hiện");
+      return `
+      <div class="overview-item" data-ma="${escapeHtml(t.ma||'')}">
         <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
-          <span>${t.ten} <span style="color:var(--muted);font-size:11.5px">(${t.ma})</span></span><span style="color:var(--muted)">${t.tienDo||0}%</span>
+          <span><b style="color:var(--blue-d)">${escapeHtml(t.ma||'')}</b> - ${escapeHtml(t.ten||'')}</span><span style="color:var(--muted)">${t.tienDo||0}%</span>
         </div>
-        <div class="progress-bar"><div class="progress-fill" style="width:${t.tienDo||0}%"></div></div>
-      </div>`).join('');
+        <div class="progress-bar"><div class="progress-fill ${isRedFill?'overdue-fill':''}" style="width:${t.tienDo||0}%"></div></div>
+      </div>`;
+    }).join('');
+    ov.querySelectorAll('.overview-item').forEach(el=>{
+      el.addEventListener('click', () => goToAssignFilterByMa(el.dataset.ma));
+    });
   } else {
     ov.className='empty-note';
     ov.textContent = 'Chưa có báo cáo nào.';
@@ -653,7 +680,7 @@ function renderAssignTable(tasksIn){
         <tr class="${t.overdue?'row-overdue':''}">
           <td>${t.ten}</td><td>${t.ma}</td><td>${t.loai||''}</td>
           <td>${formatDateOnly(t.han)}</td>
-          <td style="min-width:120px"><div class="progress-bar"><div class="progress-fill" style="width:${t.tienDo||0}%"></div></div></td>
+          <td style="min-width:120px"><div class="progress-bar"><div class="progress-fill ${(t.overdue && t.trangThai==="Đang thực hiện")?'overdue-fill':''}" style="width:${t.tienDo||0}%"></div></div></td>
           <td><span class="status ${statusMap[t.trangThai]||''}">${t.trangThai||''}</span></td>
           <td>${formatDateOnly(t.capNhat)}</td>
           <td>${t.overdue?'<span class="status st-late">Quá hạn</span>':''}</td>
