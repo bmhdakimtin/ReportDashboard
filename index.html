@@ -199,8 +199,8 @@
 
   <div class="footer-note" id="footerNote">
     Nguồn dữ liệu: <span id="footerSheetLink"></span> — dashboard tự động lấy dữ liệu mới nhất từ 7 sheet việc riêng
-    của từng thành viên (<code>PC_ChiTrang</code>, <code>PC_ChiNgoc</code>, <code>PC_AnhTri</code>, <code>PC_AnhSang</code>,
-    <code>PC_AnhHoa</code>, <code>PC_ChiPhuc</code>, <code>PC_AnhDat</code>) và sheet <code>KetQua</code> mỗi khi mở trang hoặc
+    của từng thành viên (<code>PC_Trang</code>, <code>PC_Ngoc</code>, <code>PC_Tri</code>, <code>PC_Sang</code>,
+    <code>PC_Hoa</code>, <code>PC_Phuc</code>, <code>PC_Dat</code>) và sheet <code>KetQua</code> mỗi khi mở trang hoặc
     bấm "Làm mới", không cần gửi lại file hay nhắn Claude cập nhật thủ công.
     Mỗi người chỉ chỉnh sửa trên sheet của riêng mình — thay đổi sẽ hiện ra ở đây trong vài giây.
   </div>
@@ -219,8 +219,8 @@ const roles = {"Chị Trang":"Trưởng phòng"};
 // Mỗi thành viên có 1 sheet việc riêng (không có cột "Người phụ trách" — người phụ trách
 // được suy ra từ chính sheet chứa dòng đó).
 const memberSheetMap = {
-  "Chị Trang":"PC_ChiTrang", "Chị Ngọc":"PC_ChiNgoc", "Anh Trí":"PC_AnhTri",
-  "Anh Sang":"PC_AnhSang", "Anh Hòa":"PC_AnhHoa", "Chị Phúc":"PC_ChiPhuc", "Anh Đạt":"PC_AnhDat"
+  "Chị Trang":"PC_Trang", "Chị Ngọc":"PC_Ngoc", "Anh Trí":"PC_Tri",
+  "Anh Sang":"PC_Sang", "Anh Hòa":"PC_Hoa", "Chị Phúc":"PC_Phuc", "Anh Đạt":"PC_Dat"
 };
 let tasks = []; // {ma, ten, loai, nguoi, han, tienDo, trangThai, capNhat}
 let results = []; // {nguoi, ketQua, giaTri, ngay, dungHan}
