@@ -102,14 +102,28 @@
   th.sortable:hover{color:var(--text)}
   .sort-arrow{margin-left:4px;font-size:9px;color:var(--blue)}
 
-  .member-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
-  .member-card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 4px 18px rgba(30,50,100,.06)}
-  .member-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+  /* .avatar vẫn dùng cho dòng phân tách theo thành viên trong bảng Phân công & tiến độ */
   .avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
-  .member-name{font-weight:700;font-size:14.5px}
-  .member-role{color:var(--muted);font-size:12px}
-  .member-stats{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:10px}
-  .member-stats b{color:var(--text);font-size:16px;display:block}
+
+  /* Bộ lọc chung: dùng cho toàn bộ các tab (Tổng quan, Phân công & Tiến độ, Theo thành viên, Biểu đồ, Đánh giá hiệu suất) */
+  #assignFilterBar{margin-bottom:18px}
+  #assignFilterBar .filter-title{font-size:12.5px;font-weight:700;color:var(--blue-d);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+
+  .member-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+  .member-card-v2{background:var(--panel);border:1px solid var(--border);border-left:4px solid var(--blue);border-radius:14px;padding:18px 20px;box-shadow:0 4px 18px rgba(30,50,100,.06);display:flex;flex-direction:column;gap:14px}
+  .member-card-v2.is-lead{border-left-color:var(--purple)}
+  .member-v2-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .member-v2-name{font-weight:700;font-size:16px;color:var(--text)}
+  .member-v2-role{color:var(--muted);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+  .member-v2-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .member-v2-stat{background:var(--panel2);border-radius:10px;padding:10px 8px;text-align:center}
+  .member-v2-stat b{display:block;font-size:20px;font-weight:700;color:var(--text)}
+  .member-v2-stat span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+  .member-v2-stat.green b{color:var(--green)}
+  .member-v2-stat.red b{color:var(--red)}
+  .member-v2-progress{display:flex;align-items:center;gap:10px}
+  .member-v2-progress .progress-bar{flex:1}
+  .member-v2-progress span{font-size:12px;color:var(--muted);white-space:nowrap;font-weight:600}
 
   .empty-note{color:var(--muted);font-size:13px;padding:16px;text-align:center;border:1px dashed var(--border);border-radius:12px}
   .footer-note{margin-top:30px;color:var(--muted);font-size:12px;line-height:1.7;border-top:1px solid var(--border);padding-top:16px}
@@ -131,10 +145,36 @@
     .assign-table th, .assign-table td{white-space:normal !important}
     .footer-note{display:none}
   }
-  /* ===== Xuất PDF: mở rộng toàn bộ nội dung (bỏ giới hạn cuộn ngang/max-width) khi chụp để xuất file ===== */
-  .pdf-exporting .wrap{max-width:none !important}
-  .pdf-exporting .table-scroll{overflow:visible !important}
-  .pdf-exporting .tabs, .pdf-exporting #assignFilterBar, .pdf-exporting header .meta{display:none !important}
+
+  /* ===== Responsive: điện thoại / màn hình nhỏ ===== */
+  @media (max-width:640px){
+    .wrap{padding:16px 14px 44px}
+    header{margin-bottom:16px}
+    h1{font-size:20px}
+    .sub{font-size:12px}
+    .meta{gap:8px;width:100%}
+    .badge{font-size:11.5px;padding:7px 10px;flex:1 1 auto;text-align:center}
+    .kpi-row{grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px}
+    .kpi{padding:14px 14px}
+    .kpi .label{font-size:10.5px}
+    .kpi .value{font-size:22px;margin-top:4px}
+    .tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;margin-bottom:14px}
+    .tabs::-webkit-scrollbar{height:3px}
+    .tab{padding:9px 13px;font-size:13px;flex:0 0 auto}
+    .grid-2, #panel-overview .grid-2{grid-template-columns:1fr}
+    .card{padding:15px}
+    #assignFilterBar{padding:10px 12px}
+    #assignFilterBar > div{flex-direction:column;align-items:stretch}
+    #assignFilterBar input, #assignFilterBar select{width:100% !important}
+    .assign-table{min-width:1180px}
+    .member-grid{grid-template-columns:1fr}
+    .member-v2-stats{gap:6px}
+    .member-v2-stat{padding:8px 4px}
+    .member-v2-stat b{font-size:17px}
+    table{font-size:12px}
+    th, td{padding:9px 8px}
+    #kpiTable, #panel-kpi table{display:block;overflow-x:auto}
+  }
 </style>
 </head>
 <body>
@@ -149,7 +189,7 @@
       <div class="badge">Thành viên: <b>6</b></div>
       <div class="badge" id="syncBadge">Đồng bộ: <b id="lastUpdate">đang tải...</b></div>
       <div class="badge" id="refreshBtn" style="cursor:pointer;user-select:none">🔄 Làm mới</div>
-      <div class="badge" id="exportPdfBtn" style="cursor:pointer;user-select:none">🖨️ Xuất PDF</div>
+      <div class="badge" id="exportExcelBtn" style="cursor:pointer;user-select:none">📊 Xuất Excel</div>
     </div>
   </header>
 
@@ -169,8 +209,34 @@
     <div class="tab" data-tab="kpi">Đánh giá hiệu suất</div>
   </div>
 
+  <div id="assignFilterBar" style="display:flex;flex-direction:column;gap:12px;margin-bottom:14px;padding:14px 16px;background:var(--panel2);border:1px solid var(--border);border-radius:12px">
+    <div class="filter-title">🔎 Bộ lọc chung — áp dụng cho tất cả các tab</div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <input type="text" id="filterMa" placeholder="🔍 Tìm Mã CV..." style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;width:140px">
+      <input type="text" id="filterTen" list="tenSuggestList" placeholder="🔍 Tìm tên công việc..." autocomplete="off" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;width:220px">
+      <datalist id="tenSuggestList"></datalist>
+      <select id="filterLoai" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+        <option value="">Loại: Tất cả</option>
+      </select>
+      <select id="filterTrangThai" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+        <option value="">Trạng thái: Tất cả</option>
+      </select>
+      <select id="filterNguoi" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+        <option value="">Thành viên: Tất cả</option>
+      </select>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <label style="font-size:12.5px;color:var(--muted)">Báo cáo từ</label>
+      <input type="date" id="filterCapNhatFrom" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+      <label style="font-size:12.5px;color:var(--muted)">đến</label>
+      <input type="date" id="filterCapNhatTo" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+      <label style="font-size:12.5px;color:var(--muted)">Hạn hoàn thành đến</label>
+      <input type="date" id="filterHanCutoff" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+      <div class="badge" id="assignFilterReset" style="cursor:pointer;user-select:none">✕ Xóa lọc</div>
+    </div>
+  </div>
+
   <div class="panel active" id="panel-overview">
-    <div id="overdueBanner" style="display:none;background:rgba(224,66,74,.08);border:1px solid var(--red);border-radius:14px;padding:14px 18px;margin-bottom:18px;color:var(--red);font-size:13.5px;font-weight:600"></div>
     <div class="grid-2">
       <div class="card card-compact">
         <h3><span class="dot"></span>Tiến độ các đầu việc <span id="overviewDateLabel" style="font-weight:500;color:var(--muted);font-size:12px"></span></h3>
@@ -186,33 +252,6 @@
   <div class="panel" id="panel-assign">
     <div class="card">
       <h3><span class="dot"></span>Bảng phân công &amp; tiến độ chi tiết</h3>
-      <div id="assignFilterBar" style="display:flex;flex-direction:column;gap:12px;margin-bottom:14px;padding:12px 14px;background:var(--panel2);border:1px solid var(--border);border-radius:12px">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <input type="text" id="filterMa" placeholder="🔍 Tìm Mã CV..." style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;width:140px">
-          <input type="text" id="filterTen" list="tenSuggestList" placeholder="🔍 Tìm tên công việc..." autocomplete="off" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;width:220px">
-          <datalist id="tenSuggestList"></datalist>
-          <select id="filterLoai" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-            <option value="">Loại: Tất cả</option>
-          </select>
-          <select id="filterTrangThai" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-            <option value="">Trạng thái: Tất cả</option>
-          </select>
-          <select id="filterNguoi" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-            <option value="">Thành viên: Tất cả</option>
-          </select>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <label style="font-size:12.5px;color:var(--muted)">Báo cáo từ</label>
-          <input type="date" id="filterCapNhatFrom" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-          <label style="font-size:12.5px;color:var(--muted)">đến</label>
-          <input type="date" id="filterCapNhatTo" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <label style="font-size:12.5px;color:var(--muted)">Hạn hoàn thành đến</label>
-          <input type="date" id="filterHanCutoff" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-          <div class="badge" id="assignFilterReset" style="cursor:pointer;user-select:none">✕ Xóa lọc</div>
-        </div>
-      </div>
       <div class="table-scroll">
       <table class="assign-table">
         <colgroup>
@@ -270,9 +309,8 @@
   </div>
 
   <div class="footer-note" id="footerNote">
-    Nguồn dữ liệu: <span id="footerSheetLink"></span> — dashboard tự động lấy dữ liệu mới nhất từ 7 sheet việc riêng
-    của từng thành viên (<code>Trang</code>, <code>Ngoc</code>, <code>Tri</code>, <code>Sang</code>,
-    <code>Hoa</code>, <code>Phuc</code>, <code>Dat</code>)
+    Nguồn dữ liệu: <span id="footerSheetLink"></span> — dashboard tự động lấy dữ liệu mới nhất từ sheet việc riêng
+    của từng thành viên
     Mỗi người chỉ chỉnh sửa trên sheet của riêng mình — thay đổi sẽ hiện ra ở đây trong vài giây.
   </div>
 </div>
@@ -280,8 +318,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <script>
 // ===== DATA SOURCE =====
 // Dashboard tự động lấy dữ liệu trực tiếp từ Google Sheet công khai (CSV) mỗi lần mở/làm mới.
@@ -568,7 +605,9 @@ function setupAssignFilterBar(){
     assignFilters.capNhatFrom = capNhatFromInput.value ? new Date(capNhatFromInput.value+'T00:00:00') : null;
     assignFilters.capNhatTo = capNhatToInput.value ? new Date(capNhatToInput.value+'T00:00:00') : null;
     assignFilters.hanCutoff = hanCutoffInput.value ? new Date(hanCutoffInput.value+'T00:00:00') : null;
-    renderAssignTable(lastAssignTasks);
+    // Bộ lọc chung áp dụng cho toàn bộ tab: gọi lại render() (không chỉ renderAssignTable)
+    // để Tổng quan, Theo thành viên, Biểu đồ, Đánh giá hiệu suất cùng cập nhật theo bộ lọc.
+    render();
   };
 
   maInput.addEventListener('input', applyAndRender);
@@ -583,7 +622,7 @@ function setupAssignFilterBar(){
     maInput.value=''; tenInput.value=''; loaiSel.value=''; ttSel.value=''; ngSel.value='';
     capNhatFromInput.value=''; capNhatToInput.value=''; hanCutoffInput.value='';
     assignFilters = {ma:'', ten:'', loai:'', trangThai:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null};
-    renderAssignTable(lastAssignTasks);
+    render();
   });
 }
 
@@ -635,30 +674,29 @@ function render(){
   renderInner(tasks, results);
 }
 
+// Bộ lọc chung (#assignFilterBar) áp dụng cho TOÀN BỘ các tab: Tổng quan, Phân công &
+// Tiến độ, Theo thành viên, Biểu đồ, Đánh giá hiệu suất. `tasks`/`results` tham số dưới đây
+// luôn là dữ liệu GỐC (chưa lọc) — mọi tab tự lọc lại từ `filteredTasks`/`filteredResults`
+// mỗi lần render, để khi đổi bộ lọc thì toàn bộ các tab cùng cập nhật đồng bộ.
 function renderInner(tasks, results){
-  const overdueList = tasks.filter(t=>t.overdue);
-  document.getElementById('kpiTotal').textContent = tasks.length;
-  document.getElementById('kpiProgress').textContent = tasks.filter(t=>t.trangThai==="Đang thực hiện").length;
-  document.getElementById('kpiDone').textContent = tasks.filter(t=>t.trangThai==="Hoàn thành").length;
-  document.getElementById('kpiLate').textContent = tasks.filter(t=>t.trangThai==="Trễ hạn" || t.overdue).length;
+  const filteredTasks = applyAssignFilters(tasks);
+  const filteredResults = assignFilters.nguoi ? results.filter(r=>r.nguoi===assignFilters.nguoi) : results;
 
-  const doneResults = results.filter(r=>r.dungHan!==undefined);
+  document.getElementById('kpiTotal').textContent = filteredTasks.length;
+  document.getElementById('kpiProgress').textContent = filteredTasks.filter(t=>t.trangThai==="Đang thực hiện").length;
+  document.getElementById('kpiDone').textContent = filteredTasks.filter(t=>t.trangThai==="Hoàn thành").length;
+  document.getElementById('kpiLate').textContent = filteredTasks.filter(t=>t.trangThai==="Trễ hạn" || t.overdue).length;
+
+  const doneResults = filteredResults.filter(r=>r.dungHan!==undefined);
   if(doneResults.length){
     const onTime = doneResults.filter(r=>r.dungHan).length;
     document.getElementById('kpiOnTime').textContent = Math.round(onTime/doneResults.length*100)+"%";
-  }
-
-  const banner = document.getElementById('overdueBanner');
-  if(overdueList.length){
-    banner.style.display = 'block';
-    banner.innerHTML = `⚠️ Có ${overdueList.length} công việc đã quá hạn hoàn thành chưa xử lý xong: ` +
-      overdueList.slice(0,6).map(t=>`${t.ten} (${t.nguoi}, hạn ${t.han})`).join('; ') +
-      (overdueList.length>6 ? ` và ${overdueList.length-6} việc khác…` : '');
   } else {
-    banner.style.display = 'none';
+    document.getElementById('kpiOnTime').textContent = '—';
   }
 
   // assign table — nhóm theo từng thành viên, có dòng phân tách, Tên đứng trước Mã CV
+  // (dùng danh sách gốc `tasks` vì renderAssignTable tự áp bộ lọc bên trong nó)
   lastAssignTasks = tasks;
   populateAssignFilterOptions(tasks);
   renderAssignTable(tasks);
@@ -670,7 +708,7 @@ function renderInner(tasks, results){
   const dateLabel = document.getElementById('overviewDateLabel');
   const today = new Date(); today.setHours(0,0,0,0);
   const latestByMa = new Map();
-  tasks.forEach(t=>{
+  filteredTasks.forEach(t=>{
     const d = parseVNDate(t.capNhat);
     if(!d) return;
     d.setHours(0,0,0,0);
@@ -709,38 +747,53 @@ function renderInner(tasks, results){
   }
 
   const rl = document.getElementById('resultsList');
-  if(results.length){
+  if(filteredResults.length){
     rl.className='';
-    rl.innerHTML = results.slice(0,8).map(r=>`
+    rl.innerHTML = filteredResults.slice(0,8).map(r=>`
       <div style="padding:10px 0;border-bottom:1px solid #eef1f8">
         <b>${r.nguoi}</b> — ${r.ketQua} ${r.giaTri?`<span style="color:var(--green)">(${r.giaTri})</span>`:''}
         <div style="color:var(--muted);font-size:11.5px">${r.ngay||''}</div>
       </div>`).join('');
+  } else {
+    rl.className='empty-note';
+    rl.textContent = 'Chưa có dữ liệu.';
   }
 
-  // members grid
+  // Theo thành viên — thiết kế mới, không dùng avatar. Nếu bộ lọc chung đang chọn 1
+  // thành viên cụ thể thì chỉ hiển thị đúng thành viên đó (đồng bộ với các tab khác).
   const mg = document.getElementById('memberGrid');
-  mg.innerHTML = members.map(m=>{
-    const mt = tasks.filter(t=>t.nguoi===m);
+  const membersToShow = assignFilters.nguoi ? [assignFilters.nguoi] : members;
+  mg.innerHTML = membersToShow.map(m=>{
+    const mt = filteredTasks.filter(t=>t.nguoi===m);
     const done = mt.filter(t=>t.trangThai==="Hoàn thành").length;
-    const late = mt.filter(t=>t.trangThai==="Trễ hạn").length;
-    return `<div class="member-card">
-      <div class="member-head">
-        <div class="avatar">${initials(m)}</div>
-        <div><div class="member-name">${m}</div><div class="member-role">${roles[m]||"Nhân viên mua hàng"}</div></div>
+    const late = mt.filter(t=>t.trangThai==="Trễ hạn" || t.overdue).length;
+    const pct = mt.length ? Math.round(done/mt.length*100) : 0;
+    const isLead = !!roles[m];
+    return `<div class="member-card-v2${isLead?' is-lead':''}">
+      <div class="member-v2-top">
+        <span class="member-v2-name">${escapeHtml(m)}</span>
+        <span class="member-v2-role">${escapeHtml(roles[m]||"Nhân viên mua hàng")}</span>
       </div>
-      <div class="member-stats">
-        <div>Tổng CV<b>${mt.length}</b></div>
-        <div>Hoàn thành<b>${done}</b></div>
-        <div>Trễ hạn<b>${late}</b></div>
+      <div class="member-v2-stats">
+        <div class="member-v2-stat"><b>${mt.length}</b><span>Tổng CV</span></div>
+        <div class="member-v2-stat green"><b>${done}</b><span>Hoàn thành</span></div>
+        <div class="member-v2-stat red"><b>${late}</b><span>Trễ hạn</span></div>
+      </div>
+      <div class="member-v2-progress">
+        <div class="progress-bar"><div class="progress-fill ${pct===100?'done-fill':''}" style="width:${pct}%"></div></div>
+        <span>${pct}% hoàn thành</span>
       </div>
     </div>`;
   }).join('');
+  if(!membersToShow.length){
+    mg.innerHTML = '<div class="empty-note">Chưa có dữ liệu.</div>';
+  }
 
   // kpi table
   const kt = document.getElementById('kpiTable');
-  kt.innerHTML = members.map(m=>{
-    const mr = results.filter(r=>r.nguoi===m && r.dungHan!==undefined);
+  const kpiMembersToShow = assignFilters.nguoi ? [assignFilters.nguoi] : members;
+  kt.innerHTML = kpiMembersToShow.map(m=>{
+    const mr = filteredResults.filter(r=>r.nguoi===m && r.dungHan!==undefined);
     const total = mr.length;
     const onTime = mr.filter(r=>r.dungHan).length;
     const pct = total? Math.round(onTime/total*100) : null;
@@ -751,7 +804,7 @@ function renderInner(tasks, results){
     return `<tr><td>${m}</td><td>${total}</td><td>${onTime}</td><td>${pct!==null?pct+'%':'—'}</td><td>${rank}</td></tr>`;
   }).join('');
 
-  renderCharts(tasks);
+  renderCharts(filteredTasks);
 }
 
 function renderAssignTable(tasksIn){
@@ -858,333 +911,435 @@ function renderFooterLinks(){
 }
 
 document.getElementById('refreshBtn').addEventListener('click', loadData);
-document.getElementById('exportPdfBtn').addEventListener('click', exportActivePanelToPdf);
+document.getElementById('exportExcelBtn').addEventListener('click', exportReportToExcel);
 
 // ==================================================================
-// XUẤT PDF (native text, chọn/copy được, tiếng Việt có dấu)
-// - Không đụng vào logic tải dữ liệu / render UI
-// - Đọc dữ liệu trực tiếp từ DOM đang hiển thị (không thay đổi state)
+// XUẤT EXCEL (.xlsx) — file báo cáo chuyên nghiệp, nhiều sheet
+// - Dùng xlsx-js-style (tách từ SheetJS, có hỗ trợ style)
+// - Đọc dữ liệu trực tiếp từ DOM đang hiển thị, KHÔNG đổi state/logic
 // ==================================================================
-let _pdfFontCache = null;
-async function ensurePdfFont(){
-  if(_pdfFontCache) return _pdfFontCache;
-  const urls = {
-    'DejaVuSans.ttf':      'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf',
-    'DejaVuSans-Bold.ttf': 'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf'
+(function(){
+  // ---------- Helpers style ----------
+  const CLR = {
+    header:   '2F6FED',
+    headerTx: 'FFFFFF',
+    title:    '1E4FC4',
+    zebra:    'F7F9FD',
+    border:   'E2E8F4',
+    text:     '1A2236',
+    muted:    '6B7690',
+    green:    '0EA968',
+    red:      'E0424A',
+    amber:    'C8790A',
+    blue:     '2F6FED',
+    purple:   '7C5CF0',
+    overdueBg:'FDECEE',
+    groupBg:  'EEF2FB'
   };
-  const out = {};
-  for(const [name,url] of Object.entries(urls)){
-    const r = await fetch(url);
-    if(!r.ok) throw new Error('Không tải được font '+name);
-    const buf = new Uint8Array(await r.arrayBuffer());
-    let bin = '';
-    for(let i=0;i<buf.length;i+=0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i, i+0x8000));
-    out[name] = btoa(bin);
+  const FONT = 'Segoe UI';
+
+  function border(color){
+    color = color || CLR.border;
+    const s = { style:'thin', color:{rgb:color} };
+    return { top:s, bottom:s, left:s, right:s };
   }
-  _pdfFontCache = out;
-  return out;
-}
-function registerVnFont(pdf, fonts){
-  pdf.addFileToVFS('DejaVuSans.ttf', fonts['DejaVuSans.ttf']);
-  pdf.addFont('DejaVuSans.ttf','DejaVu','normal');
-  pdf.addFileToVFS('DejaVuSans-Bold.ttf', fonts['DejaVuSans-Bold.ttf']);
-  pdf.addFont('DejaVuSans-Bold.ttf','DejaVu','bold');
-  pdf.setFont('DejaVu','normal');
-}
-function _pdfDrawHeader(s, tabLabel){
-  const {pdf, pageW, margin} = s;
-  pdf.setFillColor(47,111,237);
-  pdf.rect(0,0,pageW,24,'F');
-  pdf.setTextColor(255,255,255);
-  pdf.setFont('DejaVu','bold'); pdf.setFontSize(15);
-  pdf.text('BAN MUA HÀNG DỰ ÁN', margin, 11);
-  pdf.setFont('DejaVu','normal'); pdf.setFontSize(9.5);
-  pdf.text('Báo cáo công việc — ' + tabLabel, margin, 18);
-  const leader = document.querySelector('header .meta .badge b')?.textContent || '—';
-  const sync = document.getElementById('lastUpdate')?.textContent || '—';
-  const meta = [
-    'Trưởng phòng: ' + leader,
-    'Đồng bộ: ' + sync,
-    'Ngày xuất: ' + new Date().toLocaleString('vi-VN')
-  ];
-  pdf.setFontSize(8.5);
-  meta.forEach((t,i)=>{
-    const w = pdf.getTextWidth(t);
-    pdf.text(t, pageW - margin - w, 8 + i*5);
-  });
-  pdf.setTextColor(26,34,54);
-  s.y = 30;
-}
-function _pdfDrawKpiRow(s){
-  const {pdf, pageW, margin} = s;
-  const kpis = [
-    ['Tổng đầu việc', document.getElementById('kpiTotal')?.textContent||'0', [47,111,237]],
-    ['Đang thực hiện', document.getElementById('kpiProgress')?.textContent||'0', [200,121,10]],
-    ['Hoàn thành',     document.getElementById('kpiDone')?.textContent||'0',     [14,169,104]],
-    ['Trễ hạn',        document.getElementById('kpiLate')?.textContent||'0',     [224,66,74]],
-    ['Đúng hạn TB',    document.getElementById('kpiOnTime')?.textContent||'—',   [47,111,237]]
-  ];
-  const gap = 3;
-  const w = (pageW - margin*2 - gap*(kpis.length-1))/kpis.length;
-  const h = 18;
-  kpis.forEach((k,i)=>{
-    const x = margin + i*(w+gap);
-    pdf.setDrawColor(226,232,244); pdf.setFillColor(247,249,253);
-    pdf.roundedRect(x, s.y, w, h, 2, 2, 'FD');
-    pdf.setTextColor(107,118,144); pdf.setFontSize(7.5); pdf.setFont('DejaVu','normal');
-    pdf.text(k[0].toUpperCase(), x+3, s.y+5);
-    pdf.setTextColor(k[2][0],k[2][1],k[2][2]); pdf.setFontSize(15); pdf.setFont('DejaVu','bold');
-    pdf.text(String(k[1]), x+3, s.y+13);
-  });
-  pdf.setTextColor(26,34,54); pdf.setFont('DejaVu','normal');
-  s.y += h + 7;
-}
-function _pdfSection(s, text){
-  const {pdf, margin} = s;
-  if(s.y > s.pageH - 30){ pdf.addPage(); s.y = 15; }
-  pdf.setFont('DejaVu','bold'); pdf.setFontSize(11.5);
-  pdf.setTextColor(30,79,196);
-  pdf.text(text, margin, s.y);
-  pdf.setDrawColor(47,111,237); pdf.setLineWidth(0.6);
-  pdf.line(margin, s.y+1.5, margin+pdf.getTextWidth(text), s.y+1.5);
-  s.y += 6;
-  pdf.setTextColor(26,34,54); pdf.setFont('DejaVu','normal'); pdf.setFontSize(9.5);
-}
-function _pdfCommonTableOpts(s){
-  return {
-    startY: s.y,
-    margin: {left: s.margin, right: s.margin, bottom: 14},
-    styles: { font:'DejaVu', fontSize:8.5, cellPadding:2, textColor:[26,34,54], lineColor:[226,232,244], lineWidth:0.1, overflow:'linebreak', valign:'top' },
-    headStyles: { font:'DejaVu', fontStyle:'bold', fillColor:[47,111,237], textColor:255, fontSize:9 },
-    alternateRowStyles: { fillColor:[247,249,253] }
-  };
-}
-function _pdfRenderOverview(s){
-  const banner = document.getElementById('overdueBanner');
-  if(banner && banner.style.display !== 'none' && banner.textContent.trim()){
-    const txt = banner.textContent.trim().replace(/\s+/g,' ');
-    const lines = s.pdf.splitTextToSize(txt, s.pageW - s.margin*2 - 6);
-    const h = lines.length*4.5 + 5;
-    s.pdf.setFillColor(253,236,238); s.pdf.setDrawColor(224,66,74);
-    s.pdf.roundedRect(s.margin, s.y, s.pageW - s.margin*2, h, 2, 2, 'FD');
-    s.pdf.setTextColor(224,66,74); s.pdf.setFont('DejaVu','bold'); s.pdf.setFontSize(9);
-    s.pdf.text(lines, s.margin+3, s.y+5);
-    s.pdf.setTextColor(26,34,54); s.pdf.setFont('DejaVu','normal');
-    s.y += h + 5;
+  function baseCell(v, opts){
+    opts = opts || {};
+    const c = { v: v == null ? '' : v, t: (typeof v === 'number') ? 'n' : 's', s: {
+      font: { name:FONT, sz:10, color:{rgb:CLR.text} },
+      alignment: { vertical:'center', wrapText:true, horizontal:'left' },
+      border: border()
+    }};
+    if(opts.bold) c.s.font.bold = true;
+    if(opts.color) c.s.font.color = { rgb: opts.color };
+    if(opts.sz) c.s.font.sz = opts.sz;
+    if(opts.fill) c.s.fill = { patternType:'solid', fgColor:{rgb:opts.fill} };
+    if(opts.align) c.s.alignment.horizontal = opts.align;
+    if(opts.fmt){ c.z = opts.fmt; }
+    if(opts.type){ c.t = opts.type; }
+    if(opts.noBorder) delete c.s.border;
+    return c;
   }
-  _pdfSection(s, 'Tiến độ các đầu việc');
-  const items = document.querySelectorAll('#overviewList .overview-item');
-  if(items.length===0){
-    s.pdf.setFontSize(9.5); s.pdf.text('Chưa có dữ liệu.', s.margin, s.y); s.y += 6;
-  } else {
+  function headerCell(v){
+    return baseCell(v, { bold:true, color:CLR.headerTx, fill:CLR.header, align:'center', sz:11 });
+  }
+  function statusColor(v){
+    if(!v) return null;
+    if(/Hoàn thành|Đúng hạn/i.test(v)) return CLR.green;
+    if(/Trễ hạn/i.test(v)) return CLR.red;
+    if(/Đang thực hiện|Chưa tới hạn/i.test(v)) return CLR.blue;
+    return null;
+  }
+  function ratingColor(v){
+    if(!v) return null;
+    v = v.trim();
+    if(v==='Xuất sắc') return CLR.green;
+    if(v==='Tốt') return CLR.blue;
+    if(v==='Đạt') return CLR.amber;
+    if(v==='Cần cải thiện') return CLR.red;
+    return null;
+  }
+  function autoColWidths(rows, minW, maxW){
+    minW = minW||8; maxW = maxW||50;
+    const w = [];
+    rows.forEach(r=>{
+      (r||[]).forEach((c,i)=>{
+        const v = c && c.v != null ? String(c.v) : '';
+        // độ dài mỗi dòng lớn nhất
+        const maxLine = v.split('\n').reduce((m,l)=>Math.max(m,l.length),0);
+        w[i] = Math.max(w[i]||minW, Math.min(maxW, maxLine + 2));
+      });
+    });
+    return w.map(x=>({ wch:x }));
+  }
+  function sheetFromAOA(aoa, opts){
+    opts = opts || {};
+    const ws = { '!ref': XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:Math.max(0,aoa.length-1), c:Math.max(0,(aoa[0]||[]).length-1)}}) };
+    for(let r=0;r<aoa.length;r++){
+      const row = aoa[r]||[];
+      for(let c=0;c<row.length;c++){
+        if(row[c] == null) continue;
+        const addr = XLSX.utils.encode_cell({r,c});
+        ws[addr] = row[c];
+      }
+    }
+    if(opts.cols) ws['!cols'] = opts.cols;
+    if(opts.merges) ws['!merges'] = opts.merges;
+    if(opts.rows) ws['!rows'] = opts.rows;
+    if(opts.freeze) ws['!freeze'] = opts.freeze;
+    if(opts.freeze) ws['!views'] = [{ state:'frozen', ySplit: opts.freeze.ySplit||1, xSplit: opts.freeze.xSplit||0 }];
+    if(opts.autoFilter) ws['!autofilter'] = { ref: opts.autoFilter };
+    // In ấn chuyên nghiệp: lề mỏng, canh giữa theo chiều ngang, tự co vừa chiều rộng trang.
+    ws['!margins'] = { left:0.3, right:0.3, top:0.5, bottom:0.5, header:0.2, footer:0.2 };
+    ws['!pageSetup'] = Object.assign({ orientation:'landscape', fitToWidth:1, fitToHeight:0, horizontalCentered:true }, opts.pageSetup||{});
+    return ws;
+  }
+  function applyZebra(aoa, startRow){
+    // tô nền dòng chẵn (không đè cell đã có fill)
+    for(let r=startRow; r<aoa.length; r++){
+      if(((r-startRow)%2)===1){
+        (aoa[r]||[]).forEach(cell=>{
+          if(cell && cell.s && !cell.s.fill){
+            cell.s.fill = { patternType:'solid', fgColor:{rgb:CLR.zebra} };
+          }
+        });
+      }
+    }
+  }
+
+  // ---------- Sheet 1: Tổng quan ----------
+  function buildOverviewSheet(){
+    const aoa = [];
+    const merges = [];
     const rows = [];
+
+    // Row 0: Title
+    aoa.push([ baseCell('BAN MUA HÀNG DỰ ÁN — BÁO CÁO CÔNG VIỆC', {
+      bold:true, sz:16, color:'FFFFFF', fill:CLR.header, align:'center', noBorder:true
+    }), null, null, null, null ]);
+    merges.push({ s:{r:0,c:0}, e:{r:0,c:4} });
+    rows.push({ hpt: 30 });
+
+    // Row 1: meta
+    const leader = document.querySelector('header .meta .badge b')?.textContent || '—';
+    const sync = document.getElementById('lastUpdate')?.textContent || '—';
+    const now = new Date().toLocaleString('vi-VN');
+    aoa.push([ baseCell(`Trưởng phòng: ${leader}    ·    Đồng bộ: ${sync}    ·    Ngày xuất: ${now}`, {
+      color:CLR.muted, align:'center', noBorder:true
+    }), null, null, null, null ]);
+    merges.push({ s:{r:1,c:0}, e:{r:1,c:4} });
+    rows.push({ hpt: 20 });
+
+    // Row 2: blank
+    aoa.push([null,null,null,null,null]);
+
+    // Row 3: KPI labels
+    const kpis = [
+      ['Tổng đầu việc',  document.getElementById('kpiTotal')?.textContent||'0', CLR.blue],
+      ['Đang thực hiện', document.getElementById('kpiProgress')?.textContent||'0', CLR.amber],
+      ['Hoàn thành',     document.getElementById('kpiDone')?.textContent||'0', CLR.green],
+      ['Trễ hạn',        document.getElementById('kpiLate')?.textContent||'0', CLR.red],
+      ['Đúng hạn TB',    document.getElementById('kpiOnTime')?.textContent||'—', CLR.blue]
+    ];
+    aoa.push(kpis.map(k=>baseCell(k[0].toUpperCase(), { bold:true, color:CLR.muted, align:'center', sz:9, fill:'FFFFFF' })));
+    // Row 4: KPI values — số dạng % được lưu thành number thật với format '0%' để
+    // Excel hiển thị và tính toán đúng kiểu dữ liệu (chuyên nghiệp hơn so với chuỗi text).
+    aoa.push(kpis.map(k=>{
+      const raw = String(k[1]).trim();
+      const isPct = raw.includes('%');
+      if(isPct){
+        const num = parseFloat(raw.replace('%','').replace(',','.'));
+        if(!isNaN(num)){
+          return baseCell(num/100, { fmt:'0%', bold:true, sz:20, color:k[2], align:'center', fill:'FFFFFF' });
+        }
+      }
+      const num = parseFloat(raw.replace(',','.'));
+      const isNum = !isNaN(num) && /^[\d.,]+$/.test(raw);
+      return baseCell(isNum ? num : raw, {
+        bold:true, sz:20, color:k[2], align:'center', fill:'FFFFFF'
+      });
+    }));
+    rows.push(undefined);
+    rows.push({ hpt: 34 });
+
+    // Row 5: blank
+    aoa.push([]);
+
+    // Section: Tiến độ các đầu việc
+    aoa.push([ baseCell('TIẾN ĐỘ CÁC ĐẦU VIỆC', { bold:true, sz:12, color:CLR.title, noBorder:true }), null,null,null,null ]);
+    merges.push({ s:{r:aoa.length-1,c:0}, e:{r:aoa.length-1,c:4} });
+    const headerRowIdx1 = aoa.length;
+    aoa.push([ headerCell('Đầu việc'), headerCell('Trạng thái'), null, null, null ]);
+    merges.push({ s:{r:headerRowIdx1,c:0}, e:{r:headerRowIdx1,c:3} });
+    merges.push({ s:{r:headerRowIdx1,c:4}, e:{r:headerRowIdx1,c:4} });
+    // Note: for simplicity keep 2 columns only (merge col 0-3 as name)
+    const items = document.querySelectorAll('#overviewList .overview-item');
+    const startProgress = aoa.length;
     items.forEach(it=>{
       const name = (it.querySelector('div')?.textContent||'').trim().replace(/\s+/g,' ');
       const status = (it.querySelector('.status')?.textContent||'').trim();
-      rows.push([name, status]);
+      const nameCell = baseCell(name);
+      const stCell = baseCell(status, { align:'center', bold:true, color: statusColor(status) || CLR.text });
+      aoa.push([ nameCell, null,null,null, stCell ]);
+      merges.push({ s:{r:aoa.length-1,c:0}, e:{r:aoa.length-1,c:3} });
     });
-    s.pdf.autoTable(Object.assign(_pdfCommonTableOpts(s), {
-      head: [['Đầu việc','Trạng thái']],
-      body: rows,
-      columnStyles: { 0:{cellWidth:'auto'}, 1:{cellWidth:40, halign:'center'} }
-    }));
-    s.y = s.pdf.lastAutoTable.finalY + 6;
-  }
-  _pdfSection(s, 'Kết quả nổi bật gần đây');
-  const results = document.querySelectorAll('#resultsList .overview-item, #resultsList > div');
-  const rrows = [];
-  results.forEach(it=>{
-    const t = it.textContent.trim().replace(/\s+/g,' ');
-    if(t && t!=='Chưa có dữ liệu.') rrows.push([t]);
-  });
-  if(rrows.length===0){
-    s.pdf.setFontSize(9.5); s.pdf.text('Chưa có dữ liệu.', s.margin, s.y); s.y += 6;
-  } else {
-    const opts = Object.assign(_pdfCommonTableOpts(s), {
-      head:[['Nội dung']], body:rrows
-    });
-    opts.headStyles = Object.assign({}, opts.headStyles, {fillColor:[14,169,104]});
-    s.pdf.autoTable(opts);
-    s.y = s.pdf.lastAutoTable.finalY + 6;
-  }
-}
-function _pdfRenderAssign(s){
-  _pdfSection(s, 'Bảng phân công & tiến độ chi tiết');
-  const table = document.querySelector('#panel-assign .assign-table');
-  if(!table){ s.pdf.text('Không có dữ liệu.', s.margin, s.y); return; }
-  const opts = Object.assign(_pdfCommonTableOpts(s), {
-    html: table,
-    columnStyles: {
-      0:{cellWidth:38}, 1:{cellWidth:18}, 2:{cellWidth:16},
-      3:{cellWidth:22}, 4:{cellWidth:22}, 5:{cellWidth:22},
-      6:{cellWidth:14, halign:'center'}, 7:{cellWidth:22, halign:'center'},
-      8:{cellWidth:18, halign:'center'}, 9:{cellWidth:22},
-      10:{cellWidth:'auto'}
-    },
-    didParseCell: (data)=>{
-      const raw = data.row.raw;
-      // Dòng nhóm theo thành viên (colspan=11): tô nền + in đậm
-      if(data.cell.colSpan && data.cell.colSpan > 1){
-        data.cell.styles.fillColor = [238,242,251];
-        data.cell.styles.textColor = [30,79,196];
-        data.cell.styles.fontStyle = 'bold';
-        data.cell.styles.fontSize = 9.5;
-        data.cell.styles.halign = 'left';
-      }
-      // Dòng trễ hạn (class row-overdue trên <tr>)
-      try{
-        const trEl = raw && raw.element ? raw.element : (raw && raw.nodeType===1 ? raw : null);
-        if(trEl && trEl.classList && trEl.classList.contains('row-overdue')){
-          data.cell.styles.fillColor = [253,236,238];
-        }
-      }catch(_){}
-      // Tô màu badge Trạng thái / Đáp ứng theo nội dung
-      if(data.section==='body' && (data.column.index===7 || data.column.index===8)){
-        const v = (data.cell.raw && data.cell.raw.textContent || data.cell.text.join(' ')).trim();
-        if(/Hoàn thành|Đúng hạn/.test(v)){ data.cell.styles.textColor=[14,169,104]; data.cell.styles.fontStyle='bold'; }
-        else if(/Trễ hạn/.test(v)){ data.cell.styles.textColor=[224,66,74]; data.cell.styles.fontStyle='bold'; }
-        else if(/Đang thực hiện|Chưa tới hạn/.test(v)){ data.cell.styles.textColor=[47,111,237]; data.cell.styles.fontStyle='bold'; }
-      }
-      // Cột Tiến độ: hiển thị số % thay vì chuỗi rỗng của <div progress-bar>
-      if(data.section==='body' && data.column.index===6){
-        const cellEl = data.cell.raw;
-        const fill = cellEl && cellEl.querySelector ? cellEl.querySelector('.progress-fill') : null;
-        if(fill){
-          const w = fill.style.width || '';
-          data.cell.text = [w ? w.replace(/\s+/g,'') : '0%'];
-        }
-      }
+    if(items.length===0){
+      aoa.push([ baseCell('Chưa có dữ liệu.', { color:CLR.muted, align:'center' }), null,null,null,null ]);
+      merges.push({ s:{r:aoa.length-1,c:0}, e:{r:aoa.length-1,c:4} });
     }
-  });
-  s.pdf.autoTable(opts);
-  s.y = s.pdf.lastAutoTable.finalY + 6;
-}
-function _pdfRenderMembers(s){
-  _pdfSection(s, 'Theo thành viên');
-  const cards = document.querySelectorAll('#memberGrid .member-card');
-  if(cards.length===0){ s.pdf.text('Chưa có dữ liệu.', s.margin, s.y); s.y += 6; return; }
-  const rows = [];
-  cards.forEach(c=>{
-    const name = (c.querySelector('.member-name')?.textContent||'').trim();
-    const role = (c.querySelector('.member-role')?.textContent||'').trim();
-    const stats = [...c.querySelectorAll('.member-stats > div')].map(d=>d.textContent.trim().replace(/\s+/g,' ')).join('   ·   ');
-    rows.push([name, role, stats]);
-  });
-  const opts = Object.assign(_pdfCommonTableOpts(s), {
-    head:[['Thành viên','Vai trò','Chỉ số']],
-    body: rows,
-    columnStyles: { 0:{cellWidth:50, fontStyle:'bold'}, 1:{cellWidth:40}, 2:{cellWidth:'auto'} }
-  });
-  s.pdf.autoTable(opts);
-  s.y = s.pdf.lastAutoTable.finalY + 6;
-}
-function _pdfRenderCharts(s){
-  _pdfSection(s, 'Biểu đồ tổng hợp');
-  const list = [
-    ['Khối lượng công việc theo thành viên', document.getElementById('chartByMember')],
-    ['Khối lượng công việc theo loại mua hàng', document.getElementById('chartByLoai')]
-  ];
-  list.forEach(([title, c])=>{
-    if(!c) return;
-    const w = s.pageW - s.margin*2;
-    const h = Math.min(90, w * (c.height||220) / (c.width||600));
-    if(s.y + h + 10 > s.pageH - 14){ s.pdf.addPage(); s.y = 15; }
-    s.pdf.setFont('DejaVu','bold'); s.pdf.setFontSize(10); s.pdf.setTextColor(30,79,196);
-    s.pdf.text(title, s.margin, s.y); s.y += 4;
-    s.pdf.setFont('DejaVu','normal'); s.pdf.setTextColor(26,34,54);
-    try{
-      const url = c.toDataURL('image/png');
-      s.pdf.addImage(url, 'PNG', s.margin, s.y, w, h);
-      s.y += h + 8;
-    }catch(_){ s.y += 4; }
-  });
-}
-function _pdfRenderKpi(s){
-  _pdfSection(s, 'Tỷ lệ hoàn thành đúng hạn theo thành viên');
-  const table = document.querySelector('#panel-kpi table');
-  if(!table){ s.pdf.text('Chưa có dữ liệu.', s.margin, s.y); return; }
-  const opts = Object.assign(_pdfCommonTableOpts(s), {
-    html: table,
-    columnStyles: {
-      0:{cellWidth:50, fontStyle:'bold'},
-      1:{cellWidth:40, halign:'center'},
-      2:{cellWidth:30, halign:'center'},
-      3:{cellWidth:30, halign:'center'},
-      4:{cellWidth:'auto'}
-    },
-    didParseCell: (data)=>{
-      if(data.section==='body' && data.column.index===4){
-        const v = (data.cell.text.join(' ')||'').trim();
-        if(v==='Xuất sắc') data.cell.styles.textColor=[14,169,104];
-        else if(v==='Tốt') data.cell.styles.textColor=[47,111,237];
-        else if(v==='Đạt') data.cell.styles.textColor=[200,121,10];
-        else if(v==='Cần cải thiện') data.cell.styles.textColor=[224,66,74];
-        data.cell.styles.fontStyle='bold';
-      }
-    }
-  });
-  s.pdf.autoTable(opts);
-  s.y = s.pdf.lastAutoTable.finalY + 6;
-}
-function _pdfDrawFooter(s){
-  const total = s.pdf.getNumberOfPages();
-  for(let i=1;i<=total;i++){
-    s.pdf.setPage(i);
-    s.pdf.setFont('DejaVu','normal'); s.pdf.setFontSize(8); s.pdf.setTextColor(107,118,144);
-    const left = 'Ban Mua Hàng Dự Án · Báo cáo tự động';
-    const right = `Trang ${i}/${total}`;
-    s.pdf.text(left, s.margin, s.pageH - 5);
-    const rw = s.pdf.getTextWidth(right);
-    s.pdf.text(right, s.pageW - s.margin - rw, s.pageH - 5);
-    s.pdf.setDrawColor(226,232,244); s.pdf.setLineWidth(0.2);
-    s.pdf.line(s.margin, s.pageH - 8, s.pageW - s.margin, s.pageH - 8);
-    s.pdf.setTextColor(26,34,54);
-  }
-}
+    applyZebra(aoa, startProgress);
 
-// Xuất tab đang xem thành 1 file PDF với text chọn/copy được (không phải ảnh chụp màn hình).
-async function exportActivePanelToPdf(){
-  const btn = document.getElementById('exportPdfBtn');
-  const activeTab = document.querySelector('.tab.active');
-  const tabKey = activeTab?.dataset.tab || 'overview';
-  const tabLabel = (activeTab?.textContent || 'Báo cáo').trim();
-  const originalBtnHtml = btn.innerHTML;
-  btn.innerHTML = '⏳ Đang xuất PDF...';
+    aoa.push([]);
+    // Section: Kết quả nổi bật
+    aoa.push([ baseCell('KẾT QUẢ NỔI BẬT GẦN ĐÂY', { bold:true, sz:12, color:CLR.title, noBorder:true }), null,null,null,null ]);
+    merges.push({ s:{r:aoa.length-1,c:0}, e:{r:aoa.length-1,c:4} });
+    const headerRowIdx2 = aoa.length;
+    aoa.push([ (function(){ const h=headerCell('Nội dung'); h.s.fill.fgColor.rgb = CLR.green; return h; })(), null,null,null,null ]);
+    merges.push({ s:{r:headerRowIdx2,c:0}, e:{r:headerRowIdx2,c:4} });
+    const results = document.querySelectorAll('#resultsList .overview-item, #resultsList > div');
+    const startRes = aoa.length;
+    let hasRes = false;
+    results.forEach(it=>{
+      const t = it.textContent.trim().replace(/\s+/g,' ');
+      if(t && t!=='Chưa có dữ liệu.'){
+        hasRes = true;
+        aoa.push([ baseCell(t), null,null,null,null ]);
+        merges.push({ s:{r:aoa.length-1,c:0}, e:{r:aoa.length-1,c:4} });
+      }
+    });
+    if(!hasRes){
+      aoa.push([ baseCell('Chưa có dữ liệu.', { color:CLR.muted, align:'center' }), null,null,null,null ]);
+      merges.push({ s:{r:aoa.length-1,c:0}, e:{r:aoa.length-1,c:4} });
+    }
+    applyZebra(aoa, startRes);
+
+    const cols = [{wch:38},{wch:22},{wch:22},{wch:22},{wch:22}];
+    return sheetFromAOA(aoa, { cols, merges, rows });
+  }
+
+  // ---------- Sheet 2: Phân công chi tiết ----------
+  function buildAssignSheet(){
+    const table = document.querySelector('#panel-assign .assign-table');
+    if(!table){
+      return sheetFromAOA([[ baseCell('Chưa có dữ liệu.', { color:CLR.muted }) ]]);
+    }
+    const aoa = [];
+    const merges = [];
+    // Header từ thead
+    const theadTrs = table.querySelectorAll('thead tr');
+    let headerCols = 0;
+    theadTrs.forEach(tr=>{
+      const cells = [];
+      tr.querySelectorAll('th,td').forEach(th=>{
+        cells.push(headerCell(th.textContent.trim().replace(/\s+/g,' ')));
+      });
+      headerCols = Math.max(headerCols, cells.length);
+      aoa.push(cells);
+    });
+    // Body
+    const bodyRows = table.querySelectorAll('tbody tr');
+    const dataStart = aoa.length;
+    bodyRows.forEach(tr=>{
+      const tds = tr.querySelectorAll('th,td');
+      // Dòng nhóm (colspan lớn)
+      if(tds.length===1 && tds[0].colSpan && tds[0].colSpan>1){
+        const cell = baseCell(tds[0].textContent.trim().replace(/\s+/g,' '), {
+          bold:true, sz:11, color:CLR.title, fill:CLR.groupBg, align:'left'
+        });
+        const rowIdx = aoa.length;
+        const arr = [cell];
+        for(let i=1;i<headerCols;i++) arr.push(null);
+        aoa.push(arr);
+        merges.push({ s:{r:rowIdx,c:0}, e:{r:rowIdx,c:headerCols-1} });
+        return;
+      }
+      const isOverdue = tr.classList && tr.classList.contains('row-overdue');
+      const cells = [];
+      tds.forEach((td,idx)=>{
+        let v = td.textContent.trim().replace(/\s+/g,' ');
+        let opts = {};
+        // Cột Tiến độ (index 6) — đọc %
+        if(idx===6){
+          const fill = td.querySelector('.progress-fill');
+          if(fill && fill.style && fill.style.width){
+            const pct = parseFloat(fill.style.width);
+            if(!isNaN(pct)){
+              cells.push(baseCell(pct/100, { fmt:'0%', align:'center', type:'n' }));
+              return;
+            }
+          }
+        }
+        // Trạng thái / Đáp ứng
+        if(idx===7 || idx===8){
+          opts.align = 'center';
+          opts.bold = true;
+          const col = statusColor(v);
+          if(col) opts.color = col;
+        }
+        cells.push(baseCell(v, opts));
+      });
+      if(isOverdue){
+        cells.forEach(c=>{ if(c && c.s) c.s.fill = { patternType:'solid', fgColor:{rgb:CLR.overdueBg} }; });
+      }
+      // pad
+      while(cells.length<headerCols) cells.push(baseCell(''));
+      aoa.push(cells);
+    });
+    // Zebra: bỏ qua dòng đã có fill (group / overdue)
+    for(let r=dataStart; r<aoa.length; r++){
+      if(((r-dataStart)%2)===1){
+        (aoa[r]||[]).forEach(cell=>{
+          if(cell && cell.s && !cell.s.fill) cell.s.fill = { patternType:'solid', fgColor:{rgb:CLR.zebra} };
+        });
+      }
+    }
+    // Cột width
+    const widths = [30, 16, 14, 18, 18, 18, 12, 18, 16, 18, 40];
+    const cols = [];
+    for(let i=0;i<headerCols;i++) cols.push({ wch: widths[i] || 16 });
+
+    const lastCol = headerCols-1;
+    const lastRow = aoa.length-1;
+    const ref = XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:lastRow, c:lastCol}});
+    const filterRef = XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:lastRow, c:lastCol}});
+    const ws = sheetFromAOA(aoa, { cols, merges, freeze:{ ySplit:aoa.length && dataStart ? dataStart : 1 }, autoFilter: filterRef });
+    return ws;
+  }
+
+  // ---------- Sheet 3: Theo thành viên ----------
+  function buildMembersSheet(){
+    const cards = document.querySelectorAll('#memberGrid .member-card-v2');
+    const aoa = [];
+    aoa.push([ headerCell('Thành viên'), headerCell('Vai trò'), headerCell('Tổng CV'), headerCell('Hoàn thành'), headerCell('Trễ hạn'), headerCell('% Hoàn thành') ]);
+    const rows = [{ hpt:26 }];
+    const dataStart = aoa.length;
+    if(cards.length===0){
+      aoa.push([ baseCell('Chưa có dữ liệu.', { color:CLR.muted }), baseCell(''), baseCell(''), baseCell(''), baseCell(''), baseCell('') ]);
+    } else {
+      cards.forEach(c=>{
+        const name = (c.querySelector('.member-v2-name')?.textContent||'').trim();
+        const role = (c.querySelector('.member-v2-role')?.textContent||'').trim();
+        const stats = [...c.querySelectorAll('.member-v2-stat b')].map(b=>b.textContent.trim());
+        const pctTxt = (c.querySelector('.member-v2-progress span')?.textContent||'').trim();
+        const pctNum = parseFloat(pctTxt.replace('%',''));
+        aoa.push([
+          baseCell(name, { bold:true }),
+          baseCell(role, { color:CLR.muted }),
+          baseCell(parseFloat(stats[0])||0, { align:'center', type:'n' }),
+          baseCell(parseFloat(stats[1])||0, { align:'center', type:'n', color:CLR.green }),
+          baseCell(parseFloat(stats[2])||0, { align:'center', type:'n', color:CLR.red }),
+          !isNaN(pctNum) ? baseCell(pctNum/100, { fmt:'0%', align:'center', type:'n', bold:true }) : baseCell('—', { align:'center' })
+        ]);
+        rows.push({ hpt: 22 });
+      });
+    }
+    applyZebra(aoa, dataStart);
+    const cols = [{wch:26},{wch:20},{wch:12},{wch:14},{wch:12},{wch:14}];
+    return sheetFromAOA(aoa, { cols, rows, freeze:{ySplit:1}, autoFilter: XLSX.utils.encode_range({s:{r:0,c:0},e:{r:aoa.length-1,c:5}}) });
+  }
+
+  // ---------- Sheet 4: KPI đúng hạn ----------
+  function buildKpiSheet(){
+    const table = document.querySelector('#panel-kpi table');
+    if(!table){
+      return sheetFromAOA([[ baseCell('Chưa có dữ liệu.', { color:CLR.muted }) ]]);
+    }
+    const aoa = [];
+    const trs = table.querySelectorAll('tr');
+    let headerCols = 0;
+    trs.forEach((tr, rIdx)=>{
+      const isHead = tr.parentElement && tr.parentElement.tagName === 'THEAD';
+      const cells = [];
+      tr.querySelectorAll('th,td').forEach((cell, cIdx)=>{
+        const txt = cell.textContent.trim().replace(/\s+/g,' ');
+        if(isHead || rIdx===0 && cell.tagName==='TH'){
+          cells.push(headerCell(txt));
+        } else {
+          let opts = {};
+          if(cIdx===0){ opts.bold = true; }
+          if(cIdx===1 || cIdx===2 || cIdx===3){ opts.align='center'; }
+          if(cIdx===4){
+            opts.bold = true; opts.align='center';
+            const col = ratingColor(txt);
+            if(col) opts.color = col;
+          }
+          // Cột % (index 1) — thử parse số
+          if(cIdx===1){
+            const m = txt.match(/([\d.,]+)\s*%/);
+            if(m){
+              cells.push(baseCell(parseFloat(m[1].replace(',','.'))/100, Object.assign(opts, { fmt:'0.0%', type:'n' })));
+              return;
+            }
+          }
+          cells.push(baseCell(txt, opts));
+        }
+      });
+      headerCols = Math.max(headerCols, cells.length);
+      aoa.push(cells);
+    });
+    // pad
+    aoa.forEach(row=>{ while(row.length<headerCols) row.push(baseCell('')); });
+    applyZebra(aoa, 1);
+    const cols = [{wch:28},{wch:16},{wch:14},{wch:14},{wch:22}];
+    return sheetFromAOA(aoa, { cols, freeze:{ySplit:1}, autoFilter: XLSX.utils.encode_range({s:{r:0,c:0},e:{r:aoa.length-1,c:headerCols-1}}) });
+  }
+
+  // ---------- Build workbook ----------
+  window.__buildReportWorkbook = function(){
+    if(typeof XLSX === 'undefined') throw new Error('Thư viện XLSX chưa tải xong.');
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, buildOverviewSheet(), 'Tổng quan');
+    XLSX.utils.book_append_sheet(wb, buildAssignSheet(),   'Phân công chi tiết');
+    XLSX.utils.book_append_sheet(wb, buildMembersSheet(),  'Theo thành viên');
+    XLSX.utils.book_append_sheet(wb, buildKpiSheet(),      'KPI đúng hạn');
+    wb.Props = {
+      Title: 'Báo cáo Ban Mua Hàng Dự Án',
+      Author: 'Ban Mua Hàng Dự Án',
+      CreatedDate: new Date()
+    };
+    return wb;
+  };
+})();
+
+async function exportReportToExcel(){
+  const btn = document.getElementById('exportExcelBtn');
+  const original = btn.innerHTML;
+  btn.innerHTML = '⏳ Đang xuất Excel...';
   btn.style.pointerEvents = 'none';
   try{
-    if(!window.jspdf) throw new Error('Thư viện jsPDF chưa tải xong, thử lại sau vài giây.');
-    const fonts = await ensurePdfFont();
-    const { jsPDF } = window.jspdf;
-    const orientation = (tabKey==='assign' || tabKey==='kpi' || tabKey==='charts') ? 'landscape' : 'portrait';
-    const pdf = new jsPDF({ orientation, unit:'mm', format:'a4' });
-    if(typeof pdf.autoTable !== 'function') throw new Error('Thư viện jspdf-autotable chưa tải xong.');
-    registerVnFont(pdf, fonts);
-    const s = {
-      pdf,
-      pageW: pdf.internal.pageSize.getWidth(),
-      pageH: pdf.internal.pageSize.getHeight(),
-      margin: 12,
-      y: 12
-    };
-    _pdfDrawHeader(s, tabLabel);
-    _pdfDrawKpiRow(s);
-    if(tabKey==='overview')      _pdfRenderOverview(s);
-    else if(tabKey==='assign')   _pdfRenderAssign(s);
-    else if(tabKey==='members')  _pdfRenderMembers(s);
-    else if(tabKey==='charts')   _pdfRenderCharts(s);
-    else if(tabKey==='kpi')      _pdfRenderKpi(s);
-    _pdfDrawFooter(s);
-    const safeLabel = tabLabel.replace(/\s+/g,'').replace(/[^\p{L}\p{N}_-]/gu,'');
+    const wb = window.__buildReportWorkbook();
     const dateStr = new Date().toISOString().slice(0,10);
-    pdf.save(`BanMuaHangDuAn_${safeLabel}_${dateStr}.pdf`);
+    XLSX.writeFile(wb, `BanMuaHangDuAn_BaoCao_${dateStr}.xlsx`, { bookType:'xlsx', cellStyles:true });
   }catch(err){
     console.error(err);
-    alert('Xuất PDF thất bại: ' + (err && err.message ? err.message : 'lỗi không xác định'));
+    alert('Xuất Excel thất bại: ' + (err && err.message ? err.message : 'lỗi không xác định'));
   }finally{
-    btn.innerHTML = originalBtnHtml;
+    btn.innerHTML = original;
     btn.style.pointerEvents = '';
   }
 }
+
+
 setupAssignFilterBar();
 setupAssignSort();
 renderFooterLinks();
