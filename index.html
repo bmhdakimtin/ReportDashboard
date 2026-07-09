@@ -59,9 +59,14 @@
   .st-pending{background:rgba(245,185,66,.15);color:var(--amber)}
   .st-late{background:rgba(224,66,74,.15);color:var(--red)}
   .st-done{background:rgba(14,169,104,.15);color:var(--green)}
+  .st-cancel{background:rgba(139,152,184,.18);color:var(--muted)}
   .row-overdue{background:rgba(224,66,74,.06)}
   .row-overdue td:first-child{border-left:3px solid var(--red)}
   .overdue-tag{display:inline-block;margin-left:6px;font-size:10.5px;color:var(--red);font-weight:700}
+
+  th.sortable{cursor:pointer;user-select:none;white-space:nowrap}
+  th.sortable:hover{color:var(--text)}
+  .sort-arrow{margin-left:4px;font-size:9px;color:var(--blue)}
 
   .member-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
   .member-card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 4px 18px rgba(30,50,100,.06)}
@@ -95,27 +100,6 @@
     </div>
   </header>
 
-  <div class="card" style="margin-bottom:18px;padding:16px 20px" id="filterBar">
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <b style="font-size:13px;color:var(--muted)">⏱ Khoảng thời gian báo cáo (theo Hạn hoàn thành):</b>
-      <select id="presetSelect" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-        <option value="all">Tất cả</option>
-        <option value="month">Tháng này</option>
-        <option value="quarter">Quý này</option>
-        <option value="year">Năm này</option>
-        <option value="custom">Tùy chọn khoảng ngày…</option>
-      </select>
-      <span id="customRangeWrap" style="display:none;align-items:center;gap:8px">
-        <label style="font-size:12.5px;color:var(--muted)">Từ</label>
-        <input type="date" id="fromDate" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-        <label style="font-size:12.5px;color:var(--muted)">Đến</label>
-        <input type="date" id="toDate" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-      </span>
-      <div class="badge" id="applyFilterBtn" style="cursor:pointer;user-select:none;background:var(--blue);color:#fff;border-color:var(--blue)">Áp dụng</div>
-      <span id="filterSummary" style="font-size:12.5px;color:var(--muted)"></span>
-    </div>
-  </div>
-
   <div class="kpi-row">
     <div class="kpi"><div class="label">Tổng đầu việc</div><div class="value blue" id="kpiTotal">0</div></div>
     <div class="kpi"><div class="label">Đang thực hiện</div><div class="value amber" id="kpiProgress">0</div></div>
@@ -136,7 +120,7 @@
     <div id="overdueBanner" style="display:none;background:rgba(224,66,74,.08);border:1px solid var(--red);border-radius:14px;padding:14px 18px;margin-bottom:18px;color:var(--red);font-size:13.5px;font-weight:600"></div>
     <div class="grid-2">
       <div class="card">
-        <h3><span class="dot"></span>Tiến độ các đầu việc</h3>
+        <h3><span class="dot"></span>Tiến độ các đầu việc <span id="overviewDateLabel" style="font-weight:500;color:var(--muted);font-size:12px"></span></h3>
         <div id="overviewList" class="empty-note">Chưa có dữ liệu.</div>
       </div>
       <div class="card">
@@ -160,16 +144,24 @@
         <select id="filterNguoi" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
           <option value="">Thành viên: Tất cả</option>
         </select>
-        <label style="font-size:12.5px;color:var(--muted)">Hạn từ</label>
-        <input type="date" id="filterHanFrom" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+        <label style="font-size:12.5px;color:var(--muted)">Báo cáo từ</label>
+        <input type="date" id="filterCapNhatFrom" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
         <label style="font-size:12.5px;color:var(--muted)">đến</label>
-        <input type="date" id="filterHanTo" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+        <input type="date" id="filterCapNhatTo" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+        <label style="font-size:12.5px;color:var(--muted)">Hạn hoàn thành đến</label>
+        <input type="date" id="filterHanCutoff" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
         <div class="badge" id="assignFilterReset" style="cursor:pointer;user-select:none">✕ Xóa lọc</div>
       </div>
       <table>
         <thead><tr>
-          <th>Tên công việc</th><th>Mã CV</th><th>Loại</th>
-          <th>Hạn hoàn thành</th><th>Tiến độ</th><th>Trạng thái</th><th>Ngày báo cáo</th><th>Note</th>
+          <th class="sortable" data-field="ten">Tên công việc</th>
+          <th class="sortable" data-field="ma">Mã CV</th>
+          <th class="sortable" data-field="loai">Loại</th>
+          <th class="sortable" data-field="han">Hạn hoàn thành</th>
+          <th class="sortable" data-field="tienDo">Tiến độ</th>
+          <th class="sortable" data-field="trangThai">Trạng thái</th>
+          <th class="sortable" data-field="capNhat">Ngày báo cáo</th>
+          <th>Note</th>
         </tr></thead>
         <tbody id="assignTable">
           <tr><td colspan="8" class="empty-note">Chưa có dữ liệu.</td></tr>
@@ -233,70 +225,13 @@ const memberSheetMap = {
 let tasks = []; // {ma, ten, loai, nguoi, han, tienDo, trangThai, capNhat}
 let results = []; // {nguoi, ketQua, giaTri, ngay, dungHan}
 let chartByMember, chartByLoai;
-let dateFrom = null, dateTo = null; // Date | null — khoảng lọc báo cáo hiện tại
 
 // Bộ lọc riêng của bảng "Phân công & tiến độ chi tiết" (không ảnh hưởng các tab khác)
-let assignFilters = {ma:'', loai:'', trangThai:'', nguoi:'', hanFrom:null, hanTo:null};
-let lastAssignTasks = []; // tasks sau khi đã áp dụng bộ lọc khoảng thời gian ở đầu trang
-
-function fmtDateInput(d){
-  const p = n => String(n).padStart(2,'0');
-  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
-}
-
-function computePresetRange(preset){
-  const now = new Date(); now.setHours(0,0,0,0);
-  if(preset==='month'){
-    return [new Date(now.getFullYear(), now.getMonth(), 1), new Date(now.getFullYear(), now.getMonth()+1, 0)];
-  }
-  if(preset==='quarter'){
-    const q = Math.floor(now.getMonth()/3);
-    return [new Date(now.getFullYear(), q*3, 1), new Date(now.getFullYear(), q*3+3, 0)];
-  }
-  if(preset==='year'){
-    return [new Date(now.getFullYear(),0,1), new Date(now.getFullYear(),11,31)];
-  }
-  return [null, null];
-}
-
-function inRange(dateStr){
-  if(!dateFrom && !dateTo) return true;
-  const d = parseVNDate(dateStr);
-  if(!d) return true; // không rõ ngày thì không loại (tránh mất dữ liệu do sai định dạng)
-  d.setHours(0,0,0,0);
-  if(dateFrom && d.getTime() < dateFrom.getTime()) return false;
-  if(dateTo && d.getTime() > dateTo.getTime()) return false;
-  return true;
-}
-
-function setupFilterBar(){
-  const presetSel = document.getElementById('presetSelect');
-  const wrap = document.getElementById('customRangeWrap');
-  presetSel.addEventListener('change', () => {
-    wrap.style.display = presetSel.value === 'custom' ? 'inline-flex' : 'none';
-  });
-  document.getElementById('applyFilterBtn').addEventListener('click', () => {
-    const preset = presetSel.value;
-    if(preset === 'all'){
-      dateFrom = null; dateTo = null;
-    } else if(preset === 'custom'){
-      const f = document.getElementById('fromDate').value;
-      const t = document.getElementById('toDate').value;
-      dateFrom = f ? new Date(f+'T00:00:00') : null;
-      dateTo = t ? new Date(t+'T00:00:00') : null;
-    } else {
-      const [f,t] = computePresetRange(preset);
-      dateFrom = f; dateTo = t;
-    }
-    const summary = document.getElementById('filterSummary');
-    if(!dateFrom && !dateTo){
-      summary.textContent = 'Đang hiển thị: tất cả công việc';
-    } else {
-      summary.textContent = `Đang lọc: ${dateFrom?fmtDateInput(dateFrom):'…'} → ${dateTo?fmtDateInput(dateTo):'…'}`;
-    }
-    render();
-  });
-}
+// - capNhatFrom/capNhatTo: lọc theo khoảng Ngày báo cáo
+// - hanCutoff: lọc Hạn hoàn thành <= ngày được chọn (mốc "trở về trước")
+let assignFilters = {ma:'', loai:'', trangThai:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null};
+let lastAssignTasks = []; // tasks gốc, dùng lại mỗi khi bộ lọc/sắp xếp trong bảng thay đổi
+let assignSort = {field:null, dir:1}; // dir: 1 = tăng dần, -1 = giảm dần
 
 // CSV parser đơn giản, hỗ trợ dấu phẩy/nháy kép trong ô
 function parseCSV(text){
@@ -348,7 +283,7 @@ function formatDateOnly(v){
 }
 
 function isOverdue(t){
-  if(t.trangThai === "Hoàn thành") return false;
+  if(t.trangThai === "Hoàn thành" || t.trangThai === "Hủy bỏ") return false;
   const d = parseVNDate(t.han);
   if(!d) return false;
   const today = new Date(); today.setHours(0,0,0,0);
@@ -438,8 +373,8 @@ async function loadData(){
 }
 
 const statusMap = {
-  "Chưa bắt đầu":"st-notstarted","Đang thực hiện":"st-inprogress",
-  "Chờ duyệt":"st-pending","Trễ hạn":"st-late","Hoàn thành":"st-done"
+  "Đang thực hiện":"st-inprogress", "Hoàn thành":"st-done", "Trễ hạn":"st-late",
+  "Hoãn lại":"st-pending", "Hủy bỏ":"st-cancel"
 };
 
 function initials(name){
@@ -475,12 +410,24 @@ function applyAssignFilters(list){
     if(assignFilters.loai && t.loai !== assignFilters.loai) return false;
     if(assignFilters.trangThai && t.trangThai !== assignFilters.trangThai) return false;
     if(assignFilters.nguoi && t.nguoi !== assignFilters.nguoi) return false;
-    if(assignFilters.hanFrom || assignFilters.hanTo){
+    // Lọc theo khoảng Ngày báo cáo
+    if(assignFilters.capNhatFrom || assignFilters.capNhatTo){
+      const d = parseVNDate(t.capNhat);
+      if(d){
+        d.setHours(0,0,0,0);
+        if(assignFilters.capNhatFrom && d.getTime() < assignFilters.capNhatFrom.getTime()) return false;
+        if(assignFilters.capNhatTo && d.getTime() > assignFilters.capNhatTo.getTime()) return false;
+      }
+      // không rõ ngày thì không loại, tránh mất dữ liệu do sai định dạng
+    }
+    // Lọc Hạn hoàn thành: chỉ hiển thị các mốc <= ngày được chọn (ví dụ chọn 03/07/2026
+    // thì hiển thị cả 01/07, 02/07, 03/07/2026 — "trở về trước")
+    if(assignFilters.hanCutoff){
       const d = parseVNDate(t.han);
-      if(!d) return true; // không rõ ngày thì không loại, tránh mất dữ liệu do sai định dạng
-      d.setHours(0,0,0,0);
-      if(assignFilters.hanFrom && d.getTime() < assignFilters.hanFrom.getTime()) return false;
-      if(assignFilters.hanTo && d.getTime() > assignFilters.hanTo.getTime()) return false;
+      if(d){
+        d.setHours(0,0,0,0);
+        if(d.getTime() > assignFilters.hanCutoff.getTime()) return false;
+      }
     }
     return true;
   });
@@ -491,8 +438,9 @@ function setupAssignFilterBar(){
   const loaiSel = document.getElementById('filterLoai');
   const ttSel = document.getElementById('filterTrangThai');
   const ngSel = document.getElementById('filterNguoi');
-  const hanFromInput = document.getElementById('filterHanFrom');
-  const hanToInput = document.getElementById('filterHanTo');
+  const capNhatFromInput = document.getElementById('filterCapNhatFrom');
+  const capNhatToInput = document.getElementById('filterCapNhatTo');
+  const hanCutoffInput = document.getElementById('filterHanCutoff');
   const resetBtn = document.getElementById('assignFilterReset');
 
   const applyAndRender = () => {
@@ -500,8 +448,9 @@ function setupAssignFilterBar(){
     assignFilters.loai = loaiSel.value;
     assignFilters.trangThai = ttSel.value;
     assignFilters.nguoi = ngSel.value;
-    assignFilters.hanFrom = hanFromInput.value ? new Date(hanFromInput.value+'T00:00:00') : null;
-    assignFilters.hanTo = hanToInput.value ? new Date(hanToInput.value+'T00:00:00') : null;
+    assignFilters.capNhatFrom = capNhatFromInput.value ? new Date(capNhatFromInput.value+'T00:00:00') : null;
+    assignFilters.capNhatTo = capNhatToInput.value ? new Date(capNhatToInput.value+'T00:00:00') : null;
+    assignFilters.hanCutoff = hanCutoffInput.value ? new Date(hanCutoffInput.value+'T00:00:00') : null;
     renderAssignTable(lastAssignTasks);
   };
 
@@ -509,21 +458,63 @@ function setupAssignFilterBar(){
   loaiSel.addEventListener('change', applyAndRender);
   ttSel.addEventListener('change', applyAndRender);
   ngSel.addEventListener('change', applyAndRender);
-  hanFromInput.addEventListener('change', applyAndRender);
-  hanToInput.addEventListener('change', applyAndRender);
+  capNhatFromInput.addEventListener('change', applyAndRender);
+  capNhatToInput.addEventListener('change', applyAndRender);
+  hanCutoffInput.addEventListener('change', applyAndRender);
   resetBtn.addEventListener('click', () => {
-    maInput.value=''; loaiSel.value=''; ttSel.value=''; ngSel.value=''; hanFromInput.value=''; hanToInput.value='';
-    assignFilters = {ma:'', loai:'', trangThai:'', nguoi:'', hanFrom:null, hanTo:null};
+    maInput.value=''; loaiSel.value=''; ttSel.value=''; ngSel.value='';
+    capNhatFromInput.value=''; capNhatToInput.value=''; hanCutoffInput.value='';
+    assignFilters = {ma:'', loai:'', trangThai:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null};
     renderAssignTable(lastAssignTasks);
   });
 }
 
+// So sánh 2 task theo field được chọn để sắp xếp (chuỗi: theo bảng chữ cái tiếng Việt,
+// ngày: theo thời gian thực, tiến độ: theo số). Thiếu dữ liệu luôn xếp xuống cuối.
+function compareForSort(a, b, field){
+  if(field === 'tienDo'){
+    return (a.tienDo||0) - (b.tienDo||0);
+  }
+  if(field === 'han' || field === 'capNhat'){
+    const da = parseVNDate(a[field]);
+    const db = parseVNDate(b[field]);
+    if(!da && !db) return 0;
+    if(!da) return 1;
+    if(!db) return -1;
+    return da.getTime() - db.getTime();
+  }
+  return String(a[field]||'').localeCompare(String(b[field]||''), 'vi');
+}
+
+// Gắn sự kiện click để sắp xếp lên các cột có thể sort trong bảng phân công.
+// Click lần 1: tăng dần, lần 2: giảm dần, lần 3: bỏ sắp xếp (quay về thứ tự gốc).
+function setupAssignSort(){
+  document.querySelectorAll('#panel-assign thead th.sortable').forEach(th=>{
+    th.dataset.label = th.textContent.trim();
+    th.addEventListener('click', () => {
+      const field = th.dataset.field;
+      if(assignSort.field === field){
+        if(assignSort.dir === 1){ assignSort.dir = -1; }
+        else { assignSort.field = null; assignSort.dir = 1; }
+      } else {
+        assignSort.field = field; assignSort.dir = 1;
+      }
+      renderAssignTable(lastAssignTasks);
+    });
+  });
+}
+
+function updateSortArrows(){
+  document.querySelectorAll('#panel-assign thead th.sortable').forEach(th=>{
+    const field = th.dataset.field;
+    let arrow = '';
+    if(assignSort.field === field) arrow = `<span class="sort-arrow">${assignSort.dir===1?'▲':'▼'}</span>`;
+    th.innerHTML = th.dataset.label + arrow;
+  });
+}
+
 function render(){
-  const tasksAll = tasks;
-  const resultsAll = results;
-  const tasks_ = tasksAll.filter(t => inRange(t.han));
-  const results_ = resultsAll.filter(r => inRange(r.ngay));
-  renderInner(tasks_, results_);
+  renderInner(tasks, results);
 }
 
 function renderInner(tasks, results){
@@ -554,17 +545,46 @@ function renderInner(tasks, results){
   populateAssignFilterOptions(tasks);
   renderAssignTable(tasks);
 
-  // overview list
+  // overview list — chỉ hiển thị các công việc có Ngày báo cáo mới nhất (so với hôm nay),
+  // tức là tìm mốc ngày báo cáo gần hiện tại nhất trong dữ liệu rồi chỉ lọc đúng mốc đó.
   const ov = document.getElementById('overviewList');
-  if(tasks.length){
+  const dateLabel = document.getElementById('overviewDateLabel');
+  const today = new Date(); today.setHours(0,0,0,0);
+  let latestReportDate = null;
+  tasks.forEach(t=>{
+    const d = parseVNDate(t.capNhat);
+    if(!d) return;
+    d.setHours(0,0,0,0);
+    if(d.getTime() <= today.getTime() && (!latestReportDate || d.getTime() > latestReportDate.getTime())){
+      latestReportDate = d;
+    }
+  });
+  const latestTasks = latestReportDate
+    ? tasks.filter(t=>{
+        const d = parseVNDate(t.capNhat);
+        if(!d) return false;
+        d.setHours(0,0,0,0);
+        return d.getTime() === latestReportDate.getTime();
+      })
+    : [];
+  if(latestReportDate){
+    const p = n => String(n).padStart(2,'0');
+    dateLabel.textContent = `— báo cáo ngày ${p(latestReportDate.getDate())}/${p(latestReportDate.getMonth()+1)}/${latestReportDate.getFullYear()}`;
+  } else {
+    dateLabel.textContent = '';
+  }
+  if(latestTasks.length){
     ov.className='';
-    ov.innerHTML = tasks.slice(0,8).map(t=>`
+    ov.innerHTML = latestTasks.map(t=>`
       <div style="margin-bottom:14px">
         <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
-          <span>${t.ten}</span><span style="color:var(--muted)">${t.tienDo||0}%</span>
+          <span>${t.ten} <span style="color:var(--muted);font-size:11.5px">(${t.ma})</span></span><span style="color:var(--muted)">${t.tienDo||0}%</span>
         </div>
         <div class="progress-bar"><div class="progress-fill" style="width:${t.tienDo||0}%"></div></div>
       </div>`).join('');
+  } else {
+    ov.className='empty-note';
+    ov.textContent = 'Chưa có báo cáo nào.';
   }
 
   const rl = document.getElementById('resultsList');
@@ -621,6 +641,9 @@ function renderAssignTable(tasksIn){
     members.forEach(m=>{
       const mt = tasks.filter(t=>t.nguoi===m);
       if(!mt.length) return;
+      if(assignSort.field){
+        mt.sort((a,b) => compareForSort(a,b,assignSort.field) * assignSort.dir);
+      }
       html += `<tr class="member-sep-row" style="background:rgba(47,111,237,.07)">
         <td colspan="8" style="font-weight:700;color:var(--blue-d);padding:8px 10px">
           <span class="avatar" style="width:22px;height:22px;font-size:10px;display:inline-flex;vertical-align:middle;margin-right:8px">${initials(m)}</span>
@@ -632,7 +655,7 @@ function renderAssignTable(tasksIn){
           <td>${formatDateOnly(t.han)}</td>
           <td style="min-width:120px"><div class="progress-bar"><div class="progress-fill" style="width:${t.tienDo||0}%"></div></div></td>
           <td><span class="status ${statusMap[t.trangThai]||''}">${t.trangThai||''}</span></td>
-          <td>${t.capNhat||''}</td>
+          <td>${formatDateOnly(t.capNhat)}</td>
           <td>${t.overdue?'<span class="status st-late">Quá hạn</span>':''}</td>
         </tr>`).join('');
     });
@@ -640,6 +663,7 @@ function renderAssignTable(tasksIn){
   } else {
     tbody.innerHTML = '<tr><td colspan="8" class="empty-note">Chưa có dữ liệu.</td></tr>';
   }
+  updateSortArrows();
 }
 
 function renderCharts(tasks){
@@ -692,8 +716,8 @@ function renderFooterLinks(){
 }
 
 document.getElementById('refreshBtn').addEventListener('click', loadData);
-setupFilterBar();
 setupAssignFilterBar();
+setupAssignSort();
 renderFooterLinks();
 loadData();
 </script>
