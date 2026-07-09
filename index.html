@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Báo Cáo Ban Mua Hàng Dự Án</title>
+<style>
+  :root{
+    --bg:#f4f6fb; --panel:#ffffff; --panel2:#f7f9fd; --border:#e2e8f4;
+    --text:#1a2236; --muted:#6b7690; --blue:#2f6fed; --blue-d:#1e4fc4;
+    --green:#0ea968; --amber:#c8790a; --red:#e0424a; --purple:#7c5cf0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background:
+    radial-gradient(1200px 600px at 10% -10%, #e8effe 0%, transparent 60%),
+    radial-gradient(1000px 500px at 100% 0%, #f1eafe 0%, transparent 55%),
+    var(--bg); color:var(--text); min-height:100vh;}
+  .wrap{max-width:1400px;margin:0 auto;padding:28px 32px 60px}
+  header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:24px}
+  h1{font-size:26px;margin:0 0 4px;font-weight:700;letter-spacing:.3px}
+  h1 span{background:linear-gradient(90deg,var(--blue),var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--muted);font-size:13.5px;margin:0}
+  .meta{display:flex;gap:10px;flex-wrap:wrap}
+  .badge{background:var(--panel);border:1px solid var(--border);padding:8px 14px;border-radius:10px;font-size:12.5px;color:var(--muted)}
+  .badge b{color:var(--text)}
+
+  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:26px}
+  .kpi{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:16px;padding:18px 20px;position:relative;overflow:hidden}
+  .kpi::before{content:"";position:absolute;top:-30%;right:-30%;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(79,140,255,.25),transparent 70%)}
+  .kpi .label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.6px}
+  .kpi .value{font-size:30px;font-weight:700;margin-top:6px}
+  .kpi .value.blue{color:var(--blue)}
+  .kpi .value.green{color:var(--green)}
+  .kpi .value.amber{color:var(--amber)}
+  .kpi .value.red{color:var(--red)}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+  .tab{padding:10px 18px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;font-size:14px;font-weight:600;user-select:none}
+  .tab.active{color:var(--text);border-color:var(--blue)}
+  .panel{display:none}
+  .panel.active{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  .grid-2{display:grid;grid-template-columns:1.3fr .9fr;gap:18px}
+  @media(max-width:980px){.grid-2{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:0 4px 18px rgba(30,50,100,.06)}
+  .card h3{margin:0 0 14px;font-size:15px;color:var(--text);display:flex;align-items:center;gap:8px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--blue);box-shadow:0 0 8px var(--blue)}
+
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;color:var(--muted);font-weight:600;padding:10px 10px;border-bottom:1px solid var(--border);font-size:11.5px;text-transform:uppercase;letter-spacing:.4px}
+  td{padding:11px 10px;border-bottom:1px solid #eef1f8}
+  tr:hover td{background:rgba(47,111,237,.05)}
+
+  /* Bảng phân công & tiến độ chi tiết: giãn cột cho dễ nhìn + cho phép cuộn ngang trên màn nhỏ */
+  .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px}
+  .assign-table{min-width:1240px;table-layout:fixed}
+  .assign-table th, .assign-table td{padding:12px 16px;white-space:nowrap}
+  .assign-table td.wrap-cell{white-space:normal}
+  .assign-table col.col-ten{width:220px}
+  .assign-table col.col-ma{width:100px}
+  .assign-table col.col-loai{width:120px}
+  .assign-table col.col-ngaybatdau{width:120px}
+  .assign-table col.col-deadline{width:120px}
+  .assign-table col.col-ngayxong{width:120px}
+  .assign-table col.col-tiendo{width:150px}
+  .assign-table col.col-trangthai{width:130px}
+  .assign-table col.col-dapung{width:100px}
+  .assign-table col.col-capnhat{width:150px}
+  .assign-table col.col-baocao{width:120px}
+  .btn-view-report{background:rgba(47,111,237,.1);color:var(--blue-d);border:1px solid rgba(47,111,237,.25);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+  .btn-view-report:hover{background:rgba(47,111,237,.18)}
+
+  /* Modal xem báo cáo chi tiết */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(20,26,45,.5);z-index:1000;align-items:center;justify-content:center;padding:20px}
+  .modal-overlay.open{display:flex}
+  .modal-box{background:var(--panel);border-radius:16px;max-width:560px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(20,30,60,.3);padding:22px 24px}
+  .modal-box h4{margin:0 0 4px;font-size:16px;color:var(--text)}
+  .modal-box .modal-sub{color:var(--muted);font-size:12.5px;margin:0 0 16px}
+  .modal-box .modal-body{white-space:pre-wrap;font-size:13.5px;line-height:1.6;color:var(--text);background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+  .modal-close{float:right;cursor:pointer;color:var(--muted);font-size:20px;line-height:1;border:none;background:none}
+  .modal-close:hover{color:var(--text)}
+
+  .progress-bar{width:100%;height:8px;background:#e6ebf7;border-radius:6px;overflow:hidden}
+  .progress-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--blue),var(--purple))}
+  .progress-fill.overdue-fill{background:linear-gradient(90deg,var(--red),#ff8f93)}
+  .progress-fill.done-fill{background:linear-gradient(90deg,var(--green),#5fd6a5)}
+  .card-compact{padding:14px 16px}
+  .card-compact h3{font-size:13.5px;margin-bottom:10px}
+  #overviewList{max-height:250px;overflow-y:auto;padding-right:4px}
+  #overviewList .overview-item{padding:5px 6px;margin:-5px -6px 2px -6px}
+  #overviewList .overview-item .progress-bar{height:6px}
+  .overview-item{cursor:pointer;transition:background .15s ease;padding:6px;border-radius:8px;margin:-6px -6px 8px -6px}
+  .overview-item:hover{background:rgba(47,111,237,.08)}
+  .status{padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap}
+  .st-notstarted{background:rgba(139,152,184,.15);color:var(--muted)}
+  .st-inprogress{background:rgba(79,140,255,.15);color:var(--blue)}
+  .st-pending{background:rgba(245,185,66,.15);color:var(--amber)}
+  .st-late{background:rgba(224,66,74,.15);color:var(--red)}
+  .st-done{background:rgba(14,169,104,.15);color:var(--green)}
+  .st-cancel{background:rgba(139,152,184,.18);color:var(--muted)}
+  .row-overdue{background:rgba(224,66,74,.06)}
+  .row-overdue td:first-child{border-left:3px solid var(--red)}
+  .overdue-tag{display:inline-block;margin-left:6px;font-size:10.5px;color:var(--red);font-weight:700}
+
+  th.sortable{cursor:pointer;user-select:none;white-space:nowrap}
+  th.sortable:hover{color:var(--text)}
+  .sort-arrow{margin-left:4px;font-size:9px;color:var(--blue)}
+
+  .member-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+  .member-card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 4px 18px rgba(30,50,100,.06)}
+  .member-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+  .avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+  .member-name{font-weight:700;font-size:14.5px}
+  .member-role{color:var(--muted);font-size:12px}
+  .member-stats{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:10px}
+  .member-stats b{color:var(--text);font-size:16px;display:block}
+
+  .empty-note{color:var(--muted);font-size:13px;padding:16px;text-align:center;border:1px dashed var(--border);border-radius:12px}
+  .footer-note{margin-top:30px;color:var(--muted);font-size:12px;line-height:1.7;border-top:1px solid var(--border);padding-top:16px}
+  code{background:#182238;padding:2px 6px;border-radius:5px;color:#9fc0ff}
+  .footer-note a{text-decoration:none}
+  .footer-note a code{transition:background .15s ease}
+  .footer-note a:hover code{background:var(--blue)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1><span>Dashboard</span> — Ban Mua Hàng Dự Án</h1>
+      <p class="sub">Phạm vi: mua vật tư/dịch vụ dự án · sparepart & dịch vụ phục vụ sản xuất ổn định</p>
+    </div>
+    <div class="meta">
+      <div class="badge">Trưởng phòng: <b>Chị Trang</b></div>
+      <div class="badge">Thành viên: <b>6</b></div>
+      <div class="badge" id="syncBadge">Đồng bộ: <b id="lastUpdate">đang tải...</b></div>
+      <div class="badge" id="refreshBtn" style="cursor:pointer;user-select:none">🔄 Làm mới</div>
+    </div>
+  </header>
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="label">Tổng đầu việc</div><div class="value blue" id="kpiTotal">0</div></div>
+    <div class="kpi"><div class="label">Đang thực hiện</div><div class="value amber" id="kpiProgress">0</div></div>
+    <div class="kpi"><div class="label">Hoàn thành</div><div class="value green" id="kpiDone">0</div></div>
+    <div class="kpi"><div class="label">Trễ hạn</div><div class="value red" id="kpiLate">0</div></div>
+    <div class="kpi"><div class="label">Tỷ lệ đúng hạn TB</div><div class="value blue" id="kpiOnTime">—</div></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="overview">Tổng quan</div>
+    <div class="tab" data-tab="assign">Phân công &amp; Tiến độ</div>
+    <div class="tab" data-tab="members">Theo thành viên</div>
+    <div class="tab" data-tab="charts">Biểu đồ</div>
+    <div class="tab" data-tab="kpi">Đánh giá hiệu suất</div>
+  </div>
+
+  <div class="panel active" id="panel-overview">
+    <div id="overdueBanner" style="display:none;background:rgba(224,66,74,.08);border:1px solid var(--red);border-radius:14px;padding:14px 18px;margin-bottom:18px;color:var(--red);font-size:13.5px;font-weight:600"></div>
+    <div class="grid-2">
+      <div class="card card-compact">
+        <h3><span class="dot"></span>Tiến độ các đầu việc <span id="overviewDateLabel" style="font-weight:500;color:var(--muted);font-size:12px"></span></h3>
+        <div id="overviewList" class="empty-note">Chưa có dữ liệu.</div>
+      </div>
+      <div class="card">
+        <h3><span class="dot"></span>Kết quả nổi bật gần đây</h3>
+        <div id="resultsList" class="empty-note">Chưa có dữ liệu.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-assign">
+    <div class="card">
+      <h3><span class="dot"></span>Bảng phân công &amp; tiến độ chi tiết</h3>
+      <div id="assignFilterBar" style="display:flex;flex-direction:column;gap:12px;margin-bottom:14px;padding:12px 14px;background:var(--panel2);border:1px solid var(--border);border-radius:12px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <input type="text" id="filterMa" placeholder="🔍 Tìm Mã CV..." style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;width:140px">
+          <input type="text" id="filterTen" list="tenSuggestList" placeholder="🔍 Tìm tên công việc..." autocomplete="off" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;width:220px">
+          <datalist id="tenSuggestList"></datalist>
+          <select id="filterLoai" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+            <option value="">Loại: Tất cả</option>
+          </select>
+          <select id="filterTrangThai" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+            <option value="">Trạng thái: Tất cả</option>
+          </select>
+          <select id="filterNguoi" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+            <option value="">Thành viên: Tất cả</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <label style="font-size:12.5px;color:var(--muted)">Báo cáo từ</label>
+          <input type="date" id="filterCapNhatFrom" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+          <label style="font-size:12.5px;color:var(--muted)">đến</label>
+          <input type="date" id="filterCapNhatTo" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <label style="font-size:12.5px;color:var(--muted)">Hạn hoàn thành đến</label>
+          <input type="date" id="filterHanCutoff" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+          <div class="badge" id="assignFilterReset" style="cursor:pointer;user-select:none">✕ Xóa lọc</div>
+        </div>
+      </div>
+      <div class="table-scroll">
+      <table class="assign-table">
+        <colgroup>
+          <col class="col-ten"><col class="col-ma"><col class="col-loai">
+          <col class="col-ngaybatdau"><col class="col-deadline"><col class="col-ngayxong">
+          <col class="col-tiendo"><col class="col-trangthai"><col class="col-dapung">
+          <col class="col-capnhat"><col class="col-baocao">
+        </colgroup>
+        <thead><tr>
+          <th class="sortable" data-field="ten">Tên công việc</th>
+          <th class="sortable" data-field="ma">Mã CV</th>
+          <th class="sortable" data-field="loai">Loại công việc</th>
+          <th class="sortable" data-field="ngayBatDau">Ngày bắt đầu</th>
+          <th class="sortable" data-field="han">Deadline</th>
+          <th class="sortable" data-field="ngayXong">Ngày xong</th>
+          <th class="sortable" data-field="tienDo">Tiến độ (%)</th>
+          <th class="sortable" data-field="trangThai">Trạng thái</th>
+          <th>Đáp ứng</th>
+          <th class="sortable" data-field="capNhat">Ngày cập nhật gần nhất</th>
+          <th>Báo cáo chi tiết</th>
+        </tr></thead>
+        <tbody id="assignTable">
+          <tr><td colspan="11" class="empty-note">Chưa có dữ liệu.</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-members">
+    <div class="member-grid" id="memberGrid"></div>
+  </div>
+
+  <div class="panel" id="panel-charts">
+    <div class="grid-2">
+      <div class="card">
+        <h3><span class="dot"></span>Khối lượng công việc theo thành viên</h3>
+        <canvas id="chartByMember" height="220"></canvas>
+      </div>
+      <div class="card">
+        <h3><span class="dot"></span>Khối lượng công việc theo loại mua hàng</h3>
+        <canvas id="chartByLoai" height="220"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-kpi">
+    <div class="card">
+      <h3><span class="dot"></span>Tỷ lệ hoàn thành đúng hạn theo thành viên</h3>
+      <table>
+        <thead><tr><th>Thành viên</th><th>Tổng CV hoàn thành</th><th>Đúng hạn</th><th>Tỷ lệ</th><th>Xếp loại</th></tr></thead>
+        <tbody id="kpiTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer-note" id="footerNote">
+    Nguồn dữ liệu: <span id="footerSheetLink"></span> — dashboard tự động lấy dữ liệu mới nhất từ 7 sheet việc riêng
+    của từng thành viên (<code>PC_Trang</code>, <code>PC_Ngoc</code>, <code>PC_Tri</code>, <code>PC_Sang</code>,
+    <code>PC_Hoa</code>, <code>PC_Phuc</code>, <code>PC_Dat</code>) và sheet <code>KetQua</code> mỗi khi mở trang hoặc
+    bấm "Làm mới", không cần gửi lại file hay nhắn Claude cập nhật thủ công.
+    Mỗi người chỉ chỉnh sửa trên sheet của riêng mình — thay đổi sẽ hiện ra ở đây trong vài giây.
+  </div>
+</div>
+
+<div class="modal-overlay" id="reportModal" onclick="if(event.target===this) closeReportModal()">
+  <div class="modal-box">
+    <button type="button" class="modal-close" onclick="closeReportModal()" aria-label="Đóng">&times;</button>
+    <h4 id="reportModalTitle"></h4>
+    <p class="modal-sub">Báo cáo chi tiết</p>
+    <div class="modal-body" id="reportModalBody"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script>
+// ===== DATA SOURCE =====
+// Dashboard tự động lấy dữ liệu trực tiếp từ Google Sheet công khai (CSV) mỗi lần mở/làm mới.
+// Google Sheet ID: xem SHEET_ID bên dưới. Sheet phải bật chia sẻ "Anyone with the link - Viewer".
+const SHEET_ID = "12QtQ6jJftAwRHx31DcqQn6gf8r-WQQokTjmiaKtVLj8";
+const csvUrl = (sheetName) => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+
+const members = ["Chị Trang","Chị Ngọc","Anh Trí","Anh Sang","Anh Hòa","Chị Phúc","Anh Đạt"];
+const roles = {"Chị Trang":"Trưởng phòng"};
+// Mỗi thành viên có 1 sheet việc riêng (không có cột "Người phụ trách" — người phụ trách
+// được suy ra từ chính sheet chứa dòng đó).
+const memberSheetMap = {
+  "Chị Trang":"PC_Trang", "Chị Ngọc":"PC_Ngoc", "Anh Trí":"PC_Tri",
+  "Anh Sang":"PC_Sang", "Anh Hòa":"PC_Hoa", "Chị Phúc":"PC_Phuc", "Anh Đạt":"PC_Dat"
+};
+let tasks = []; // {ma, ten, loai, nguoi, han, tienDo, trangThai, capNhat}
+let results = []; // {nguoi, ketQua, giaTri, ngay, dungHan}
+let chartByMember, chartByLoai;
+
+// Bộ lọc riêng của bảng "Phân công & tiến độ chi tiết" (không ảnh hưởng các tab khác)
+// - capNhatFrom/capNhatTo: lọc theo khoảng Ngày báo cáo
+// - hanCutoff: lọc Hạn hoàn thành <= ngày được chọn (mốc "trở về trước")
+let assignFilters = {ma:'', ten:'', loai:'', trangThai:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null};
+let lastAssignTasks = []; // tasks gốc, dùng lại mỗi khi bộ lọc/sắp xếp trong bảng thay đổi
+let assignSort = {field:null, dir:1}; // dir: 1 = tăng dần, -1 = giảm dần
+
+// CSV parser đơn giản, hỗ trợ dấu phẩy/nháy kép trong ô
+function parseCSV(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i];
+    if(inQuotes){
+      if(c==='"'){ if(text[i+1]==='"'){ field+='"'; i++; } else { inQuotes=false; } }
+      else field += c;
+    } else {
+      if(c==='"') inQuotes = true;
+      else if(c===','){ row.push(field); field=''; }
+      else if(c==='\n' || c==='\r'){
+        if(field!=='' || row.length){ row.push(field); rows.push(row); row=[]; field=''; }
+        if(c==='\r' && text[i+1]==='\n') i++;
+      } else field += c;
+    }
+  }
+  if(field!=='' || row.length){ row.push(field); rows.push(row); }
+  return rows.filter(r=>r.some(v=>v!==''));
+}
+
+function toPercent(v){
+  if(!v) return 0;
+  const n = parseFloat(String(v).replace('%','').replace(',','.'));
+  return isNaN(n) ? 0 : n;
+}
+
+// Hỗ trợ dd/mm/yyyy, dd-mm-yyyy, yyyy-mm-dd
+function parseVNDate(v){
+  if(!v) return null;
+  const s = String(v).trim();
+  let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if(m) return new Date(+m[3], +m[2]-1, +m[1]);
+  m = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+  if(m) return new Date(+m[1], +m[2]-1, +m[3]);
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+// Chỉ hiển thị phần ngày (dd/mm/yyyy). Nếu không parse được thì giữ nguyên chuỗi gốc
+// để không làm mất dữ liệu hiển thị.
+function formatDateOnly(v){
+  const d = parseVNDate(v);
+  if(!d) return v || '';
+  const p = n => String(n).padStart(2,'0');
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()}`;
+}
+
+function escapeHtml(str){
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// Popup xem nội dung đầy đủ của cột "Báo cáo chi tiết"
+function openReportModal(btn){
+  const title = btn.getAttribute('data-title') || '';
+  const report = btn.getAttribute('data-report') || '';
+  document.getElementById('reportModalTitle').textContent = title;
+  document.getElementById('reportModalBody').textContent = report;
+  document.getElementById('reportModal').classList.add('open');
+}
+function closeReportModal(){
+  document.getElementById('reportModal').classList.remove('open');
+}
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape') closeReportModal();
+});
+
+// Nhảy từ 1 dòng trong "Tiến độ các đầu việc" (tab Tổng quan) sang tab
+// "Phân công & Tiến độ" và tự động lọc đúng Mã CV vừa bấm vào.
+function goToAssignFilterByMa(ma){
+  const maInput = document.getElementById('filterMa');
+  if(maInput){
+    maInput.value = ma;
+    maInput.dispatchEvent(new Event('input', {bubbles:true}));
+  }
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  const assignTab = document.querySelector('.tab[data-tab="assign"]');
+  if(assignTab) assignTab.classList.add('active');
+  const assignPanel = document.getElementById('panel-assign');
+  if(assignPanel) assignPanel.classList.add('active');
+}
+
+function isOverdue(t){
+  if(t.trangThai === "Hoàn thành" || t.trangThai === "Hủy bỏ") return false;
+  const d = parseVNDate(t.han);
+  if(!d) return false;
+  const today = new Date(); today.setHours(0,0,0,0);
+  return d.getTime() < today.getTime();
+}
+
+// Đọc Google Sheet công khai bằng JSONP (chèn thẻ <script>) thay vì fetch().
+// Lý do: gviz endpoint của Google không trả header CORS cho phép fetch() gọi trực tiếp
+// từ trình duyệt ở origin khác (kể cả khi Sheet đã bật "Anyone with link"), nên fetch()
+// luôn báo lỗi dù dữ liệu đọc được bình thường ở phía server. Thẻ <script> không bị CORS
+// chặn nên đây là cách chuẩn để đọc Google Sheet công khai từ web page tĩnh.
+function fetchSheetJSONP(name){
+  return new Promise((resolve, reject) => {
+    const cbName = 'gvizCB_' + Math.random().toString(36).slice(2);
+    let done = false;
+    const cleanup = () => {
+      delete window[cbName];
+      if(script.parentNode) script.parentNode.removeChild(script);
+      clearTimeout(timer);
+    };
+    window[cbName] = (resp) => {
+      if(done) return;
+      done = true;
+      cleanup();
+      if(!resp || resp.status === 'error' || !resp.table){
+        reject(new Error(`Sheet ${name} chưa cho phép truy cập công khai hoặc không tồn tại`));
+        return;
+      }
+      const rows = (resp.table.rows||[]).map(r =>
+        (r.c||[]).map(c => c ? (c.f !== undefined && c.f !== null ? c.f : (c.v !== undefined && c.v !== null ? c.v : '')) : '')
+      );
+      resolve(rows);
+    };
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json;responseHandler:${cbName}&sheet=${encodeURIComponent(name)}`;
+    const script = document.createElement('script');
+    script.src = url;
+    script.onerror = () => { if(done) return; done = true; cleanup(); reject(new Error(`Không tải được sheet ${name}`)); };
+    document.head.appendChild(script);
+    const timer = setTimeout(() => {
+      if(done) return; done = true; cleanup();
+      reject(new Error(`Hết thời gian chờ tải sheet ${name}`));
+    }, 12000);
+  });
+}
+
+async function fetchSheet(name){
+  // Dữ liệu JSON trả về từ gviz đã KHÔNG bao gồm dòng tiêu đề (header nằm riêng ở resp.table.cols),
+  // nên không cần bỏ dòng đầu như khi parse CSV thô.
+  return fetchSheetJSONP(name);
+}
+
+// Sheet riêng của từng thành viên (đã cập nhật cấu trúc cột theo Google Sheet mới nhất):
+// A Mã CV | B Tên công việc | C Loại công việc | D Ngày bắt đầu | E Deadline |
+// F Ngày xong | G Tiến độ (%) | H Trạng thái | I Hoàn thành đúng hạn? |
+// J Ngày cập nhật gần nhất | K Báo cáo chi tiết
+async function fetchMemberTasks(nguoi, sheetName){
+  const rows = await fetchSheet(sheetName);
+  // Lọc an toàn: bỏ dòng tiêu đề nếu gviz lỡ trả về (r[0]==='Mã CV'), và bỏ dòng
+  // mẫu/trống chưa có Tên công việc (r[1]) — đây là nguyên nhân đếm dư trước đây.
+  return rows.filter(r=>r[0] && String(r[0]).trim()!=='Mã CV' && r[1] && String(r[1]).trim()!=='').map(r=>({
+    ma:r[0]||'', ten:r[1]||'', loai:r[2]||'', nguoi,
+    ngayBatDau:r[3]||'', han:r[4]||'', ngayXong:r[5]||'',
+    tienDo:toPercent(r[6]), trangThai:r[7]||'',
+    hoanThanhDungHan: r[8]==='Có' ? true : (r[8]==='Không' ? false : undefined),
+    capNhat:r[9]||'', baoCaoChiTiet:r[10]||''
+  }));
+}
+
+async function loadData(){
+  const badge = document.getElementById('lastUpdate');
+  try{
+    const memberEntries = Object.entries(memberSheetMap);
+    const [memberResults, kqRows] = await Promise.all([
+      Promise.all(memberEntries.map(([nguoi, sheetName]) => fetchMemberTasks(nguoi, sheetName))),
+      fetchSheet('KetQua')
+    ]);
+    tasks = memberResults.flat();
+    tasks.forEach(t=>{ t.overdue = isOverdue(t); });
+    results = kqRows.filter(r=>r[1]).map(r=>({
+      nguoi:r[1]||'', ketQua:r[2]||'', giaTri:r[3]||'', ngay:r[4]||'',
+      dungHan: r[5]==='Có' ? true : (r[5]==='Không' ? false : undefined)
+    }));
+    badge.textContent = new Date().toLocaleString('vi-VN');
+    document.getElementById('syncBadge').style.borderColor = 'var(--green)';
+  }catch(e){
+    badge.textContent = 'Lỗi tải dữ liệu: ' + (e && e.message ? e.message : 'không xác định') +
+      ' — kiểm tra quyền chia sẻ Google Sheet (Anyone with link)';
+    document.getElementById('syncBadge').style.borderColor = 'var(--red)';
+    console.error(e);
+  }
+  render();
+}
+
+const statusMap = {
+  "Đang thực hiện":"st-inprogress", "Hoàn thành":"st-done", "Trễ hạn":"st-late",
+  "Hoãn lại":"st-pending", "Hủy bỏ":"st-cancel"
+};
+
+function initials(name){
+  const p = name.replace(/^(Chị|Anh)\s+/,'').trim();
+  return p.slice(0,2).toUpperCase();
+}
+
+// Cập nhật danh sách lựa chọn của dropdown Loại/Trạng thái/Thành viên dựa trên dữ liệu
+// hiện có, đồng thời giữ nguyên lựa chọn đang chọn nếu vẫn còn hợp lệ.
+function populateAssignFilterOptions(tasks){
+  const loaiSel = document.getElementById('filterLoai');
+  const curLoai = loaiSel.value;
+  const loaiSet = Array.from(new Set(tasks.map(t=>t.loai).filter(Boolean))).sort((a,b)=>a.localeCompare(b,'vi'));
+  loaiSel.innerHTML = '<option value="">Loại: Tất cả</option>' + loaiSet.map(l=>`<option value="${l}">${l}</option>`).join('');
+  loaiSel.value = loaiSet.includes(curLoai) ? curLoai : '';
+
+  const ttSel = document.getElementById('filterTrangThai');
+  const curTT = ttSel.value;
+  const ttSet = Object.keys(statusMap);
+  ttSel.innerHTML = '<option value="">Trạng thái: Tất cả</option>' + ttSet.map(s=>`<option value="${s}">${s}</option>`).join('');
+  ttSel.value = ttSet.includes(curTT) ? curTT : '';
+
+  const ngSel = document.getElementById('filterNguoi');
+  const curNg = ngSel.value;
+  ngSel.innerHTML = '<option value="">Thành viên: Tất cả</option>' + members.map(m=>`<option value="${m}">${m}</option>`).join('');
+  ngSel.value = members.includes(curNg) ? curNg : '';
+
+  const tenList = document.getElementById('tenSuggestList');
+  if(tenList){
+    const tenSet = Array.from(new Set(tasks.map(t=>t.ten).filter(Boolean))).sort((a,b)=>a.localeCompare(b,'vi'));
+    tenList.innerHTML = tenSet.map(t=>`<option value="${escapeHtml(t)}"></option>`).join('');
+  }
+}
+
+// Áp dụng bộ lọc riêng của bảng phân công lên danh sách task (không đụng tới `tasks`/`results` gốc)
+function applyAssignFilters(list){
+  return list.filter(t=>{
+    if(assignFilters.ma && !String(t.ma||'').toLowerCase().includes(assignFilters.ma.toLowerCase())) return false;
+    if(assignFilters.ten && !String(t.ten||'').toLowerCase().includes(assignFilters.ten.toLowerCase())) return false;
+    if(assignFilters.loai && t.loai !== assignFilters.loai) return false;
+    if(assignFilters.trangThai && t.trangThai !== assignFilters.trangThai) return false;
+    if(assignFilters.nguoi && t.nguoi !== assignFilters.nguoi) return false;
+    // Lọc theo khoảng Ngày báo cáo
+    if(assignFilters.capNhatFrom || assignFilters.capNhatTo){
+      const d = parseVNDate(t.capNhat);
+      if(d){
+        d.setHours(0,0,0,0);
+        if(assignFilters.capNhatFrom && d.getTime() < assignFilters.capNhatFrom.getTime()) return false;
+        if(assignFilters.capNhatTo && d.getTime() > assignFilters.capNhatTo.getTime()) return false;
+      }
+      // không rõ ngày thì không loại, tránh mất dữ liệu do sai định dạng
+    }
+    // Lọc Hạn hoàn thành: chỉ hiển thị các mốc <= ngày được chọn (ví dụ chọn 03/07/2026
+    // thì hiển thị cả 01/07, 02/07, 03/07/2026 — "trở về trước")
+    if(assignFilters.hanCutoff){
+      const d = parseVNDate(t.han);
+      if(d){
+        d.setHours(0,0,0,0);
+        if(d.getTime() > assignFilters.hanCutoff.getTime()) return false;
+      }
+    }
+    return true;
+  });
+}
+
+function setupAssignFilterBar(){
+  const maInput = document.getElementById('filterMa');
+  const tenInput = document.getElementById('filterTen');
+  const loaiSel = document.getElementById('filterLoai');
+  const ttSel = document.getElementById('filterTrangThai');
+  const ngSel = document.getElementById('filterNguoi');
+  const capNhatFromInput = document.getElementById('filterCapNhatFrom');
+  const capNhatToInput = document.getElementById('filterCapNhatTo');
+  const hanCutoffInput = document.getElementById('filterHanCutoff');
+  const resetBtn = document.getElementById('assignFilterReset');
+
+  const applyAndRender = () => {
+    assignFilters.ma = maInput.value.trim();
+    assignFilters.ten = tenInput.value.trim();
+    assignFilters.loai = loaiSel.value;
+    assignFilters.trangThai = ttSel.value;
+    assignFilters.nguoi = ngSel.value;
+    assignFilters.capNhatFrom = capNhatFromInput.value ? new Date(capNhatFromInput.value+'T00:00:00') : null;
+    assignFilters.capNhatTo = capNhatToInput.value ? new Date(capNhatToInput.value+'T00:00:00') : null;
+    assignFilters.hanCutoff = hanCutoffInput.value ? new Date(hanCutoffInput.value+'T00:00:00') : null;
+    renderAssignTable(lastAssignTasks);
+  };
+
+  maInput.addEventListener('input', applyAndRender);
+  tenInput.addEventListener('input', applyAndRender);
+  loaiSel.addEventListener('change', applyAndRender);
+  ttSel.addEventListener('change', applyAndRender);
+  ngSel.addEventListener('change', applyAndRender);
+  capNhatFromInput.addEventListener('change', applyAndRender);
+  capNhatToInput.addEventListener('change', applyAndRender);
+  hanCutoffInput.addEventListener('change', applyAndRender);
+  resetBtn.addEventListener('click', () => {
+    maInput.value=''; tenInput.value=''; loaiSel.value=''; ttSel.value=''; ngSel.value='';
+    capNhatFromInput.value=''; capNhatToInput.value=''; hanCutoffInput.value='';
+    assignFilters = {ma:'', ten:'', loai:'', trangThai:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null};
+    renderAssignTable(lastAssignTasks);
+  });
+}
+
+// So sánh 2 task theo field được chọn để sắp xếp (chuỗi: theo bảng chữ cái tiếng Việt,
+// ngày: theo thời gian thực, tiến độ: theo số). Thiếu dữ liệu luôn xếp xuống cuối.
+function compareForSort(a, b, field){
+  if(field === 'tienDo'){
+    return (a.tienDo||0) - (b.tienDo||0);
+  }
+  if(field === 'han' || field === 'capNhat' || field === 'ngayBatDau' || field === 'ngayXong'){
+    const da = parseVNDate(a[field]);
+    const db = parseVNDate(b[field]);
+    if(!da && !db) return 0;
+    if(!da) return 1;
+    if(!db) return -1;
+    return da.getTime() - db.getTime();
+  }
+  return String(a[field]||'').localeCompare(String(b[field]||''), 'vi');
+}
+
+// Gắn sự kiện click để sắp xếp lên các cột có thể sort trong bảng phân công.
+// Click lần 1: tăng dần, lần 2: giảm dần, lần 3: bỏ sắp xếp (quay về thứ tự gốc).
+function setupAssignSort(){
+  document.querySelectorAll('#panel-assign thead th.sortable').forEach(th=>{
+    th.dataset.label = th.textContent.trim();
+    th.addEventListener('click', () => {
+      const field = th.dataset.field;
+      if(assignSort.field === field){
+        if(assignSort.dir === 1){ assignSort.dir = -1; }
+        else { assignSort.field = null; assignSort.dir = 1; }
+      } else {
+        assignSort.field = field; assignSort.dir = 1;
+      }
+      renderAssignTable(lastAssignTasks);
+    });
+  });
+}
+
+function updateSortArrows(){
+  document.querySelectorAll('#panel-assign thead th.sortable').forEach(th=>{
+    const field = th.dataset.field;
+    let arrow = '';
+    if(assignSort.field === field) arrow = `<span class="sort-arrow">${assignSort.dir===1?'▲':'▼'}</span>`;
+    th.innerHTML = th.dataset.label + arrow;
+  });
+}
+
+function render(){
+  renderInner(tasks, results);
+}
+
+function renderInner(tasks, results){
+  const overdueList = tasks.filter(t=>t.overdue);
+  document.getElementById('kpiTotal').textContent = tasks.length;
+  document.getElementById('kpiProgress').textContent = tasks.filter(t=>t.trangThai==="Đang thực hiện").length;
+  document.getElementById('kpiDone').textContent = tasks.filter(t=>t.trangThai==="Hoàn thành").length;
+  document.getElementById('kpiLate').textContent = tasks.filter(t=>t.trangThai==="Trễ hạn" || t.overdue).length;
+
+  const doneResults = results.filter(r=>r.dungHan!==undefined);
+  if(doneResults.length){
+    const onTime = doneResults.filter(r=>r.dungHan).length;
+    document.getElementById('kpiOnTime').textContent = Math.round(onTime/doneResults.length*100)+"%";
+  }
+
+  const banner = document.getElementById('overdueBanner');
+  if(overdueList.length){
+    banner.style.display = 'block';
+    banner.innerHTML = `⚠️ Có ${overdueList.length} công việc đã quá hạn hoàn thành chưa xử lý xong: ` +
+      overdueList.slice(0,6).map(t=>`${t.ten} (${t.nguoi}, hạn ${t.han})`).join('; ') +
+      (overdueList.length>6 ? ` và ${overdueList.length-6} việc khác…` : '');
+  } else {
+    banner.style.display = 'none';
+  }
+
+  // assign table — nhóm theo từng thành viên, có dòng phân tách, Tên đứng trước Mã CV
+  lastAssignTasks = tasks;
+  populateAssignFilterOptions(tasks);
+  renderAssignTable(tasks);
+
+  // overview list — mỗi Mã CV chỉ hiển thị DUY NHẤT 1 dòng (không lặp lại), lấy theo
+  // dòng có Ngày báo cáo gần với hôm nay nhất trong số các lần báo cáo của chính mã đó
+  // (mỗi công việc có thể được báo cáo nhiều lần với % khác nhau — ta chỉ lấy bản mới nhất).
+  const ov = document.getElementById('overviewList');
+  const dateLabel = document.getElementById('overviewDateLabel');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const latestByMa = new Map();
+  tasks.forEach(t=>{
+    const d = parseVNDate(t.capNhat);
+    if(!d) return;
+    d.setHours(0,0,0,0);
+    if(d.getTime() > today.getTime()) return; // bỏ qua báo cáo có ngày trong tương lai
+    const key = t.ma || t.ten; // dùng Mã CV làm khóa duy nhất, dự phòng theo tên nếu thiếu mã
+    const existing = latestByMa.get(key);
+    if(!existing || d.getTime() > existing.date.getTime()){
+      latestByMa.set(key, {task:t, date:d});
+    }
+  });
+  const latestTasks = Array.from(latestByMa.values())
+    .sort((a,b)=>b.date.getTime()-a.date.getTime())
+    .map(x=>x.task);
+
+  dateLabel.textContent = latestTasks.length ? '— theo báo cáo mới nhất của từng Mã CV' : '';
+
+  if(latestTasks.length){
+    ov.className='';
+    ov.innerHTML = latestTasks.map(t=>{
+      const fillClass = t.trangThai === "Hoàn thành" ? 'done-fill'
+        : (t.overdue && t.trangThai === "Đang thực hiện") ? 'overdue-fill' : '';
+      return `
+      <div class="overview-item" data-ma="${escapeHtml(t.ma||'')}">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
+          <span><b style="color:var(--blue-d)">${escapeHtml(t.ma||'')}</b> - ${escapeHtml(t.ten||'')}</span><span style="color:var(--muted)">${t.tienDo||0}%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill ${fillClass}" style="width:${t.tienDo||0}%"></div></div>
+      </div>`;
+    }).join('');
+    ov.querySelectorAll('.overview-item').forEach(el=>{
+      el.addEventListener('click', () => goToAssignFilterByMa(el.dataset.ma));
+    });
+  } else {
+    ov.className='empty-note';
+    ov.textContent = 'Chưa có báo cáo nào.';
+  }
+
+  const rl = document.getElementById('resultsList');
+  if(results.length){
+    rl.className='';
+    rl.innerHTML = results.slice(0,8).map(r=>`
+      <div style="padding:10px 0;border-bottom:1px solid #eef1f8">
+        <b>${r.nguoi}</b> — ${r.ketQua} ${r.giaTri?`<span style="color:var(--green)">(${r.giaTri})</span>`:''}
+        <div style="color:var(--muted);font-size:11.5px">${r.ngay||''}</div>
+      </div>`).join('');
+  }
+
+  // members grid
+  const mg = document.getElementById('memberGrid');
+  mg.innerHTML = members.map(m=>{
+    const mt = tasks.filter(t=>t.nguoi===m);
+    const done = mt.filter(t=>t.trangThai==="Hoàn thành").length;
+    const late = mt.filter(t=>t.trangThai==="Trễ hạn").length;
+    return `<div class="member-card">
+      <div class="member-head">
+        <div class="avatar">${initials(m)}</div>
+        <div><div class="member-name">${m}</div><div class="member-role">${roles[m]||"Nhân viên mua hàng"}</div></div>
+      </div>
+      <div class="member-stats">
+        <div>Tổng CV<b>${mt.length}</b></div>
+        <div>Hoàn thành<b>${done}</b></div>
+        <div>Trễ hạn<b>${late}</b></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // kpi table
+  const kt = document.getElementById('kpiTable');
+  kt.innerHTML = members.map(m=>{
+    const mr = results.filter(r=>r.nguoi===m && r.dungHan!==undefined);
+    const total = mr.length;
+    const onTime = mr.filter(r=>r.dungHan).length;
+    const pct = total? Math.round(onTime/total*100) : null;
+    let rank = "Chưa có dữ liệu";
+    if(pct!==null){
+      rank = pct>=90?"Xuất sắc":pct>=75?"Tốt":pct>=60?"Đạt":"Cần cải thiện";
+    }
+    return `<tr><td>${m}</td><td>${total}</td><td>${onTime}</td><td>${pct!==null?pct+'%':'—'}</td><td>${rank}</td></tr>`;
+  }).join('');
+
+  renderCharts(tasks);
+}
+
+function renderAssignTable(tasksIn){
+  const tbody = document.getElementById('assignTable');
+  const tasks = applyAssignFilters(tasksIn || []);
+  if(tasksIn && tasksIn.length){
+    let html = '';
+    members.forEach(m=>{
+      const mt = tasks.filter(t=>t.nguoi===m);
+      if(!mt.length) return;
+      if(assignSort.field){
+        mt.sort((a,b) => compareForSort(a,b,assignSort.field) * assignSort.dir);
+      }
+      html += `<tr class="member-sep-row" style="background:rgba(47,111,237,.07)">
+        <td colspan="11" style="font-weight:700;color:var(--blue-d);padding:8px 10px">
+          <span class="avatar" style="width:22px;height:22px;font-size:10px;display:inline-flex;vertical-align:middle;margin-right:8px">${initials(m)}</span>
+          ${m} <span style="font-weight:500;color:var(--muted);font-size:12px">(${mt.length} đầu việc)</span>
+        </td></tr>`;
+      html += mt.map(t=>`
+        <tr class="${t.overdue?'row-overdue':''}">
+          <td class="wrap-cell">${escapeHtml(t.ten||'')}</td><td>${escapeHtml(t.ma||'')}</td><td class="wrap-cell">${escapeHtml(t.loai||'')}</td>
+          <td>${formatDateOnly(t.ngayBatDau)}</td>
+          <td>${formatDateOnly(t.han)}</td>
+          <td>${formatDateOnly(t.ngayXong)}</td>
+          <td style="min-width:120px"><div class="progress-bar"><div class="progress-fill ${t.trangThai === "Hoàn thành" ? 'done-fill' : (t.overdue && t.trangThai==="Đang thực hiện")?'overdue-fill':''}" style="width:${t.tienDo||0}%"></div></div></td>
+          <td><span class="status ${statusMap[t.trangThai]||''}">${t.trangThai||''}</span></td>
+          <td>${t.hoanThanhDungHan===true?'<span class="status st-done">Có</span>':t.hoanThanhDungHan===false?'<span class="status st-late">Không</span>':''}</td>
+          <td>${formatDateOnly(t.capNhat)}</td>
+          <td>${t.baoCaoChiTiet?`<button type="button" class="btn-view-report" data-report="${escapeHtml(t.baoCaoChiTiet)}" data-title="${escapeHtml((t.ma?t.ma+' — ':'')+(t.ten||''))}" onclick="openReportModal(this)">Xem chi tiết</button>`:'<span style="color:var(--muted)">—</span>'}${t.overdue?' <span class="status st-late">Quá hạn</span>':''}</td>
+        </tr>`).join('');
+    });
+    tbody.innerHTML = html || '<tr><td colspan="11" class="empty-note">Không có công việc nào khớp bộ lọc đã chọn.</td></tr>';
+  } else {
+    tbody.innerHTML = '<tr><td colspan="11" class="empty-note">Chưa có dữ liệu.</td></tr>';
+  }
+  updateSortArrows();
+}
+
+function renderCharts(tasks){
+  if(typeof Chart === 'undefined') return;
+  const palette = ['#2f6fed','#7c5cf0','#0ea968','#c8790a','#e0424a','#0aa7c8','#e07f2f'];
+
+  const byMemberCounts = members.map(m => tasks.filter(t=>t.nguoi===m).length);
+  const ctxM = document.getElementById('chartByMember');
+  if(ctxM){
+    if(chartByMember) chartByMember.destroy();
+    chartByMember = new Chart(ctxM, {
+      type:'bar',
+      data:{ labels: members, datasets:[{ label:'Số đầu việc', data: byMemberCounts,
+        backgroundColor: palette, borderRadius:6 }] },
+      options:{ plugins:{legend:{display:false}}, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } } }
+    });
+  }
+
+  const loaiCounts = {};
+  tasks.forEach(t=>{ const l = t.loai || 'Khác'; loaiCounts[l] = (loaiCounts[l]||0)+1; });
+  const loaiLabels = Object.keys(loaiCounts);
+  const ctxL = document.getElementById('chartByLoai');
+  if(ctxL){
+    if(chartByLoai) chartByLoai.destroy();
+    chartByLoai = new Chart(ctxL, {
+      type:'pie',
+      data:{ labels: loaiLabels, datasets:[{ data: loaiLabels.map(l=>loaiCounts[l]),
+        backgroundColor: palette }] },
+      options:{ plugins:{legend:{position:'bottom'}} }
+    });
+  }
+}
+
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-'+tab.dataset.tab).classList.add('active');
+  });
+});
+
+function renderFooterLinks(){
+  // Chỉ link tới toàn bộ Google Sheet (Google không lộ mã gid từng tab qua các công cụ hiện có,
+  // nên không thể tự động nhảy đúng tab — anh cần tự chọn tab sau khi mở).
+  const el = document.getElementById('footerSheetLink');
+  if(el){
+    el.innerHTML = `<a href="https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit" target="_blank" rel="noopener">Google Sheet "Ke Hoach Bao Cao Ban Mua Hang"</a>`;
+  }
+}
+
+document.getElementById('refreshBtn').addEventListener('click', loadData);
+setupAssignFilterBar();
+setupAssignSort();
+renderFooterLinks();
+loadData();
+</script>
+</body>
+</html>
