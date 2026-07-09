@@ -54,6 +54,12 @@
   .progress-bar{width:100%;height:8px;background:#e6ebf7;border-radius:6px;overflow:hidden}
   .progress-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--blue),var(--purple))}
   .progress-fill.overdue-fill{background:linear-gradient(90deg,var(--red),#ff8f93)}
+  .progress-fill.done-fill{background:linear-gradient(90deg,var(--green),#5fd6a5)}
+  .card-compact{padding:14px 16px}
+  .card-compact h3{font-size:13.5px;margin-bottom:10px}
+  #overviewList{max-height:250px;overflow-y:auto;padding-right:4px}
+  #overviewList .overview-item{padding:5px 6px;margin:-5px -6px 2px -6px}
+  #overviewList .overview-item .progress-bar{height:6px}
   .overview-item{cursor:pointer;transition:background .15s ease;padding:6px;border-radius:8px;margin:-6px -6px 8px -6px}
   .overview-item:hover{background:rgba(47,111,237,.08)}
   .status{padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap}
@@ -122,7 +128,7 @@
   <div class="panel active" id="panel-overview">
     <div id="overdueBanner" style="display:none;background:rgba(224,66,74,.08);border:1px solid var(--red);border-radius:14px;padding:14px 18px;margin-bottom:18px;color:var(--red);font-size:13.5px;font-weight:600"></div>
     <div class="grid-2">
-      <div class="card">
+      <div class="card card-compact">
         <h3><span class="dot"></span>Tiến độ các đầu việc <span id="overviewDateLabel" style="font-weight:500;color:var(--muted);font-size:12px"></span></h3>
         <div id="overviewList" class="empty-note">Chưa có dữ liệu.</div>
       </div>
@@ -136,24 +142,32 @@
   <div class="panel" id="panel-assign">
     <div class="card">
       <h3><span class="dot"></span>Bảng phân công &amp; tiến độ chi tiết</h3>
-      <div id="assignFilterBar" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;padding:12px 14px;background:var(--panel2);border:1px solid var(--border);border-radius:12px">
-        <input type="text" id="filterMa" placeholder="🔍 Tìm Mã CV..." style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;width:140px">
-        <select id="filterLoai" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-          <option value="">Loại: Tất cả</option>
-        </select>
-        <select id="filterTrangThai" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-          <option value="">Trạng thái: Tất cả</option>
-        </select>
-        <select id="filterNguoi" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-          <option value="">Thành viên: Tất cả</option>
-        </select>
-        <label style="font-size:12.5px;color:var(--muted)">Báo cáo từ</label>
-        <input type="date" id="filterCapNhatFrom" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-        <label style="font-size:12.5px;color:var(--muted)">đến</label>
-        <input type="date" id="filterCapNhatTo" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-        <label style="font-size:12.5px;color:var(--muted)">Hạn hoàn thành đến</label>
-        <input type="date" id="filterHanCutoff" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-        <div class="badge" id="assignFilterReset" style="cursor:pointer;user-select:none">✕ Xóa lọc</div>
+      <div id="assignFilterBar" style="display:flex;flex-direction:column;gap:12px;margin-bottom:14px;padding:12px 14px;background:var(--panel2);border:1px solid var(--border);border-radius:12px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <input type="text" id="filterMa" placeholder="🔍 Tìm Mã CV..." style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;width:140px">
+          <input type="text" id="filterTen" list="tenSuggestList" placeholder="🔍 Tìm tên công việc..." autocomplete="off" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;width:220px">
+          <datalist id="tenSuggestList"></datalist>
+          <select id="filterLoai" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+            <option value="">Loại: Tất cả</option>
+          </select>
+          <select id="filterTrangThai" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+            <option value="">Trạng thái: Tất cả</option>
+          </select>
+          <select id="filterNguoi" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+            <option value="">Thành viên: Tất cả</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <label style="font-size:12.5px;color:var(--muted)">Báo cáo từ</label>
+          <input type="date" id="filterCapNhatFrom" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+          <label style="font-size:12.5px;color:var(--muted)">đến</label>
+          <input type="date" id="filterCapNhatTo" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <label style="font-size:12.5px;color:var(--muted)">Hạn hoàn thành đến</label>
+          <input type="date" id="filterHanCutoff" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+          <div class="badge" id="assignFilterReset" style="cursor:pointer;user-select:none">✕ Xóa lọc</div>
+        </div>
       </div>
       <table>
         <thead><tr>
@@ -232,7 +246,7 @@ let chartByMember, chartByLoai;
 // Bộ lọc riêng của bảng "Phân công & tiến độ chi tiết" (không ảnh hưởng các tab khác)
 // - capNhatFrom/capNhatTo: lọc theo khoảng Ngày báo cáo
 // - hanCutoff: lọc Hạn hoàn thành <= ngày được chọn (mốc "trở về trước")
-let assignFilters = {ma:'', loai:'', trangThai:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null};
+let assignFilters = {ma:'', ten:'', loai:'', trangThai:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null};
 let lastAssignTasks = []; // tasks gốc, dùng lại mỗi khi bộ lọc/sắp xếp trong bảng thay đổi
 let assignSort = {field:null, dir:1}; // dir: 1 = tăng dần, -1 = giảm dần
 
@@ -426,12 +440,19 @@ function populateAssignFilterOptions(tasks){
   const curNg = ngSel.value;
   ngSel.innerHTML = '<option value="">Thành viên: Tất cả</option>' + members.map(m=>`<option value="${m}">${m}</option>`).join('');
   ngSel.value = members.includes(curNg) ? curNg : '';
+
+  const tenList = document.getElementById('tenSuggestList');
+  if(tenList){
+    const tenSet = Array.from(new Set(tasks.map(t=>t.ten).filter(Boolean))).sort((a,b)=>a.localeCompare(b,'vi'));
+    tenList.innerHTML = tenSet.map(t=>`<option value="${escapeHtml(t)}"></option>`).join('');
+  }
 }
 
 // Áp dụng bộ lọc riêng của bảng phân công lên danh sách task (không đụng tới `tasks`/`results` gốc)
 function applyAssignFilters(list){
   return list.filter(t=>{
     if(assignFilters.ma && !String(t.ma||'').toLowerCase().includes(assignFilters.ma.toLowerCase())) return false;
+    if(assignFilters.ten && !String(t.ten||'').toLowerCase().includes(assignFilters.ten.toLowerCase())) return false;
     if(assignFilters.loai && t.loai !== assignFilters.loai) return false;
     if(assignFilters.trangThai && t.trangThai !== assignFilters.trangThai) return false;
     if(assignFilters.nguoi && t.nguoi !== assignFilters.nguoi) return false;
@@ -460,6 +481,7 @@ function applyAssignFilters(list){
 
 function setupAssignFilterBar(){
   const maInput = document.getElementById('filterMa');
+  const tenInput = document.getElementById('filterTen');
   const loaiSel = document.getElementById('filterLoai');
   const ttSel = document.getElementById('filterTrangThai');
   const ngSel = document.getElementById('filterNguoi');
@@ -470,6 +492,7 @@ function setupAssignFilterBar(){
 
   const applyAndRender = () => {
     assignFilters.ma = maInput.value.trim();
+    assignFilters.ten = tenInput.value.trim();
     assignFilters.loai = loaiSel.value;
     assignFilters.trangThai = ttSel.value;
     assignFilters.nguoi = ngSel.value;
@@ -480,6 +503,7 @@ function setupAssignFilterBar(){
   };
 
   maInput.addEventListener('input', applyAndRender);
+  tenInput.addEventListener('input', applyAndRender);
   loaiSel.addEventListener('change', applyAndRender);
   ttSel.addEventListener('change', applyAndRender);
   ngSel.addEventListener('change', applyAndRender);
@@ -487,9 +511,9 @@ function setupAssignFilterBar(){
   capNhatToInput.addEventListener('change', applyAndRender);
   hanCutoffInput.addEventListener('change', applyAndRender);
   resetBtn.addEventListener('click', () => {
-    maInput.value=''; loaiSel.value=''; ttSel.value=''; ngSel.value='';
+    maInput.value=''; tenInput.value=''; loaiSel.value=''; ttSel.value=''; ngSel.value='';
     capNhatFromInput.value=''; capNhatToInput.value=''; hanCutoffInput.value='';
-    assignFilters = {ma:'', loai:'', trangThai:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null};
+    assignFilters = {ma:'', ten:'', loai:'', trangThai:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null};
     renderAssignTable(lastAssignTasks);
   });
 }
@@ -597,13 +621,14 @@ function renderInner(tasks, results){
   if(latestTasks.length){
     ov.className='';
     ov.innerHTML = latestTasks.map(t=>{
-      const isRedFill = (t.overdue && t.trangThai === "Đang thực hiện");
+      const fillClass = t.trangThai === "Hoàn thành" ? 'done-fill'
+        : (t.overdue && t.trangThai === "Đang thực hiện") ? 'overdue-fill' : '';
       return `
       <div class="overview-item" data-ma="${escapeHtml(t.ma||'')}">
         <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
           <span><b style="color:var(--blue-d)">${escapeHtml(t.ma||'')}</b> - ${escapeHtml(t.ten||'')}</span><span style="color:var(--muted)">${t.tienDo||0}%</span>
         </div>
-        <div class="progress-bar"><div class="progress-fill ${isRedFill?'overdue-fill':''}" style="width:${t.tienDo||0}%"></div></div>
+        <div class="progress-bar"><div class="progress-fill ${fillClass}" style="width:${t.tienDo||0}%"></div></div>
       </div>`;
     }).join('');
     ov.querySelectorAll('.overview-item').forEach(el=>{
@@ -680,7 +705,7 @@ function renderAssignTable(tasksIn){
         <tr class="${t.overdue?'row-overdue':''}">
           <td>${t.ten}</td><td>${t.ma}</td><td>${t.loai||''}</td>
           <td>${formatDateOnly(t.han)}</td>
-          <td style="min-width:120px"><div class="progress-bar"><div class="progress-fill ${(t.overdue && t.trangThai==="Đang thực hiện")?'overdue-fill':''}" style="width:${t.tienDo||0}%"></div></div></td>
+          <td style="min-width:120px"><div class="progress-bar"><div class="progress-fill ${t.trangThai === "Hoàn thành" ? 'done-fill' : (t.overdue && t.trangThai==="Đang thực hiện")?'overdue-fill':''}" style="width:${t.tienDo||0}%"></div></div></td>
           <td><span class="status ${statusMap[t.trangThai]||''}">${t.trangThai||''}</span></td>
           <td>${formatDateOnly(t.capNhat)}</td>
           <td>${t.overdue?'<span class="status st-late">Quá hạn</span>':''}</td>
