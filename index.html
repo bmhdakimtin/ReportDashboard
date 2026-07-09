@@ -51,6 +51,35 @@
   td{padding:11px 10px;border-bottom:1px solid #eef1f8}
   tr:hover td{background:rgba(47,111,237,.05)}
 
+  /* Bảng phân công & tiến độ chi tiết: giãn cột cho dễ nhìn + cho phép cuộn ngang trên màn nhỏ */
+  .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px}
+  .assign-table{min-width:1240px;table-layout:fixed}
+  .assign-table th, .assign-table td{padding:12px 16px;white-space:nowrap}
+  .assign-table td.wrap-cell{white-space:normal}
+  .assign-table col.col-ten{width:220px}
+  .assign-table col.col-ma{width:100px}
+  .assign-table col.col-loai{width:120px}
+  .assign-table col.col-ngaybatdau{width:120px}
+  .assign-table col.col-deadline{width:120px}
+  .assign-table col.col-ngayxong{width:120px}
+  .assign-table col.col-tiendo{width:150px}
+  .assign-table col.col-trangthai{width:130px}
+  .assign-table col.col-dapung{width:100px}
+  .assign-table col.col-capnhat{width:150px}
+  .assign-table col.col-baocao{width:120px}
+  .btn-view-report{background:rgba(47,111,237,.1);color:var(--blue-d);border:1px solid rgba(47,111,237,.25);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+  .btn-view-report:hover{background:rgba(47,111,237,.18)}
+
+  /* Modal xem báo cáo chi tiết */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(20,26,45,.5);z-index:1000;align-items:center;justify-content:center;padding:20px}
+  .modal-overlay.open{display:flex}
+  .modal-box{background:var(--panel);border-radius:16px;max-width:560px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(20,30,60,.3);padding:22px 24px}
+  .modal-box h4{margin:0 0 4px;font-size:16px;color:var(--text)}
+  .modal-box .modal-sub{color:var(--muted);font-size:12.5px;margin:0 0 16px}
+  .modal-box .modal-body{white-space:pre-wrap;font-size:13.5px;line-height:1.6;color:var(--text);background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+  .modal-close{float:right;cursor:pointer;color:var(--muted);font-size:20px;line-height:1;border:none;background:none}
+  .modal-close:hover{color:var(--text)}
+
   .progress-bar{width:100%;height:8px;background:#e6ebf7;border-radius:6px;overflow:hidden}
   .progress-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--blue),var(--purple))}
   .progress-fill.overdue-fill{background:linear-gradient(90deg,var(--red),#ff8f93)}
@@ -169,24 +198,32 @@
           <div class="badge" id="assignFilterReset" style="cursor:pointer;user-select:none">✕ Xóa lọc</div>
         </div>
       </div>
-      <table>
+      <div class="table-scroll">
+      <table class="assign-table">
+        <colgroup>
+          <col class="col-ten"><col class="col-ma"><col class="col-loai">
+          <col class="col-ngaybatdau"><col class="col-deadline"><col class="col-ngayxong">
+          <col class="col-tiendo"><col class="col-trangthai"><col class="col-dapung">
+          <col class="col-capnhat"><col class="col-baocao">
+        </colgroup>
         <thead><tr>
           <th class="sortable" data-field="ten">Tên công việc</th>
           <th class="sortable" data-field="ma">Mã CV</th>
-          <th class="sortable" data-field="loai">Loại</th>
+          <th class="sortable" data-field="loai">Loại công việc</th>
           <th class="sortable" data-field="ngayBatDau">Ngày bắt đầu</th>
-          <th class="sortable" data-field="han">Hạn hoàn thành</th>
+          <th class="sortable" data-field="han">Deadline</th>
           <th class="sortable" data-field="ngayXong">Ngày xong</th>
-          <th class="sortable" data-field="tienDo">Tiến độ</th>
+          <th class="sortable" data-field="tienDo">Tiến độ (%)</th>
           <th class="sortable" data-field="trangThai">Trạng thái</th>
-          <th>Đúng hạn?</th>
-          <th class="sortable" data-field="capNhat">Ngày báo cáo</th>
+          <th>Đáp ứng</th>
+          <th class="sortable" data-field="capNhat">Ngày cập nhật gần nhất</th>
           <th>Báo cáo chi tiết</th>
         </tr></thead>
         <tbody id="assignTable">
           <tr><td colspan="11" class="empty-note">Chưa có dữ liệu.</td></tr>
         </tbody>
       </table>
+      </div>
     </div>
   </div>
 
@@ -223,6 +260,15 @@
     <code>PC_Hoa</code>, <code>PC_Phuc</code>, <code>PC_Dat</code>) và sheet <code>KetQua</code> mỗi khi mở trang hoặc
     bấm "Làm mới", không cần gửi lại file hay nhắn Claude cập nhật thủ công.
     Mỗi người chỉ chỉnh sửa trên sheet của riêng mình — thay đổi sẽ hiện ra ở đây trong vài giây.
+  </div>
+</div>
+
+<div class="modal-overlay" id="reportModal" onclick="if(event.target===this) closeReportModal()">
+  <div class="modal-box">
+    <button type="button" class="modal-close" onclick="closeReportModal()" aria-label="Đóng">&times;</button>
+    <h4 id="reportModalTitle"></h4>
+    <p class="modal-sub">Báo cáo chi tiết</p>
+    <div class="modal-body" id="reportModalBody"></div>
   </div>
 </div>
 
@@ -307,6 +353,21 @@ function escapeHtml(str){
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
+
+// Popup xem nội dung đầy đủ của cột "Báo cáo chi tiết"
+function openReportModal(btn){
+  const title = btn.getAttribute('data-title') || '';
+  const report = btn.getAttribute('data-report') || '';
+  document.getElementById('reportModalTitle').textContent = title;
+  document.getElementById('reportModalBody').textContent = report;
+  document.getElementById('reportModal').classList.add('open');
+}
+function closeReportModal(){
+  document.getElementById('reportModal').classList.remove('open');
+}
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape') closeReportModal();
+});
 
 // Nhảy từ 1 dòng trong "Tiến độ các đầu việc" (tab Tổng quan) sang tab
 // "Phân công & Tiến độ" và tự động lọc đúng Mã CV vừa bấm vào.
@@ -711,7 +772,7 @@ function renderAssignTable(tasksIn){
         </td></tr>`;
       html += mt.map(t=>`
         <tr class="${t.overdue?'row-overdue':''}">
-          <td>${t.ten}</td><td>${t.ma}</td><td>${t.loai||''}</td>
+          <td class="wrap-cell">${escapeHtml(t.ten||'')}</td><td>${escapeHtml(t.ma||'')}</td><td class="wrap-cell">${escapeHtml(t.loai||'')}</td>
           <td>${formatDateOnly(t.ngayBatDau)}</td>
           <td>${formatDateOnly(t.han)}</td>
           <td>${formatDateOnly(t.ngayXong)}</td>
@@ -719,7 +780,7 @@ function renderAssignTable(tasksIn){
           <td><span class="status ${statusMap[t.trangThai]||''}">${t.trangThai||''}</span></td>
           <td>${t.hoanThanhDungHan===true?'<span class="status st-done">Có</span>':t.hoanThanhDungHan===false?'<span class="status st-late">Không</span>':''}</td>
           <td>${formatDateOnly(t.capNhat)}</td>
-          <td>${escapeHtml(t.baoCaoChiTiet||'')}${t.overdue?' <span class="status st-late">Quá hạn</span>':''}</td>
+          <td>${t.baoCaoChiTiet?`<button type="button" class="btn-view-report" data-report="${escapeHtml(t.baoCaoChiTiet)}" data-title="${escapeHtml((t.ma?t.ma+' — ':'')+(t.ten||''))}" onclick="openReportModal(this)">Xem chi tiết</button>`:'<span style="color:var(--muted)">—</span>'}${t.overdue?' <span class="status st-late">Quá hạn</span>':''}</td>
         </tr>`).join('');
     });
     tbody.innerHTML = html || '<tr><td colspan="11" class="empty-note">Không có công việc nào khớp bộ lọc đã chọn.</td></tr>';
