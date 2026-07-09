@@ -206,7 +206,7 @@
     <div class="kpi"><div class="label">Tổng đầu việc</div><div class="value black" id="kpiTotal">0</div></div>
     <div class="kpi"><div class="label">Đang thực hiện</div><div class="value blue" id="kpiProgress">0</div></div>
     <div class="kpi"><div class="label">Hoàn thành</div><div class="value green" id="kpiDone">0</div></div>
-    <div class="kpi"><div class="label">Sắp đến hạn</div><div class="value dark purple" id="kpiDueSoon">0</div></div>
+    <div class="kpi"><div class="label">Sắp đến hạn</div><div class="value purple" id="kpiDueSoon">0</div></div>
     <div class="kpi"><div class="label">Trễ hạn</div><div class="value red" id="kpiLate">0</div></div>
     <div class="kpi"><div class="label">Hoãn lại</div><div class="value amber" id="kpiOnTime">0</div></div>
     <div class="kpi"><div class="label">Huỷ bỏ</div><div class="value" style="color:var(--muted)" id="kpiCancel">0</div></div>
@@ -325,8 +325,9 @@
   <div class="footer-note" id="footerNote">
     Nguồn dữ liệu: <span id="footerSheetLink"></span> — dashboard tự động lấy dữ liệu mới nhất từ sheet việc riêng
     của từng thành viên
-    Mỗi người chỉ chỉnh sửa trên sheet của riêng mình — thay đổi sẽ hiện ra ở đây trong vài giây.\n
-	Author: PHAM DANG TRI
+    Mỗi người chỉ chỉnh sửa trên sheet của riêng mình — thay đổi sẽ hiện ra ở đây trong vài giây.
+    <br><br>
+    Author: PHAM DANG TRI
   </div>
 </div>
 
@@ -827,7 +828,7 @@ function renderInner(tasks, results){
         <div class="member-v2-stat"><b>${mt.length}</b><span>Tổng CV</span></div>
         <div class="member-v2-stat"><b>${inProgress}</b><span>Đang thực hiện</span></div>
         <div class="member-v2-stat green"><b>${done}</b><span>Hoàn thành</span></div>
-        <div class="member-v2-stat amber"><b>${dueSoon}</b><span>Sắp đến hạn</span></div>
+        <div class="member-v2-stat purple"><b>${dueSoon}</b><span>Sắp đến hạn</span></div>
         <div class="member-v2-stat red"><b>${late}</b><span>Trễ hạn</span></div>
         <div class="member-v2-stat amber"><b>${postponed}</b><span>Hoãn lại</span></div>
         <div class="member-v2-stat"><b>${cancelled}</b><span>Huỷ bỏ</span></div>
