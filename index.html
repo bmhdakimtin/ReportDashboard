@@ -82,6 +82,16 @@
   .page-btn:hover:not(:disabled){border-color:var(--gold-d);color:var(--gold-d)}
   .page-btn.active{background:var(--gold-d);border-color:var(--gold-d);color:#fff}
   .page-btn:disabled{opacity:.4;cursor:default}
+  .card-header-row{display:flex;justify-content:space-between;align-items:center;gap:10px 16px;flex-wrap:wrap;margin-bottom:14px}
+  .card-header-row h3{margin:0}
+  .chart-toggle{display:inline-flex;gap:3px;background:var(--panel2);border:1px solid var(--border);border-radius:9px;padding:3px}
+  .chart-toggle button{border:none;background:transparent;padding:6px 11px;font-size:11.5px;font-weight:600;color:var(--muted);border-radius:6px;cursor:pointer;transition:.15s;white-space:nowrap}
+  .chart-toggle button:hover:not(.active){color:var(--gold-d)}
+  .chart-toggle button.active{background:var(--gold-d);color:#fff}
+  @media (max-width:560px){
+    .card-header-row{flex-direction:column;align-items:flex-start;margin-bottom:12px}
+    .chart-toggle{flex-wrap:wrap}
+  }
   .page-ellipsis{color:var(--muted);padding:0 2px;font-size:13px}
   .assign-table{min-width:1530px;table-layout:fixed;background:var(--panel);border-radius:0}
   .assign-table th, .assign-table td{padding:12px 16px;white-space:normal;word-wrap:break-word;overflow-wrap:break-word;vertical-align:top}
@@ -349,7 +359,19 @@
 
   <div class="panel" id="panel-assign">
     <div class="card">
-      <h3><span class="dot"></span>Bảng phân công &amp; tiến độ chi tiết</h3>
+      <div class="card-header-row">
+        <h3><span class="dot"></span>Bảng phân công &amp; tiến độ chi tiết</h3>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)">
+          <label for="assignPageSizeSelect" style="white-space:nowrap">Số dòng/trang:</label>
+          <select id="assignPageSizeSelect" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--panel);color:var(--text)">
+            <option value="10">10 dòng</option>
+            <option value="20">20 dòng</option>
+            <option value="30">30 dòng</option>
+            <option value="40">40 dòng</option>
+            <option value="50">50 dòng</option>
+          </select>
+        </div>
+      </div>
       <div class="table-scroll">
       <table class="assign-table">
         <colgroup>
@@ -387,12 +409,25 @@
   <div class="panel" id="panel-charts">
     <div class="grid-2">
       <div class="card">
-        <h3><span class="dot"></span>Khối lượng &amp; trạng thái công việc theo thành viên</h3>
-        <div style="font-size:11.5px;color:var(--muted);margin:-6px 0 8px">Mỗi thành viên có 2 cột: <b>cột trái</b> = phân bổ theo Trạng thái, <b>cột phải</b> = phân bổ theo Đáp ứng. Chiều cao mỗi cột = tổng đầu việc tương ứng.</div>
+        <div class="card-header-row">
+          <h3><span class="dot"></span>Khối lượng &amp; trạng thái công việc theo thành viên</h3>
+          <div class="chart-toggle" id="memberChartModeToggle" role="group" aria-label="Chế độ xem biểu đồ theo thành viên">
+            <button type="button" data-mode="both">Trạng thái + Đáp ứng</button>
+            <button type="button" data-mode="status">Chỉ Trạng thái</button>
+            <button type="button" data-mode="dapung">Chỉ Đáp ứng</button>
+          </div>
+        </div>
+        <div style="font-size:11.5px;color:var(--muted);margin:0 0 10px" id="memberChartDesc">Mỗi thành viên có 2 cột: <b>cột trái</b> = phân bổ theo Trạng thái, <b>cột phải</b> = phân bổ theo Đáp ứng. Chiều cao mỗi cột = tổng đầu việc tương ứng.</div>
         <canvas id="chartByMember" height="260"></canvas>
       </div>
       <div class="card">
-        <h3><span class="dot"></span>Khối lượng công việc theo loại mua hàng</h3>
+        <div class="card-header-row">
+          <h3><span class="dot"></span>Khối lượng công việc theo loại mua hàng<span id="loaiChartFilterNote" style="font-size:11.5px;font-weight:600;color:var(--gold-d);margin-left:8px"></span></h3>
+          <div class="chart-toggle" id="loaiChartModeToggle" role="group" aria-label="Chế độ xem biểu đồ theo loại mua hàng">
+            <button type="button" data-mode="pie">Biểu đồ tròn</button>
+            <button type="button" data-mode="bar">Biểu đồ cột</button>
+          </div>
+        </div>
         <canvas id="chartByLoai" height="220"></canvas>
       </div>
     </div>
@@ -401,6 +436,9 @@
   <div class="panel" id="panel-kpi">
     <div class="card">
       <h3><span class="dot"></span>Tỷ lệ hoàn thành đúng hạn theo thành viên</h3>
+      <div id="kpiEmptyNote" style="display:none;font-size:12.5px;color:var(--red);background:rgba(224,66,74,.08);border:1px solid rgba(224,66,74,.25);border-radius:8px;padding:8px 12px;margin-bottom:10px">
+        Không đọc được dữ liệu từ sheet <b>"KPI_DanhGia"</b>. Vui lòng kiểm tra: tên tab sheet đúng là "KPI_DanhGia", sheet có dữ liệu, và các cột "Người phụ trách", "Tổng CV hoàn thành", "Số CV đúng hạn", "Tỷ lệ đúng hạn", "Xếp loại" đã được điền.
+      </div>
       <table>
         <thead><tr><th>Thành viên</th><th>Tổng CV hoàn thành</th><th>Đúng hạn</th><th>Tỷ lệ</th><th>Xếp loại</th></tr></thead>
         <tbody id="kpiTable"></tbody>
@@ -474,7 +512,37 @@ const memberSheetMap = {
 };
 let tasks = [];
 let results = [];
+let kpiEval = []; // dữ liệu đã tổng hợp sẵn từ sheet "KPI_DanhGia"
 let chartByMember, chartByLoai;
+let lastChartTasks = [];
+let memberChartMembers = [];      // danh sách thành viên hiện đang hiển thị trên biểu đồ cột theo thành viên
+let memberChartTasksMap = [];     // mảng đầu việc tương ứng từng thành viên (cùng thứ tự với memberChartMembers)
+let loaiChartAllLabels = [];      // danh sách loại mua hàng cố định (để giữ thứ tự/màu khi lọc theo thành viên)
+let loaiChartPalette = ['#c9971a','#7c5cf0','#0ea968','#c8790a','#e0424a','#0aa7c8','#e07f2f'];
+let loaiSelectedMemberIdx = null;  // index thành viên đang được CHỌN (bấm) trên biểu đồ cột, null = không lọc
+
+// ── Chế độ xem biểu đồ: lưu lựa chọn của người dùng vào localStorage
+// để F5 / mở lại trình duyệt vẫn giữ nguyên chế độ đã chọn.
+const CHART_MEMBER_MODE_KEY = 'bmhda_chart_member_mode'; // 'both' | 'status' | 'dapung'
+const CHART_LOAI_MODE_KEY = 'bmhda_chart_loai_mode';     // 'pie' | 'bar'
+function getChartMemberMode(){
+  try{
+    const v = localStorage.getItem(CHART_MEMBER_MODE_KEY);
+    return (v === 'status' || v === 'dapung') ? v : 'both';
+  }catch(e){ return 'both'; }
+}
+function setChartMemberMode(mode){
+  try{ localStorage.setItem(CHART_MEMBER_MODE_KEY, mode); }catch(e){}
+}
+function getChartLoaiMode(){
+  try{
+    const v = localStorage.getItem(CHART_LOAI_MODE_KEY);
+    return (v === 'bar') ? v : 'pie';
+  }catch(e){ return 'pie'; }
+}
+function setChartLoaiMode(mode){
+  try{ localStorage.setItem(CHART_LOAI_MODE_KEY, mode); }catch(e){}
+}
 
 let assignFilters = {ma:'', ten:'', loai:'', trangThai:'', dapUng:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null, kpiCategory:''};
 
@@ -518,7 +586,20 @@ function dateToInputValue(d){
 let lastAssignTasks = [];
 let assignSort = {field:null, dir:1};
 let assignPage = 1;
-const ASSIGN_PAGE_SIZE = 7; // số dòng dữ liệu tối đa mỗi trang (không tính hàng tiêu đề nhóm)
+const ASSIGN_PAGE_SIZE_KEY = 'bmhda_assign_page_size';
+const ASSIGN_PAGE_SIZE_DEFAULT = 10;
+const ASSIGN_PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50];
+function getAssignPageSize(){
+  try{
+    const v = parseInt(localStorage.getItem(ASSIGN_PAGE_SIZE_KEY), 10);
+    if(ASSIGN_PAGE_SIZE_OPTIONS.includes(v)) return v;
+  }catch(e){}
+  return ASSIGN_PAGE_SIZE_DEFAULT;
+}
+function setAssignPageSize(size){
+  try{ localStorage.setItem(ASSIGN_PAGE_SIZE_KEY, String(size)); }catch(e){}
+}
+let assignPageSize = getAssignPageSize(); // số dòng dữ liệu tối đa mỗi trang (không tính hàng tiêu đề nhóm), người dùng có thể tự chọn
 let overviewSort = {field:'date', dir:-1}; // mặc định: mới nhất trước (giống hành vi gốc)
 
 function toPercent(v){
@@ -637,6 +718,12 @@ function fetchSheetJSONP(name){
 }
 
 async function fetchSheet(name){ return fetchSheetJSONP(name); }
+// Bản an toàn: nếu 1 sheet phụ (VD KPI_DanhGia) chưa tồn tại/lỗi thì không làm hỏng
+// toàn bộ quá trình tải dữ liệu — chỉ trả về mảng rỗng và ghi cảnh báo ra console.
+async function fetchSheetSafe(name){
+  try{ return await fetchSheet(name); }
+  catch(e){ console.warn(`Không tải được sheet "${name}":`, e && e.message ? e.message : e); return []; }
+}
 
 async function fetchMemberTasks(nguoi, sheetName){
   const rows = await fetchSheet(sheetName);
@@ -647,6 +734,131 @@ async function fetchMemberTasks(nguoi, sheetName){
     dapUng: r[8]||'',
     capNhat:r[9]||'', baoCaoChiTiet:r[10]||''
   }));
+}
+
+// ── Bỏ dấu + chuẩn hoá chuỗi để so khớp tên cột không phụ thuộc hoa/thường, dấu tiếng Việt ──
+function normalizeHeaderStr(s){
+  return String(s||'').trim().toLowerCase()
+    .replace(/đ/g,'d')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/\s+/g,' ');
+}
+// Nhận diện giá trị "Đúng hạn" linh hoạt: chấp nhận nhiều cách ghi khác nhau
+// (Có/Không, có/không, Yes/No, TRUE/FALSE, checkbox...) thay vì chỉ đúng chuỗi "Có".
+function parseDungHan(v){
+  if(v === true) return true;
+  if(v === false) return false;
+  const s = normalizeHeaderStr(v);
+  if(['co','yes','true','1','x','dung han'].includes(s)) return true;
+  if(['khong','no','false','0'].includes(s)) return false;
+  return undefined;
+}
+// Các tên cột (đã chuẩn hoá, không dấu) có thể gặp trong sheet "KetQua", dùng để tự dò vị trí
+// cột thay vì đoán cứng theo chỉ số — tránh trường hợp sheet có thêm/bớt cột (VD cột Timestamp
+// do Google Form tự thêm) làm lệch toàn bộ dữ liệu.
+const KETQUA_HEADER_ALIASES = {
+  nguoi:  ['nguoi phu trach', 'nguoi', 'thanh vien'],
+  ketQua: ['ket qua'],
+  giaTri: ['gia tri'],
+  ngay:   ['ngay'],
+  dungHan:['dung han', 'ket qua dung han', 'hoan thanh dung han']
+};
+function detectKetQuaColumns(rows){
+  for(let i=0; i<Math.min(rows.length, 3); i++){
+    const norm = (rows[i]||[]).map(normalizeHeaderStr);
+    const map = {};
+    Object.keys(KETQUA_HEADER_ALIASES).forEach(key=>{
+      const idx = norm.findIndex(cell => cell && KETQUA_HEADER_ALIASES[key].some(alias => cell === alias || cell.includes(alias)));
+      if(idx !== -1) map[key] = idx;
+    });
+    // Chỉ coi là dò được header hợp lệ khi tìm thấy tối thiểu 2 cột quan trọng nhất
+    if(map.nguoi !== undefined && map.dungHan !== undefined){
+      return { headerRowIndex:i, colIndex:map };
+    }
+  }
+  return null;
+}
+// Chuyển các dòng thô lấy từ sheet "KetQua" thành danh sách kết quả có cấu trúc.
+// Ưu tiên tự dò cột theo tên tiêu đề; nếu không dò được (VD sheet không có header) thì mới
+// dùng lại cách đoán cột cố định như cấu trúc gốc (giả định có cột Timestamp ở đầu).
+function parseKetQuaRows(rows){
+  if(!rows || !rows.length) return [];
+  const detected = detectKetQuaColumns(rows);
+  const colIndex = detected ? detected.colIndex : { nguoi:1, ketQua:2, giaTri:3, ngay:4, dungHan:5 };
+  const startRow = detected ? detected.headerRowIndex + 1 : 0;
+  const out = [];
+  for(let i = startRow; i < rows.length; i++){
+    const r = rows[i] || [];
+    const nguoiRaw = r[colIndex.nguoi];
+    if(!nguoiRaw) continue;
+    const nguoiNorm = normalizeHeaderStr(nguoiRaw);
+    // Phòng trường hợp dòng đầu vẫn lọt qua (VD startRow tính sai) — bỏ qua nếu giống dòng tiêu đề
+    if(KETQUA_HEADER_ALIASES.nguoi.includes(nguoiNorm)) continue;
+    out.push({
+      nguoi: String(nguoiRaw).trim(),
+      ketQua: colIndex.ketQua !== undefined ? (r[colIndex.ketQua] || '') : '',
+      giaTri: colIndex.giaTri !== undefined ? (r[colIndex.giaTri] || '') : '',
+      ngay: colIndex.ngay !== undefined ? (r[colIndex.ngay] || '') : '',
+      dungHan: parseDungHan(r[colIndex.dungHan])
+    });
+  }
+  return out;
+}
+
+// ── Sheet "KPI_DanhGia": bảng đánh giá hiệu suất ĐÃ được tính sẵn theo từng người
+// (Người phụ trách | Tổng CV hoàn thành | Số CV đúng hạn | Tỷ lệ đúng hạn | Xếp loại).
+// Khác với "KetQua" (dữ liệu thô từng CV), sheet này đã là số liệu tổng hợp nên
+// không tính lại % hay xếp loại — chỉ đọc và hiển thị đúng như trong sheet.
+const KPI_DANHGIA_HEADER_ALIASES = {
+  nguoi:     ['nguoi phu trach', 'nguoi', 'thanh vien'],
+  tongCV:    ['tong cv hoan thanh', 'tong cv', 'tong cong viec hoan thanh'],
+  soDungHan: ['so cv dung han', 'cv dung han', 'so dung han'],
+  tyLe:      ['ty le dung han', 'ty le'],
+  xepLoai:   ['xep loai']
+};
+function detectKpiDanhGiaColumns(rows){
+  for(let i=0; i<Math.min(rows.length, 3); i++){
+    const norm = (rows[i]||[]).map(normalizeHeaderStr);
+    const map = {};
+    Object.keys(KPI_DANHGIA_HEADER_ALIASES).forEach(key=>{
+      const idx = norm.findIndex(cell => cell && KPI_DANHGIA_HEADER_ALIASES[key].some(alias => cell === alias || cell.includes(alias)));
+      if(idx !== -1) map[key] = idx;
+    });
+    // Chỉ coi là dò được header hợp lệ khi tìm thấy tối thiểu cột "Người phụ trách" và "Tổng CV hoàn thành"
+    if(map.nguoi !== undefined && map.tongCV !== undefined){
+      return { headerRowIndex:i, colIndex:map };
+    }
+  }
+  return null;
+}
+function toNumberSafe(v){
+  if(v === '' || v === null || v === undefined) return 0;
+  const n = Number(String(v).replace(/[^\d.-]/g,''));
+  return isNaN(n) ? 0 : n;
+}
+function parseKpiDanhGiaRows(rows){
+  if(!rows || !rows.length) return [];
+  const detected = detectKpiDanhGiaColumns(rows);
+  // Nếu không dò được header (sheet không có tiêu đề đúng tên), dùng thứ tự cột gốc
+  // như trong ảnh mẫu: A=Người phụ trách, B=Tổng CV hoàn thành, C=Số CV đúng hạn, D=Tỷ lệ, E=Xếp loại
+  const colIndex = detected ? detected.colIndex : { nguoi:0, tongCV:1, soDungHan:2, tyLe:3, xepLoai:4 };
+  const startRow = detected ? detected.headerRowIndex + 1 : 1;
+  const out = [];
+  for(let i = startRow; i < rows.length; i++){
+    const r = rows[i] || [];
+    const nguoiRaw = r[colIndex.nguoi];
+    if(!nguoiRaw) continue;
+    const nguoiNorm = normalizeHeaderStr(nguoiRaw);
+    if(KPI_DANHGIA_HEADER_ALIASES.nguoi.includes(nguoiNorm)) continue;
+    out.push({
+      nguoi: String(nguoiRaw).trim(),
+      tongCV: toNumberSafe(colIndex.tongCV !== undefined ? r[colIndex.tongCV] : 0),
+      soDungHan: toNumberSafe(colIndex.soDungHan !== undefined ? r[colIndex.soDungHan] : 0),
+      tyLe: colIndex.tyLe !== undefined ? String(r[colIndex.tyLe] || '').trim() : '',
+      xepLoai: colIndex.xepLoai !== undefined ? String(r[colIndex.xepLoai] || '').trim() : ''
+    });
+  }
+  return out;
 }
 
 const dapUngMap = {
@@ -663,16 +875,20 @@ async function loadData(){
   const badge = document.getElementById('lastUpdate');
   try{
     const memberEntries = Object.entries(memberSheetMap);
-    const [memberResults, kqRows] = await Promise.all([
+    const [memberResults, kqRows, kpiRows] = await Promise.all([
       Promise.all(memberEntries.map(([nguoi, sheetName]) => fetchMemberTasks(nguoi, sheetName))),
-      fetchSheet('KetQua')
+      fetchSheetSafe('KetQua'),
+      fetchSheetSafe('KPI_DanhGia')
     ]);
     tasks = memberResults.flat();
     tasks.forEach(t=>{ t.overdue = isOverdue(t); t.dueSoon = isDueSoon(t); });
-    results = kqRows.filter(r=>r[1]).map(r=>({
-      nguoi:r[1]||'', ketQua:r[2]||'', giaTri:r[3]||'', ngay:r[4]||'',
-      dungHan: r[5]==='Có' ? true : (r[5]==='Không' ? false : undefined)
-    }));
+    results = parseKetQuaRows(kqRows);
+    kpiEval = parseKpiDanhGiaRows(kpiRows);
+    if(!kpiEval.length){
+      // Sheet "KPI_DanhGia" tồn tại nhưng không đọc được dòng dữ liệu nào — có thể do
+      // sheet đang trống, hoặc tên cột không khớp bất kỳ alias nào ở trên.
+      console.warn('[KPI_DanhGia] Không đọc được dòng dữ liệu nào. Dòng đầu tiên trong sheet:', kpiRows[0]);
+    }
     badge.textContent = new Date().toLocaleString('vi-VN');
     document.getElementById('syncBadge').style.borderColor = 'var(--green)';
   }catch(e){
@@ -682,6 +898,7 @@ async function loadData(){
   }
   render();
 }
+
 
 const statusMap = {
   "Đang thực hiện":"st-inprogress", "Hoàn thành":"st-done", "Trễ hạn":"st-late",
@@ -901,8 +1118,8 @@ function setupKpiCardFilters(){
       assignFilters.kpiCategory = (assignFilters.kpiCategory === cat && cat !== '') ? '' : cat;
       assignPage = 1;
       saveAssignFiltersToStorage();
-      activateTab('assign');
-      try{ localStorage.setItem(TAB_STORAGE_KEY, 'assign'); }catch(e){}
+      // Chỉ áp dụng bộ lọc và vẽ lại, KHÔNG tự động chuyển tab —
+      // người dùng đang ở tab nào (Biểu đồ, Tổng quan, ...) thì vẫn ở nguyên tab đó.
       render();
     });
   });
@@ -1039,15 +1256,19 @@ function renderInner(tasks, results){
   if(!membersToShow.length) mg.innerHTML = '<div class="empty-note">Chưa có dữ liệu.</div>';
 
   const kt = document.getElementById('kpiTable');
+  const kpiEmptyNote = document.getElementById('kpiEmptyNote');
+  const filteredKpiEval = assignFilters.nguoi ? kpiEval.filter(r=>r.nguoi===assignFilters.nguoi) : kpiEval;
+  if(kpiEmptyNote) kpiEmptyNote.style.display = filteredKpiEval.length ? 'none' : 'block';
   const kpiMembersToShow = assignFilters.nguoi ? [assignFilters.nguoi] : members;
   kt.innerHTML = kpiMembersToShow.map(m=>{
-    const mr = filteredResults.filter(r=>r.nguoi===m && r.dungHan!==undefined);
-    const total = mr.length;
-    const onTime = mr.filter(r=>r.dungHan).length;
-    const pct = total? Math.round(onTime/total*100) : null;
-    let rank = "Chưa có dữ liệu";
-    if(pct!==null) rank = pct>=90?"Xuất sắc":pct>=75?"Tốt":pct>=60?"Đạt":"Cần cải thiện";
-    return `<tr><td>${m}</td><td>${total}</td><td>${onTime}</td><td>${pct!==null?pct+'%':'—'}</td><td>${rank}</td></tr>`;
+    // Đọc trực tiếp số liệu đã tổng hợp sẵn theo từng người từ sheet "KPI_DanhGia"
+    // (không tự tính lại % hay xếp loại — sheet đã có công thức riêng).
+    const row = filteredKpiEval.find(r=>r.nguoi===m);
+    const total = row ? row.tongCV : 0;
+    const onTime = row ? row.soDungHan : 0;
+    const pctText = row && row.tyLe ? row.tyLe : '—';
+    const rank = row && row.xepLoai ? row.xepLoai : 'Chưa có dữ liệu';
+    return `<tr><td>${m}</td><td>${total}</td><td>${onTime}</td><td>${pctText}</td><td>${rank}</td></tr>`;
   }).join('');
 
   renderCharts(filteredTasks);
@@ -1084,12 +1305,12 @@ function renderAssignTable(tasksIn){
     return;
   }
 
-  const totalPages = Math.max(1, Math.ceil(totalDataRows / ASSIGN_PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(totalDataRows / assignPageSize));
   if(assignPage > totalPages) assignPage = totalPages;
   if(assignPage < 1) assignPage = 1;
 
-  const start = (assignPage - 1) * ASSIGN_PAGE_SIZE;
-  const end = start + ASSIGN_PAGE_SIZE;
+  const start = (assignPage - 1) * assignPageSize;
+  const end = start + assignPageSize;
 
   // Chọn ra các hàng thuộc trang hiện tại — nếu 1 nhóm bị cắt ngang giữa 2 trang,
   // hàng tiêu đề nhóm đó sẽ được LẶP LẠI ở đầu trang tiếp theo để không mất ngữ cảnh.
@@ -1184,6 +1405,7 @@ function renderAssignPagination(totalPages, totalRows, fromIdx, toIdx){
 }
 
 function renderCharts(tasks){
+  lastChartTasks = tasks; // lưu lại để các nút chọn chế độ có thể vẽ lại khi bấm, không cần lọc lại dữ liệu
   if(typeof Chart === 'undefined'){
     // Không nên xảy ra nữa vì Chart.js đã được nhúng trực tiếp vào file,
     // nhưng vẫn hiển thị cảnh báo rõ ràng thay vì để trống im lặng nếu có sự cố.
@@ -1199,7 +1421,7 @@ function renderCharts(tasks){
     });
     return;
   }
-  const palette = ['#c9971a','#7c5cf0','#0ea968','#c8790a','#e0424a','#0aa7c8','#e07f2f'];
+  const palette = loaiChartPalette;
 
   // ==== Biểu đồ cột nhóm + chồng: Theo thành viên — Trạng thái & Đáp ứng ====
   const trangThaiDefs = [
@@ -1217,6 +1439,9 @@ function renderCharts(tasks){
     { key:'Trễ hạn',       color:'#ef8a90' }
   ];
   const memberTasksMap = members.map(m => tasks.filter(t=>t.nguoi===m));
+  memberChartMembers = members;
+  memberChartTasksMap = memberTasksMap;
+  loaiSelectedMemberIdx = null; // biểu đồ vừa được vẽ lại từ đầu -> bỏ lựa chọn lọc cũ
 
   const statusDatasets = trangThaiDefs.map(def => ({
     label: def.key,
@@ -1231,13 +1456,48 @@ function renderCharts(tasks){
     data: memberTasksMap.map(mt => mt.filter(t => t.dapUng === def.key).length)
   }));
 
+  const memberMode = getChartMemberMode();
+  const memberDatasets = memberMode === 'status' ? statusDatasets
+    : memberMode === 'dapung' ? dapUngDatasets
+    : [...statusDatasets, ...dapUngDatasets];
+
+  const memberDescEl = document.getElementById('memberChartDesc');
+  if(memberDescEl){
+    memberDescEl.innerHTML = memberMode === 'status'
+      ? 'Mỗi thành viên có <b>1 cột</b> = phân bổ công việc theo Trạng thái. Chiều cao cột = tổng đầu việc.'
+      : memberMode === 'dapung'
+      ? 'Mỗi thành viên có <b>1 cột</b> = phân bổ công việc theo Đáp ứng. Chiều cao cột = tổng đầu việc.'
+      : 'Mỗi thành viên có 2 cột: <b>cột trái</b> = phân bổ theo Trạng thái, <b>cột phải</b> = phân bổ theo Đáp ứng. Chiều cao mỗi cột = tổng đầu việc tương ứng.';
+  }
+
   const ctxM = document.getElementById('chartByMember');
   if(ctxM){
     if(chartByMember) chartByMember.destroy();
     chartByMember = new Chart(ctxM, {
       type:'bar',
-      data:{ labels: members, datasets:[...statusDatasets, ...dapUngDatasets] },
+      data:{ labels: members, datasets: memberDatasets },
       options:{
+        // Chỉ lọc biểu đồ "theo loại mua hàng" khi người dùng BẤM CHỌN vào cột của
+        // một thành viên — không còn tự động lọc theo di chuyển chuột (hover) nữa.
+        onClick: (evt, activeElements) => {
+          if(!activeElements || !activeElements.length) return;
+          const idx = activeElements[0].index;
+          if(idx === loaiSelectedMemberIdx){
+            // Bấm lại đúng thành viên đang được chọn -> bỏ chọn, quay về xem tổng
+            loaiSelectedMemberIdx = null;
+            applyLoaiChartMemberFilter(null);
+          }else{
+            loaiSelectedMemberIdx = idx;
+            applyLoaiChartMemberFilter(idx);
+          }
+        },
+        // Đổi con trỏ chuột thành hình bàn tay khi rê qua cột, để gợi ý có thể bấm chọn
+        // (không dùng để lọc dữ liệu, chỉ đổi giao diện con trỏ).
+        onHover: (evt, activeElements) => {
+          if(evt.native && evt.native.target){
+            evt.native.target.style.cursor = (activeElements && activeElements.length) ? 'pointer' : 'default';
+          }
+        },
         plugins:{
           legend:{ position:'bottom', labels:{ boxWidth:12, font:{ size:10.5 } } },
           tooltip:{
@@ -1257,19 +1517,110 @@ function renderCharts(tasks){
       }
     });
   }
+
+  // ==== Biểu đồ theo loại mua hàng: Tròn (pie) hoặc Cột (bar) ====
   const loaiCounts = {};
   tasks.forEach(t=>{ const l = t.loai || 'Khác'; loaiCounts[l] = (loaiCounts[l]||0)+1; });
   const loaiLabels = Object.keys(loaiCounts);
+  loaiChartAllLabels = loaiLabels;
+  const loaiFilterNoteEl = document.getElementById('loaiChartFilterNote');
+  if(loaiFilterNoteEl) loaiFilterNoteEl.textContent = '';
+  const loaiMode = getChartLoaiMode();
   const ctxL = document.getElementById('chartByLoai');
   if(ctxL){
     if(chartByLoai) chartByLoai.destroy();
-    chartByLoai = new Chart(ctxL, {
-      type:'pie',
-      data:{ labels: loaiLabels, datasets:[{ data: loaiLabels.map(l=>loaiCounts[l]), backgroundColor: palette }] },
-      options:{ plugins:{legend:{position:'bottom'}} }
+    if(loaiMode === 'bar'){
+      chartByLoai = new Chart(ctxL, {
+        type:'bar',
+        data:{ labels: loaiLabels, datasets:[{ label:'Số đầu việc', data: loaiLabels.map(l=>loaiCounts[l]), backgroundColor: palette }] },
+        options:{
+          plugins:{ legend:{ display:false } },
+          scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } }
+        }
+      });
+    }else{
+      chartByLoai = new Chart(ctxL, {
+        type:'pie',
+        data:{ labels: loaiLabels, datasets:[{ data: loaiLabels.map(l=>loaiCounts[l]), backgroundColor: palette }] },
+        options:{ plugins:{legend:{position:'bottom'}} }
+      });
+    }
+  }
+}
+
+// ── Khi người dùng BẤM CHỌN cột của 1 thành viên trên biểu đồ "theo thành viên",
+// biểu đồ "theo loại mua hàng" bên cạnh sẽ lọc theo đúng thành viên đó.
+// Chỉ cập nhật dữ liệu tại chỗ (không destroy/tạo lại chart) để tránh giật/nháy.
+function applyLoaiChartMemberFilter(memberIdx){
+  if(!chartByLoai || !loaiChartAllLabels.length) return;
+  const sourceTasks = (memberIdx === null || memberIdx === undefined)
+    ? lastChartTasks
+    : (memberChartTasksMap[memberIdx] || []);
+  const counts = {};
+  sourceTasks.forEach(t=>{ const l = t.loai || 'Khác'; counts[l] = (counts[l]||0)+1; });
+  const dataArr = loaiChartAllLabels.map(l => counts[l] || 0);
+  chartByLoai.data.datasets[0].data = dataArr;
+  chartByLoai.update('none'); // 'none' = cập nhật không animation, mượt hơn
+
+  const noteEl = document.getElementById('loaiChartFilterNote');
+  if(noteEl){
+    const memberName = (memberIdx === null || memberIdx === undefined) ? '' : memberChartMembers[memberIdx];
+    noteEl.textContent = memberName ? `— đang lọc theo: ${memberName}` : '';
+  }
+}
+
+// ── Khởi tạo & xử lý sự kiện cho các nút chọn chế độ xem biểu đồ
+function initChartModeToggles(){
+  const memberToggle = document.getElementById('memberChartModeToggle');
+  if(memberToggle){
+    const sync = () => {
+      const mode = getChartMemberMode();
+      memberToggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+    };
+    sync();
+    memberToggle.querySelectorAll('button').forEach(btn=>{
+      btn.addEventListener('click', () => {
+        if(btn.classList.contains('active')) return;
+        setChartMemberMode(btn.dataset.mode);
+        sync();
+        renderCharts(lastChartTasks);
+      });
+    });
+  }
+  const loaiToggle = document.getElementById('loaiChartModeToggle');
+  if(loaiToggle){
+    const sync = () => {
+      const mode = getChartLoaiMode();
+      loaiToggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+    };
+    sync();
+    loaiToggle.querySelectorAll('button').forEach(btn=>{
+      btn.addEventListener('click', () => {
+        if(btn.classList.contains('active')) return;
+        setChartLoaiMode(btn.dataset.mode);
+        sync();
+        renderCharts(lastChartTasks);
+      });
     });
   }
 }
+initChartModeToggles();
+
+// ── Chọn số dòng hiển thị mỗi trang cho bảng "Phân công & tiến độ chi tiết" ──
+function initAssignPageSizeSelect(){
+  const sel = document.getElementById('assignPageSizeSelect');
+  if(!sel) return;
+  sel.value = String(assignPageSize);
+  sel.addEventListener('change', () => {
+    const size = parseInt(sel.value, 10);
+    if(!ASSIGN_PAGE_SIZE_OPTIONS.includes(size)) return;
+    assignPageSize = size;
+    setAssignPageSize(size);
+    assignPage = 1; // đổi số dòng/trang thì quay về trang đầu để tránh lệch trang
+    renderAssignTable(lastAssignTasks);
+  });
+}
+initAssignPageSizeSelect();
 
 const TAB_STORAGE_KEY = 'bmhda_active_tab';
 function activateTab(tabName){
@@ -1812,8 +2163,8 @@ async function exportToPptx(){
     });
   }
 
-  // Sheet 4 — Đánh giá hiệu suất
-  function buildKpiEvalSheet(filteredResults){
+  // Sheet 4 — Đánh giá hiệu suất (đọc trực tiếp từ sheet "KPI_DanhGia", không tự tính lại)
+  function buildKpiEvalSheet(filteredKpiEval){
     const aoa = [];
     const merges = [];
     const today = new Date().toLocaleDateString('vi-VN');
@@ -1823,19 +2174,19 @@ async function exportToPptx(){
     aoa.push(['Thành viên','Tổng CV HT','Đúng hạn','Tỷ lệ','Xếp loại'].map(h=>headerCell(h)));
     const kpiMembersToShow = assignFilters.nguoi ? [assignFilters.nguoi] : members;
     kpiMembersToShow.forEach((m,i)=>{
-      const mr = filteredResults.filter(r=>r.nguoi===m && r.dungHan!==undefined);
-      const total = mr.length; const onTime = mr.filter(r=>r.dungHan).length;
-      const pct = total ? Math.round(onTime/total*100) : null;
-      let rank = "Chưa có dữ liệu";
-      if(pct!==null) rank = pct>=90?"Xuất sắc":pct>=75?"Tốt":pct>=60?"Đạt":"Cần cải thiện";
-      const rankColor = rank==="Xuất sắc"?CLR.green:rank==="Tốt"?CLR.blue:rank==="Đạt"?CLR.amber:rank==="Cần cải thiện"?CLR.red:CLR.muted;
+      const row = filteredKpiEval.find(r=>r.nguoi===m);
+      const total = row ? row.tongCV : 0;
+      const onTime = row ? row.soDungHan : 0;
+      const pctText = row && row.tyLe ? row.tyLe : '—';
+      const rank = row && row.xepLoai ? row.xepLoai : 'Chưa có dữ liệu';
+      const rankColor = rank==="Xuất sắc"?CLR.green:rank==="Tốt"?CLR.blue:rank==="Đạt"?CLR.amber:rank==="Khá"?CLR.amber:rank==="Cần cải thiện"?CLR.red:CLR.muted;
       const fill = i%2===0?'':CLR.zebra;
       const isLead = !!roles[m];
       aoa.push([
         baseCell(m, {fill, bold:true, color:isLead?CLR.purple:CLR.title}),
         baseCell(total, {fill, type:'n', align:'center'}),
         baseCell(onTime, {fill, type:'n', align:'center', color:CLR.green}),
-        baseCell(pct!==null?pct+'%':'—', {fill, align:'center', bold:true, color:pct!==null?(pct>=75?CLR.green:pct>=60?CLR.amber:CLR.red):CLR.muted}),
+        baseCell(pctText, {fill, align:'center', bold:true, color:CLR.muted}),
         baseCell(rank, {fill, bold:true, color:rankColor, align:'center'})
       ]);
     });
@@ -1879,11 +2230,12 @@ async function exportToPptx(){
     if(typeof XLSX === 'undefined') throw new Error('Thư viện XLSX chưa tải xong.');
     const filteredTasks   = applyAssignFilters(tasks);
     const filteredResults = assignFilters.nguoi ? results.filter(r=>r.nguoi===assignFilters.nguoi) : results;
+    const filteredKpiEval = assignFilters.nguoi ? kpiEval.filter(r=>r.nguoi===assignFilters.nguoi) : kpiEval;
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, buildKpiSheet(filteredTasks, filteredResults), 'Tổng quan KPI');
     XLSX.utils.book_append_sheet(wb, buildAssignSheet(), 'Phân công chi tiết');
     XLSX.utils.book_append_sheet(wb, buildMembersSheet(filteredTasks), 'Theo thành viên');
-    XLSX.utils.book_append_sheet(wb, buildKpiEvalSheet(filteredResults), 'Đánh giá hiệu suất');
+    XLSX.utils.book_append_sheet(wb, buildKpiEvalSheet(filteredKpiEval), 'Đánh giá hiệu suất');
     XLSX.utils.book_append_sheet(wb, buildResultsSheet(filteredResults), 'Kết quả nổi bật');
     wb.Props = { Title:'Báo cáo Ban Mua Hàng Dự Án', Author:'Ban Mua Hàng Dự Án', CreatedDate:new Date() };
     return wb;
