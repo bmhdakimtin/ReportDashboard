@@ -2,6 +2,12 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#fbf7ea">
+<meta name="format-detection" content="telephone=no">
 <title>Báo Cáo Ban Mua Hàng Dự Án</title>
 <link rel="shortcut icon" href="https://kimtingroup.com/Data/Sites/3/skins/kimtingroup-site3/favicon.ico" />
 <!-- Google Tag Manager -->
@@ -26,11 +32,12 @@
     --green:#0ea968; --amber:#c8790a; --red:#e0424a; --purple:#7c5cf0;
   }
   *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background:
     radial-gradient(1200px 600px at 10% -10%, #fff6d9 0%, transparent 62%),
     radial-gradient(1000px 500px at 100% 0%, #fffbef 0%, transparent 55%),
-    var(--bg); color:var(--text); min-height:100vh;}
-  .wrap{max-width:1400px;margin:0 auto;padding:28px 32px 60px}
+    var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden;}
+  .wrap{max-width:1400px;margin:0 auto;padding:28px 32px 60px;padding-left:max(32px, env(safe-area-inset-left));padding-right:max(32px, env(safe-area-inset-right))}
   header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:24px}
   h1{font-size:26px;margin:0 0 4px;font-weight:700;letter-spacing:.3px}
   h1 span{background:linear-gradient(90deg,var(--gold-d),var(--gold-bright));-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -42,11 +49,12 @@
   .badge-export:hover{opacity:.88}
   .badge-export b{color:#221f18}
 
-  .kpi-row{display:grid;grid-template-columns:repeat(7,1fr);gap:14px;margin-bottom:26px}
-  .kpi{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px 16px;position:relative;overflow:hidden;min-width:0}
-  .kpi::before{content:"";position:absolute;top:-40%;right:-25%;width:110px;height:110px;border-radius:50%;background:radial-gradient(circle,rgba(255,221,0,.14),transparent 72%)}
-  .kpi .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .kpi .value{font-size:26px;font-weight:700;margin-top:6px}
+  .kpi-row{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;margin-bottom:24px}
+  .kpi{background:var(--panel);border:1px solid var(--border);border-top:3px solid var(--kpi-color,var(--border));border-radius:16px;padding:14px 16px;position:relative;overflow:hidden;min-width:0}
+  .kpi::after{content:"";position:absolute;bottom:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,var(--kpi-tint,rgba(255,221,0,.08)),transparent 70%);pointer-events:none}
+  .kpi-icon{font-size:18px;line-height:1;margin-bottom:6px;display:block;opacity:.85}
+  .kpi .label{color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;line-height:1.3;white-space:normal}
+  .kpi .value{font-size:26px;font-weight:800;margin-top:5px;line-height:1}
   .kpi .value.blue{color:var(--blue)}
   .kpi .value.green{color:var(--green)}
   .kpi .value.amber{color:var(--amber)}
@@ -160,6 +168,9 @@
 
   #assignFilterBar{margin-bottom:18px}
   #assignFilterBar .filter-title{font-size:12.5px;font-weight:700;color:var(--gold-d);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+  /* Desktop: date-field shows label + input side by side */
+  .filter-date-group .date-field{display:inline-flex;align-items:center;gap:6px}
+  .filter-date-group .date-group-title{display:none}
 
   .member-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
   .member-card-v2{background:var(--panel);border:1px solid var(--border);border-left:4px solid var(--gold-d);border-radius:14px;padding:18px 20px;box-shadow:0 4px 18px rgba(120,95,20,.07);display:flex;flex-direction:column;gap:14px}
@@ -235,25 +246,136 @@
     .kpi-row{grid-template-columns:repeat(4,1fr)}
     .member-grid{grid-template-columns:repeat(2,1fr)}
   }
+  /* ===== Bộ lọc chung — kiểu "bottom-sheet nhỏ gọn" cho mobile ===== */
+  #assignFilterToggle{display:none}
   @media (max-width:640px){
-    .wrap{padding:16px 14px 44px}
-    header{margin-bottom:16px}
-    h1{font-size:20px}
+    .wrap{padding:14px 12px 44px;padding-left:max(12px, env(safe-area-inset-left));padding-right:max(12px, env(safe-area-inset-right))}
+    header{margin-bottom:14px}
+    h1{font-size:19px}
     .sub{font-size:12px}
-    .meta{gap:8px;width:100%}
-    .badge{font-size:11.5px;padding:7px 10px;flex:1 1 auto;text-align:center}
-    .kpi-row{grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px}
-    .kpi{padding:14px 14px}
-    .kpi .label{font-size:10.5px}
+    .meta{gap:7px;width:100%}
+    .badge{font-size:11px;padding:7px 10px;flex:1 1 auto;text-align:center}
+
+    /* ===== KPI Mobile: Tổng đầu việc nổi bật, còn lại 2 cột ===== */
+    .kpi-row{
+      grid-template-columns:1fr 1fr;
+      gap:9px;
+      margin-bottom:14px;
+    }
+    /* Thẻ đầu tiên (Tổng đầu việc): chiếm cả hàng, hiển thị ngang */
+    .kpi:first-child{
+      grid-column:1/-1;
+      display:flex;
+      align-items:center;
+      gap:14px;
+      padding:14px 18px;
+    }
+    .kpi:first-child .kpi-icon{font-size:28px;margin-bottom:0;opacity:.7}
+    .kpi:first-child .kpi-body{flex:1;min-width:0}
+    .kpi:first-child .value{font-size:34px;margin-top:2px}
+    .kpi:first-child .label{font-size:11px}
+    /* Các thẻ còn lại: 2 cột, compact */
+    .kpi{padding:12px 13px}
+    .kpi .label{font-size:10px}
     .kpi .value{font-size:22px;margin-top:4px}
-    .tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;margin-bottom:14px}
+    .kpi-icon{font-size:16px;margin-bottom:4px}
+
+    .tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;margin-bottom:12px;gap:3px}
     .tabs::-webkit-scrollbar{height:3px}
-    .tab{padding:9px 13px;font-size:13px;flex:0 0 auto}
+    .tab{padding:9px 12px;font-size:12.5px;flex:0 0 auto}
     .grid-2, #panel-overview .grid-2{grid-template-columns:1fr}
-    .card{padding:15px}
-    #assignFilterBar{padding:10px 12px}
-    #assignFilterBar > div{flex-direction:column;align-items:stretch}
-    #assignFilterBar input, #assignFilterBar select{width:100% !important}
+    .card{padding:14px}
+
+    /* ===== Bộ lọc mobile: gọn đẹp 2 cột ===== */
+    #assignFilterBar{
+      padding:0;
+      border:1px solid var(--border);
+      border-radius:14px;
+      overflow:hidden;
+      background:var(--panel);
+      margin-bottom:12px;
+    }
+    #assignFilterToggle{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      padding:13px 14px;cursor:pointer;user-select:none;
+      -webkit-tap-highlight-color:transparent;
+      background:var(--panel);
+    }
+    #assignFilterToggle .aft-left{display:flex;align-items:center;gap:8px;min-width:0}
+    #assignFilterToggle .aft-icon{font-size:15px;flex:0 0 auto}
+    #assignFilterToggle .aft-label{font-size:13.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    #assignFilterToggle .aft-count{flex:0 0 auto;background:var(--gold-d);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;min-width:20px;text-align:center}
+    #assignFilterToggle .aft-chevron{flex:0 0 auto;font-size:11px;color:var(--muted);transition:transform .25s ease}
+    #assignFilterBar.open #assignFilterToggle .aft-chevron{transform:rotate(180deg)}
+    #assignFilterBar .filter-title{display:none}
+
+    #assignFilterContent{
+      display:none;
+      padding:0 12px 14px;
+      border-top:1px solid var(--border);
+    }
+    #assignFilterBar.open #assignFilterContent{display:block}
+
+    /* Grid 2 cột cho các select + text inputs */
+    #assignFilterContent .filter-row-fields{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+      margin-top:12px;
+    }
+    /* Text inputs chiếm cả hàng */
+    #assignFilterContent .filter-row-fields input[type="text"]{
+      grid-column:1/-1;
+    }
+    #assignFilterBar input, #assignFilterBar select{
+      width:100%;
+      box-sizing:border-box;
+    }
+
+    /* Nhóm ngày: nền riêng, layout 2 cột */
+    #assignFilterContent .filter-date-group{
+      background:var(--panel2);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:12px 12px 10px;
+      margin-top:10px;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+    }
+    #assignFilterContent .filter-date-group .date-group-title{
+      display:block;
+      grid-column:1/-1;
+      font-size:11px;font-weight:700;color:var(--gold-d);
+      text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;
+    }
+    #assignFilterContent .filter-date-group .date-field{
+      display:flex;flex-direction:column;gap:4px;
+    }
+    #assignFilterContent .filter-date-group .date-field label{
+      font-size:11px;color:var(--muted);font-weight:600;
+    }
+    #assignFilterContent .filter-date-group .date-field:last-child{
+      grid-column:1/-1;
+    }
+
+    /* Nút xoá lọc */
+    #assignFilterReset{
+      display:flex !important;
+      align-items:center;justify-content:center;
+      width:100%;margin-top:10px;
+      padding:11px !important;
+      border-radius:10px;
+      background:rgba(224,66,74,.08) !important;
+      border:1px solid rgba(224,66,74,.2) !important;
+      color:var(--red) !important;
+      font-weight:700;font-size:13px;
+    }
+
+    /* Bắt buộc font-size >=16px để Safari/iOS không tự zoom khi chạm nhập */
+    input, select, textarea{font-size:16px !important}
+    #assignFilterBar input, #assignFilterBar select{padding:11px 12px !important}
+
     .assign-table{min-width:1180px}
     .member-grid{grid-template-columns:1fr}
     .member-v2-stats{grid-template-columns:1fr;gap:6px}
@@ -266,7 +388,12 @@
     th, td{padding:9px 8px}
     #kpiTable, #panel-kpi table{display:block;overflow-x:auto}
     .export-options{grid-template-columns:1fr}
+    .modal-box{padding:24px 20px;width:94%}
   }
+  /* Vùng chạm rộng hơn + tắt cử chỉ double-tap-zoom trên các phần tử bấm được,
+     tránh hiện tượng "nhảy zoom" khó chịu khi thao tác nhanh trên di động */
+  .tab, .badge, .page-btn, .chart-toggle button, .kpi, .overview-sort-btn,
+  .badge-export, #exportBtn, .btn-view-report, .overview-item{touch-action:manipulation}
 </style>
 </head>
 <body>
@@ -289,13 +416,55 @@
   </header>
 
   <div class="kpi-row">
-    <div class="kpi"><div class="label">Tổng đầu việc</div><div class="value" id="kpiTotal">0</div></div>
-    <div class="kpi"><div class="label">Đang thực hiện</div><div class="value blue" id="kpiProgress">0</div></div>
-    <div class="kpi"><div class="label">Hoàn thành</div><div class="value green" id="kpiDone">0</div></div>
-    <div class="kpi"><div class="label">Sắp đến hạn</div><div class="value amber" id="kpiDueSoon">0</div></div>
-    <div class="kpi"><div class="label">Trễ hạn</div><div class="value red" id="kpiLate">0</div></div>
-    <div class="kpi"><div class="label">Hoãn lại</div><div class="value purple" id="kpiOnTime">0</div></div>
-    <div class="kpi"><div class="label">Huỷ bỏ</div><div class="value" style="color:var(--muted)" id="kpiCancel">0</div></div>
+    <div class="kpi" style="--kpi-color:#8f6a00;--kpi-tint:rgba(143,106,0,.08)">
+      <span class="kpi-icon">📋</span>
+      <div class="kpi-body">
+        <div class="label">Tổng đầu việc</div>
+        <div class="value" id="kpiTotal">0</div>
+      </div>
+    </div>
+    <div class="kpi" style="--kpi-color:var(--blue);--kpi-tint:rgba(47,111,237,.08)">
+      <span class="kpi-icon">⚡</span>
+      <div class="kpi-body">
+        <div class="label">Đang thực hiện</div>
+        <div class="value blue" id="kpiProgress">0</div>
+      </div>
+    </div>
+    <div class="kpi" style="--kpi-color:var(--green);--kpi-tint:rgba(14,169,104,.08)">
+      <span class="kpi-icon">✅</span>
+      <div class="kpi-body">
+        <div class="label">Hoàn thành</div>
+        <div class="value green" id="kpiDone">0</div>
+      </div>
+    </div>
+    <div class="kpi" style="--kpi-color:var(--amber);--kpi-tint:rgba(200,121,10,.08)">
+      <span class="kpi-icon">⏰</span>
+      <div class="kpi-body">
+        <div class="label">Sắp đến hạn</div>
+        <div class="value amber" id="kpiDueSoon">0</div>
+      </div>
+    </div>
+    <div class="kpi" style="--kpi-color:var(--red);--kpi-tint:rgba(224,66,74,.08)">
+      <span class="kpi-icon">🚨</span>
+      <div class="kpi-body">
+        <div class="label">Trễ hạn</div>
+        <div class="value red" id="kpiLate">0</div>
+      </div>
+    </div>
+    <div class="kpi" style="--kpi-color:var(--purple);--kpi-tint:rgba(124,92,240,.08)">
+      <span class="kpi-icon">⏸</span>
+      <div class="kpi-body">
+        <div class="label">Hoãn lại</div>
+        <div class="value purple" id="kpiOnTime">0</div>
+      </div>
+    </div>
+    <div class="kpi" style="--kpi-color:#8b95a8;--kpi-tint:rgba(139,149,168,.08)">
+      <span class="kpi-icon">🚫</span>
+      <div class="kpi-body">
+        <div class="label">Huỷ bỏ</div>
+        <div class="value" style="color:var(--muted)" id="kpiCancel">0</div>
+      </div>
+    </div>
   </div>
 
   <div class="tabs">
@@ -308,31 +477,50 @@
 
   <div id="assignFilterBar" style="display:flex;flex-direction:column;gap:12px;margin-bottom:14px;padding:14px 16px;background:var(--panel);border:1px solid var(--border);border-radius:12px;box-shadow:0 3px 12px rgba(120,95,20,.06)">
     <div class="filter-title">🔎 Bộ lọc chung — áp dụng cho tất cả các tab</div>
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <input type="text" id="filterMa" placeholder="🔍 Tìm Mã CV..." style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;width:140px">
-      <input type="text" id="filterTen" list="tenSuggestList" placeholder="🔍 Tìm tên công việc..." autocomplete="off" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;width:220px">
-      <datalist id="tenSuggestList"></datalist>
-      <select id="filterLoai" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-        <option value="">Loại: Tất cả</option>
-      </select>
-      <select id="filterTrangThai" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-        <option value="">Trạng thái: Tất cả</option>
-      </select>
-      <select id="filterDapUng" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-        <option value="">Đáp ứng: Tất cả</option>
-      </select>
-      <select id="filterNguoi" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-        <option value="">Thành viên: Tất cả</option>
-      </select>
+    <div id="assignFilterToggle">
+      <div class="aft-left">
+        <span class="aft-icon">🔎</span>
+        <span class="aft-label">Bộ lọc</span>
+        <span class="aft-count" id="assignFilterCount" style="display:none">0</span>
+      </div>
+      <span class="aft-chevron">▼</span>
     </div>
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <label style="font-size:12.5px;color:var(--muted)">Báo cáo từ</label>
-      <input type="date" id="filterCapNhatFrom" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-      <label style="font-size:12.5px;color:var(--muted)">đến</label>
-      <input type="date" id="filterCapNhatTo" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-      <label style="font-size:12.5px;color:var(--muted)">Hạn hoàn thành đến</label>
-      <input type="date" id="filterHanCutoff" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-      <div class="badge" id="assignFilterReset" style="cursor:pointer;user-select:none">✕ Xóa lọc</div>
+    <div id="assignFilterContent">
+      <div class="filter-row-fields" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <input type="text" id="filterMa" placeholder="🔍 Tìm Mã CV..." style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;width:140px">
+        <input type="text" id="filterTen" list="tenSuggestList" placeholder="🔍 Tìm tên công việc..." autocomplete="off" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;width:220px">
+        <datalist id="tenSuggestList"></datalist>
+        <select id="filterLoai" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+          <option value="">Loại: Tất cả</option>
+        </select>
+        <select id="filterTrangThai" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+          <option value="">Trạng thái: Tất cả</option>
+        </select>
+        <select id="filterDapUng" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+          <option value="">Đáp ứng: Tất cả</option>
+        </select>
+        <select id="filterNguoi" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+          <option value="">Thành viên: Tất cả</option>
+        </select>
+      </div>
+      <div class="filter-date-group" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px">
+        <span class="date-group-title" style="display:none">📅 Lọc theo ngày</span>
+        <div class="date-field">
+          <label style="font-size:12.5px;color:var(--muted)">Báo cáo từ</label>
+          <input type="date" id="filterCapNhatFrom" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+        </div>
+        <div class="date-field">
+          <label style="font-size:12.5px;color:var(--muted)">đến</label>
+          <input type="date" id="filterCapNhatTo" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+        </div>
+        <div class="date-field">
+          <label style="font-size:12.5px;color:var(--muted)">Hạn hoàn thành đến</label>
+          <input type="date" id="filterHanCutoff" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <div class="badge" id="assignFilterReset" style="cursor:pointer;user-select:none;display:inline-flex">✕ Xóa lọc</div>
+      </div>
     </div>
   </div>
 
@@ -995,6 +1183,23 @@ function setupAssignFilterBar(){
   capNhatToInput.value = dateToInputValue(assignFilters.capNhatTo);
   hanCutoffInput.value = dateToInputValue(assignFilters.hanCutoff);
 
+  const updateFilterCountBadge = () => {
+    const badge = document.getElementById('assignFilterCount');
+    if(!badge) return;
+    let n = 0;
+    if(maInput.value.trim()) n++;
+    if(tenInput.value.trim()) n++;
+    if(loaiSel.value) n++;
+    if(ttSel.value) n++;
+    if(duSel.value) n++;
+    if(ngSel.value) n++;
+    if(capNhatFromInput.value) n++;
+    if(capNhatToInput.value) n++;
+    if(hanCutoffInput.value) n++;
+    badge.textContent = n;
+    badge.style.display = n > 0 ? 'inline-block' : 'none';
+  };
+
   const applyAndRender = () => {
     assignFilters.ma = maInput.value.trim();
     assignFilters.ten = tenInput.value.trim();
@@ -1007,8 +1212,19 @@ function setupAssignFilterBar(){
     assignFilters.hanCutoff = hanCutoffInput.value ? new Date(hanCutoffInput.value+'T00:00:00') : null;
     assignPage = 1;
     saveAssignFiltersToStorage();
+    updateFilterCountBadge();
     render();
   };
+
+  // Thanh bấm mở/thu gọn bộ lọc (chỉ hiển thị trên mobile qua CSS)
+  const filterBar = document.getElementById('assignFilterBar');
+  const filterToggle = document.getElementById('assignFilterToggle');
+  if(filterToggle && filterBar){
+    filterToggle.addEventListener('click', () => {
+      filterBar.classList.toggle('open');
+    });
+  }
+  updateFilterCountBadge();
 
   maInput.addEventListener('input', applyAndRender);
   tenInput.addEventListener('input', applyAndRender);
