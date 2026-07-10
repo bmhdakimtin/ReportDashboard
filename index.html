@@ -3,32 +3,48 @@
 <head>
 <meta charset="UTF-8">
 <title>Báo Cáo Ban Mua Hàng Dự Án</title>
+<link rel="shortcut icon" href="https://kimtingroup.com/Data/Sites/3/skins/kimtingroup-site3/favicon.ico" />
+<!-- Google Tag Manager -->
+<!--
+  Đã tạm gỡ 3 file CSS của website công ty (global.min.css, main.min.css, custom.css):
+  các file này dùng nhiều tên class rất phổ biến trùng với dashboard (.label, .badge,
+  .card, .tab, header, table, th, td...) nên đè mất toàn bộ style của dashboard, gây vỡ
+  layout header và làm mờ/chìm chữ trên các thẻ KPI, tab, thanh lọc như đã xảy ra.
+  Nếu công ty có sẵn 1 file CSS RIÊNG chỉ chứa biến thương hiệu (font, màu chủ đạo...)
+  và không style các thẻ HTML chung chung, có thể thêm lại an toàn hơn.
+-->
 <style>
   :root{
-    --bg:#f4f6fb; --panel:#ffffff; --panel2:#f7f9fd; --border:#e2e8f4;
-    --text:#1a2236; --muted:#6b7690; --blue:#2f6fed; --blue-d:#1e4fc4;
+    /* Nền & trung tính: tông vàng ấm theo màu logo Kim Tín (#FFDD00) */
+    --bg:#fbf7ea; --panel:#ffffff; --panel2:#fdf6df; --border:#ecdfae;
+    --text:#221f18; --muted:#635a42;
+    /* Màu vàng thương hiệu — dùng cho các điểm nhấn/khung/nút, KHÔNG dùng làm màu chữ chính vì độ tương phản thấp */
+    --gold:#c9971a; --gold-d:#8f6a00; --gold-bright:#ffdd00; --gold-tint:#fdf3d0;
+    /* Các màu trạng thái công việc — GIỮ NGUYÊN để không đổi ý nghĩa màu đã dùng xuyên suốt
+       (xanh dương = Đang thực hiện, xanh lá = Hoàn thành, đỏ = Trễ hạn, tím = Hoãn lại) */
+    --blue:#2f6fed; --blue-d:#1e4fc4;
     --green:#0ea968; --amber:#c8790a; --red:#e0424a; --purple:#7c5cf0;
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background:
-    radial-gradient(1200px 600px at 10% -10%, #e8effe 0%, transparent 60%),
-    radial-gradient(1000px 500px at 100% 0%, #f1eafe 0%, transparent 55%),
+    radial-gradient(1200px 600px at 10% -10%, #fff6d9 0%, transparent 62%),
+    radial-gradient(1000px 500px at 100% 0%, #fffbef 0%, transparent 55%),
     var(--bg); color:var(--text); min-height:100vh;}
   .wrap{max-width:1400px;margin:0 auto;padding:28px 32px 60px}
   header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:24px}
   h1{font-size:26px;margin:0 0 4px;font-weight:700;letter-spacing:.3px}
-  h1 span{background:linear-gradient(90deg,var(--blue),var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent}
+  h1 span{background:linear-gradient(90deg,var(--gold-d),var(--gold-bright));-webkit-background-clip:text;background-clip:text;color:transparent}
   .sub{color:var(--muted);font-size:13.5px;margin:0}
   .meta{display:flex;gap:10px;flex-wrap:wrap}
   .badge{background:var(--panel);border:1px solid var(--border);padding:8px 14px;border-radius:10px;font-size:12.5px;color:var(--muted)}
   .badge b{color:var(--text)}
-  .badge-export{background:linear-gradient(135deg,#1e4fc4,#7c5cf0);border:none;color:#fff;font-weight:700;cursor:pointer;user-select:none;transition:opacity .15s}
+  .badge-export{background:linear-gradient(135deg,#8f6a00,#ffdd00);border:none;color:#221f18;font-weight:700;cursor:pointer;user-select:none;transition:opacity .15s}
   .badge-export:hover{opacity:.88}
-  .badge-export b{color:#fff}
+  .badge-export b{color:#221f18}
 
   .kpi-row{display:grid;grid-template-columns:repeat(7,1fr);gap:14px;margin-bottom:26px}
-  .kpi{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:16px;padding:16px 16px;position:relative;overflow:hidden;min-width:0}
-  .kpi::before{content:"";position:absolute;top:-30%;right:-30%;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(79,140,255,.25),transparent 70%)}
+  .kpi{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px 16px;position:relative;overflow:hidden;min-width:0}
+  .kpi::before{content:"";position:absolute;top:-40%;right:-25%;width:110px;height:110px;border-radius:50%;background:radial-gradient(circle,rgba(255,221,0,.14),transparent 72%)}
   .kpi .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .kpi .value{font-size:26px;font-weight:700;margin-top:6px}
   .kpi .value.blue{color:var(--blue)}
@@ -37,9 +53,10 @@
   .kpi .value.red{color:var(--red)}
   .kpi .value.purple{color:var(--purple)}
 
-  .tabs{display:flex;gap:8px;margin-bottom:18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
-  .tab{padding:10px 18px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;font-size:14px;font-weight:600;user-select:none}
-  .tab.active{color:var(--text);border-color:var(--blue)}
+  .tabs{display:flex;gap:4px;margin-bottom:18px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:6px;flex-wrap:wrap;box-shadow:0 2px 10px rgba(120,95,20,.05)}
+  .tab{padding:9px 18px;cursor:pointer;color:var(--muted);border-radius:8px;border-bottom:none;font-size:14px;font-weight:600;user-select:none;transition:background .15s,color .15s}
+  .tab:hover{color:var(--text);background:var(--gold-tint)}
+  .tab.active{color:#221f18;background:var(--gold-tint);border-color:transparent}
   .panel{display:none}
   .panel.active{display:block;animation:fade .25s ease}
   @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
@@ -47,20 +64,30 @@
   .grid-2{display:grid;grid-template-columns:1.3fr .9fr;gap:18px}
   @media(max-width:980px){.grid-2{grid-template-columns:1fr}}
   #panel-overview .grid-2{grid-template-columns:1fr 1fr}
-  .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:0 4px 18px rgba(30,50,100,.06)}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:0 4px 18px rgba(120,95,20,.07)}
   .card h3{margin:0 0 14px;font-size:15px;color:var(--text);display:flex;align-items:center;gap:8px}
-  .dot{width:8px;height:8px;border-radius:50%;background:var(--blue);box-shadow:0 0 8px var(--blue)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--gold-d);box-shadow:0 0 8px var(--gold-d)}
 
   table{width:100%;border-collapse:collapse;font-size:13px}
   th{text-align:left;color:var(--muted);font-weight:600;padding:10px 10px;border-bottom:1px solid var(--border);font-size:11.5px;text-transform:uppercase;letter-spacing:.4px}
-  td{padding:11px 10px;border-bottom:1px solid #eef1f8}
-  tr:hover td{background:rgba(47,111,237,.05)}
+  td{padding:11px 10px;border-bottom:1px solid #f2ead0}
+  tr:hover td{background:rgba(201,151,26,.07)}
 
-  .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px;border:1px solid var(--border);box-shadow:0 3px 14px rgba(30,50,100,.07);background:var(--panel)}
+  .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px;border:1px solid var(--border);box-shadow:0 3px 14px rgba(120,95,20,.08);background:var(--panel)}
+
+  .pagination-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:14px 4px 2px}
+  .pagination-summary{font-size:12.5px;color:var(--muted)}
+  .pagination-pages{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+  .page-btn{min-width:32px;height:32px;padding:0 8px;border:1px solid var(--border);background:var(--panel);color:var(--text);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:.15s}
+  .page-btn:hover:not(:disabled){border-color:var(--gold-d);color:var(--gold-d)}
+  .page-btn.active{background:var(--gold-d);border-color:var(--gold-d);color:#fff}
+  .page-btn:disabled{opacity:.4;cursor:default}
+  .page-ellipsis{color:var(--muted);padding:0 2px;font-size:13px}
   .assign-table{min-width:1530px;table-layout:fixed;background:var(--panel);border-radius:0}
   .assign-table th, .assign-table td{padding:12px 16px;white-space:normal;word-wrap:break-word;overflow-wrap:break-word;vertical-align:top}
   .assign-table thead th{background:var(--panel2);position:sticky;top:0;z-index:1;white-space:nowrap}
   .assign-table td.wrap-cell{white-space:normal}
+  .assign-table td.ten-cell{white-space:pre-line}
   .assign-table tbody td:nth-child(2),
   .assign-table tbody td:nth-child(4),
   .assign-table tbody td:nth-child(5),
@@ -94,16 +121,16 @@
   .overview-sort-bar{display:flex;align-items:center;gap:6px;font-weight:400}
   .overview-sort-label{color:var(--muted);font-size:11.5px}
   .overview-sort-btn{border:1px solid var(--border);background:var(--panel2);color:var(--muted);font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;transition:.15s}
-  .overview-sort-btn:hover{color:var(--text);border-color:var(--blue)}
-  .overview-sort-btn.active{background:var(--blue);border-color:var(--blue);color:#fff}
+  .overview-sort-btn:hover{color:var(--text);border-color:var(--gold-d)}
+  .overview-sort-btn.active{background:var(--gold-d);border-color:var(--gold-d);color:#fff}
   .kpi{cursor:pointer;transition:transform .12s ease,box-shadow .12s ease}
-  .kpi:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(30,50,100,.12)}
-  .kpi.active{border-color:var(--blue-d);box-shadow:0 0 0 3px rgba(47,111,237,.18)}
+  .kpi:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(120,95,20,.14)}
+  .kpi.active{border-color:var(--gold-d);box-shadow:0 0 0 3px rgba(143,106,0,.18)}
   #overviewList{max-height:250px;overflow-y:auto;padding-right:4px}
   #overviewList .overview-item{padding:5px 6px;margin:-5px -6px 2px -6px}
   #overviewList .overview-item .progress-bar{height:6px}
   .overview-item{cursor:pointer;transition:background .15s ease;padding:6px;border-radius:8px;margin:-6px -6px 8px -6px}
-  .overview-item:hover{background:rgba(47,111,237,.08)}
+  .overview-item:hover{background:rgba(201,151,26,.1)}
   .status{padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap}
   .st-notstarted{background:rgba(139,152,184,.15);color:var(--muted)}
   .st-duesoon{background:rgba(200,121,10,.15);color:var(--amber)}
@@ -117,16 +144,16 @@
 
   th.sortable{cursor:pointer;user-select:none;white-space:nowrap}
   th.sortable:hover{color:var(--text)}
-  .sort-arrow{margin-left:4px;font-size:9px;color:var(--blue)}
+  .sort-arrow{margin-left:4px;font-size:9px;color:var(--gold-d)}
 
-  .avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+  .avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--gold-d),var(--gold-bright));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#221f18}
 
   #assignFilterBar{margin-bottom:18px}
-  #assignFilterBar .filter-title{font-size:12.5px;font-weight:700;color:var(--blue-d);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+  #assignFilterBar .filter-title{font-size:12.5px;font-weight:700;color:var(--gold-d);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
 
   .member-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-  .member-card-v2{background:var(--panel);border:1px solid var(--border);border-left:4px solid var(--blue);border-radius:14px;padding:18px 20px;box-shadow:0 4px 18px rgba(30,50,100,.06);display:flex;flex-direction:column;gap:14px}
-  .member-card-v2.is-lead{border-left-color:var(--purple)}
+  .member-card-v2{background:var(--panel);border:1px solid var(--border);border-left:4px solid var(--gold-d);border-radius:14px;padding:18px 20px;box-shadow:0 4px 18px rgba(120,95,20,.07);display:flex;flex-direction:column;gap:14px}
+  .member-card-v2.is-lead{border-left-color:var(--gold-d)}
   .member-v2-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
   .member-v2-name{font-weight:700;font-size:16px;color:var(--text)}
   .member-v2-role{color:var(--muted);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
@@ -151,7 +178,7 @@
   code{background:#182238;padding:2px 6px;border-radius:5px;color:#9fc0ff}
   .footer-note a{text-decoration:none}
   .footer-note a code{transition:background .15s ease}
-  .footer-note a:hover code{background:var(--blue)}
+  .footer-note a:hover code{background:var(--gold-d)}
 
   /* ===== Export Modal ===== */
   .modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,18,40,.55);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
@@ -162,8 +189,8 @@
   .modal-sub{color:var(--muted);font-size:13.5px;margin:0 0 24px}
   .export-options{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
   .export-opt{border:2px solid var(--border);border-radius:14px;padding:18px 16px;cursor:pointer;transition:border-color .15s,background .15s;text-align:center;position:relative}
-  .export-opt:hover{border-color:var(--blue);background:#f0f5ff}
-  .export-opt.selected{border-color:var(--blue);background:#eef4ff}
+  .export-opt:hover{border-color:var(--gold-d);background:var(--gold-tint)}
+  .export-opt.selected{border-color:var(--gold-d);background:var(--gold-tint)}
   .export-opt .opt-icon{font-size:32px;margin-bottom:8px}
   .export-opt .opt-name{font-weight:700;font-size:14px;color:var(--text)}
   .export-opt .opt-desc{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5}
@@ -171,12 +198,12 @@
   .modal-actions{display:flex;gap:10px;justify-content:flex-end}
   .btn-cancel{padding:9px 20px;border:1px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;font-size:13.5px;color:var(--muted);font-weight:600;transition:background .15s}
   .btn-cancel:hover{background:var(--panel2)}
-  .btn-export-go{padding:9px 26px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;font-weight:700;font-size:13.5px;cursor:pointer;transition:opacity .15s}
+  .btn-export-go{padding:9px 26px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--gold-d),var(--gold-bright));color:#221f18;font-weight:700;font-size:13.5px;cursor:pointer;transition:opacity .15s}
   .btn-export-go:hover{opacity:.88}
   .btn-export-go:disabled{opacity:.5;cursor:not-allowed}
   .modal-progress{margin-bottom:16px;display:none}
   .modal-progress-bar{height:6px;background:#e6ebf7;border-radius:6px;overflow:hidden;margin-top:6px}
-  .modal-progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--blue),var(--purple));border-radius:6px;transition:width .3s ease}
+  .modal-progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--gold-d),var(--gold-bright));border-radius:6px;transition:width .3s ease}
   .modal-progress-label{font-size:12px;color:var(--muted)}
 
   /* ===== In ấn ===== */
@@ -235,9 +262,11 @@
 <body>
 <div class="wrap">
   <header>
-    <div>
-      <h1>Ban Mua Hàng Dự Án</h1>
-      <p class="sub">BÁO CÁO CÔNG VIỆC</p>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div>
+        <h1>Ban Mua Hàng Dự Án</h1>
+        <p class="sub">BÁO CÁO CÔNG VIỆC</p>
+      </div>
     </div>
     <div class="meta">
       <div class="badge">Trưởng phòng: <b>Chị Trang</b></div>
@@ -267,7 +296,7 @@
     <div class="tab" data-tab="kpi">Đánh giá hiệu suất</div>
   </div>
 
-  <div id="assignFilterBar" style="display:flex;flex-direction:column;gap:12px;margin-bottom:14px;padding:14px 16px;background:var(--panel2);border:1px solid var(--border);border-radius:12px">
+  <div id="assignFilterBar" style="display:flex;flex-direction:column;gap:12px;margin-bottom:14px;padding:14px 16px;background:var(--panel);border:1px solid var(--border);border-radius:12px;box-shadow:0 3px 12px rgba(120,95,20,.06)">
     <div class="filter-title">🔎 Bộ lọc chung — áp dụng cho tất cả các tab</div>
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <input type="text" id="filterMa" placeholder="🔍 Tìm Mã CV..." style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;width:140px">
@@ -347,6 +376,7 @@
         </tbody>
       </table>
       </div>
+      <div id="assignPagination" class="pagination-bar"></div>
     </div>
   </div>
 
@@ -357,8 +387,9 @@
   <div class="panel" id="panel-charts">
     <div class="grid-2">
       <div class="card">
-        <h3><span class="dot"></span>Khối lượng công việc theo thành viên</h3>
-        <canvas id="chartByMember" height="220"></canvas>
+        <h3><span class="dot"></span>Khối lượng &amp; trạng thái công việc theo thành viên</h3>
+        <div style="font-size:11.5px;color:var(--muted);margin:-6px 0 8px">Mỗi thành viên có 2 cột: <b>cột trái</b> = phân bổ theo Trạng thái, <b>cột phải</b> = phân bổ theo Đáp ứng. Chiều cao mỗi cột = tổng đầu việc tương ứng.</div>
+        <canvas id="chartByMember" height="260"></canvas>
       </div>
       <div class="card">
         <h3><span class="dot"></span>Khối lượng công việc theo loại mua hàng</h3>
@@ -432,8 +463,48 @@ let results = [];
 let chartByMember, chartByLoai;
 
 let assignFilters = {ma:'', ten:'', loai:'', trangThai:'', dapUng:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null, kpiCategory:''};
+
+// ── Lưu/khôi phục bộ lọc chung qua localStorage — để bộ lọc không bị mất khi F5 ──
+const ASSIGN_FILTERS_KEY = 'bmhda_assign_filters';
+function saveAssignFiltersToStorage(){
+  try{
+    localStorage.setItem(ASSIGN_FILTERS_KEY, JSON.stringify({
+      ma: assignFilters.ma, ten: assignFilters.ten, loai: assignFilters.loai,
+      trangThai: assignFilters.trangThai, dapUng: assignFilters.dapUng, nguoi: assignFilters.nguoi,
+      capNhatFrom: assignFilters.capNhatFrom ? assignFilters.capNhatFrom.toISOString() : null,
+      capNhatTo: assignFilters.capNhatTo ? assignFilters.capNhatTo.toISOString() : null,
+      hanCutoff: assignFilters.hanCutoff ? assignFilters.hanCutoff.toISOString() : null,
+      kpiCategory: assignFilters.kpiCategory
+    }));
+  }catch(e){}
+}
+function restoreAssignFiltersFromStorage(){
+  try{
+    const raw = localStorage.getItem(ASSIGN_FILTERS_KEY);
+    if(!raw) return;
+    const s = JSON.parse(raw);
+    assignFilters.ma = s.ma || '';
+    assignFilters.ten = s.ten || '';
+    assignFilters.loai = s.loai || '';
+    assignFilters.trangThai = s.trangThai || '';
+    assignFilters.dapUng = s.dapUng || '';
+    assignFilters.nguoi = s.nguoi || '';
+    assignFilters.capNhatFrom = s.capNhatFrom ? new Date(s.capNhatFrom) : null;
+    assignFilters.capNhatTo = s.capNhatTo ? new Date(s.capNhatTo) : null;
+    assignFilters.hanCutoff = s.hanCutoff ? new Date(s.hanCutoff) : null;
+    assignFilters.kpiCategory = s.kpiCategory || '';
+  }catch(e){}
+}
+// Đổi Date -> chuỗi 'yyyy-mm-dd' để gán vào input[type=date]
+function dateToInputValue(d){
+  if(!d) return '';
+  const p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+}
 let lastAssignTasks = [];
 let assignSort = {field:null, dir:1};
+let assignPage = 1;
+const ASSIGN_PAGE_SIZE = 7; // số dòng dữ liệu tối đa mỗi trang (không tính hàng tiêu đề nhóm)
 let overviewSort = {field:'date', dir:-1}; // mặc định: mới nhất trước (giống hành vi gốc)
 
 function toPercent(v){
@@ -464,6 +535,21 @@ function escapeHtml(str){
   return String(str)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// Định dạng cột "Tên công việc": nếu dữ liệu gốc đã có xuống dòng (\n) thì giữ nguyên
+// (nhờ CSS white-space:pre-line trên .ten-cell). Nếu dữ liệu là 1 dòng liền có các
+// mục dạng "1) ... 2) ... 3) ..." thì tự tách mỗi mục xuống 1 dòng cho dễ đọc.
+function formatTenCongViec(str){
+  const raw = String(str||'');
+  const escaped = escapeHtml(raw);
+  if(/\n|\r/.test(raw)){
+    // Đã có xuống dòng thật trong dữ liệu -> giữ nguyên, để CSS pre-line xử lý
+    return escaped;
+  }
+  // Chèn xuống dòng trước mỗi mục đánh số dạng "1)", "2)", ... khi đứng sau khoảng trắng
+  // (không chèn ở đầu chuỗi để không tạo dòng trống thừa)
+  return escaped.replace(/\s(?=\d{1,2}\))/g, '\n');
 }
 
 function goToAssignFilterByMa(ma){
@@ -590,25 +676,25 @@ const statusMap = {
 
 function populateAssignFilterOptions(tasks){
   const loaiSel = document.getElementById('filterLoai');
-  const curLoai = loaiSel.value;
+  const curLoai = assignFilters.loai;
   const loaiSet = Array.from(new Set(tasks.map(t=>t.loai).filter(Boolean))).sort((a,b)=>a.localeCompare(b,'vi'));
   loaiSel.innerHTML = '<option value="">Loại: Tất cả</option>' + loaiSet.map(l=>`<option value="${l}">${l}</option>`).join('');
   loaiSel.value = loaiSet.includes(curLoai) ? curLoai : '';
 
   const ttSel = document.getElementById('filterTrangThai');
-  const curTT = ttSel.value;
+  const curTT = assignFilters.trangThai;
   const ttSet = Object.keys(statusMap);
   ttSel.innerHTML = '<option value="">Trạng thái: Tất cả</option>' + ttSet.map(s=>`<option value="${s}">${s}</option>`).join('');
   ttSel.value = ttSet.includes(curTT) ? curTT : '';
 
   const duSel = document.getElementById('filterDapUng');
-  const curDu = duSel.value;
+  const curDu = assignFilters.dapUng;
   const duSet = Object.keys(dapUngMap).concat(['Sắp đến hạn']);
   duSel.innerHTML = '<option value="">Đáp ứng: Tất cả</option>' + duSet.map(s=>`<option value="${s}">${s}</option>`).join('');
   duSel.value = duSet.includes(curDu) ? curDu : '';
 
   const ngSel = document.getElementById('filterNguoi');
-  const curNg = ngSel.value;
+  const curNg = assignFilters.nguoi;
   ngSel.innerHTML = '<option value="">Thành viên: Tất cả</option>' + members.map(m=>`<option value="${m}">${m}</option>`).join('');
   ngSel.value = members.includes(curNg) ? curNg : '';
 
@@ -668,6 +754,16 @@ function setupAssignFilterBar(){
   const hanCutoffInput = document.getElementById('filterHanCutoff');
   const resetBtn = document.getElementById('assignFilterReset');
 
+  // Khôi phục bộ lọc đã lưu từ lần trước (nếu có) TRƯỚC khi gắn sự kiện —
+  // riêng 2 dropdown Loại/Thành viên sẽ được khôi phục sau, trong
+  // populateAssignFilterOptions() vì lúc này options của chúng chưa có sẵn.
+  restoreAssignFiltersFromStorage();
+  maInput.value = assignFilters.ma;
+  tenInput.value = assignFilters.ten;
+  capNhatFromInput.value = dateToInputValue(assignFilters.capNhatFrom);
+  capNhatToInput.value = dateToInputValue(assignFilters.capNhatTo);
+  hanCutoffInput.value = dateToInputValue(assignFilters.hanCutoff);
+
   const applyAndRender = () => {
     assignFilters.ma = maInput.value.trim();
     assignFilters.ten = tenInput.value.trim();
@@ -678,6 +774,8 @@ function setupAssignFilterBar(){
     assignFilters.capNhatFrom = capNhatFromInput.value ? new Date(capNhatFromInput.value+'T00:00:00') : null;
     assignFilters.capNhatTo = capNhatToInput.value ? new Date(capNhatToInput.value+'T00:00:00') : null;
     assignFilters.hanCutoff = hanCutoffInput.value ? new Date(hanCutoffInput.value+'T00:00:00') : null;
+    assignPage = 1;
+    saveAssignFiltersToStorage();
     render();
   };
 
@@ -694,6 +792,8 @@ function setupAssignFilterBar(){
     maInput.value=''; tenInput.value=''; loaiSel.value=''; ttSel.value=''; duSel.value=''; ngSel.value='';
     capNhatFromInput.value=''; capNhatToInput.value=''; hanCutoffInput.value='';
     assignFilters = {ma:'', ten:'', loai:'', trangThai:'', dapUng:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null, kpiCategory:''};
+    assignPage = 1;
+    saveAssignFiltersToStorage();
     render();
   });
 }
@@ -722,6 +822,7 @@ function setupAssignSort(){
       } else {
         assignSort.field = field; assignSort.dir = 1;
       }
+      assignPage = 1;
       renderAssignTable(lastAssignTasks);
     });
   });
@@ -784,6 +885,8 @@ function setupKpiCardFilters(){
       const cat = KPI_CATEGORY_MAP[valueId];
       // Bấm lại thẻ đang active thì bỏ lọc (về lại "Tổng đầu việc")
       assignFilters.kpiCategory = (assignFilters.kpiCategory === cat && cat !== '') ? '' : cat;
+      assignPage = 1;
+      saveAssignFiltersToStorage();
       activateTab('assign');
       try{ localStorage.setItem(TAB_STORAGE_KEY, 'assign'); }catch(e){}
       render();
@@ -859,7 +962,7 @@ function renderInner(tasks, results){
       return `
       <div class="overview-item" data-ma="${escapeHtml(t.ma||'')}">
         <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
-          <span><b style="color:var(--blue-d)">${escapeHtml(t.ma||'')}</b> - ${escapeHtml(t.ten||'')}</span><span style="color:var(--muted)">${t.tienDo||0}%</span>
+          <span><b style="color:var(--gold-d)">${escapeHtml(t.ma||'')}</b> - ${escapeHtml(t.ten||'')}</span><span style="color:var(--muted)">${t.tienDo||0}%</span>
         </div>
         <div class="progress-bar"><div class="progress-fill ${fillClass}" style="width:${t.tienDo||0}%"></div></div>
       </div>`;
@@ -939,19 +1042,70 @@ function renderInner(tasks, results){
 function renderAssignTable(tasksIn){
   const tbody = document.getElementById('assignTable');
   const tasks = applyAssignFilters(tasksIn || []);
-  if(tasksIn && tasksIn.length){
-    let html = '';
-    members.forEach(m=>{
-      const mt = tasks.filter(t=>t.nguoi===m);
-      if(!mt.length) return;
-      if(assignSort.field) mt.sort((a,b) => compareForSort(a,b,assignSort.field) * assignSort.dir);
-      html += `<tr class="member-sep-row" style="background:rgba(47,111,237,.07)">
-        <td colspan="11" style="font-weight:700;color:var(--blue-d);padding:8px 10px">
-          ${m} <span style="font-weight:500;color:var(--muted);font-size:12px">(${mt.length} đầu việc)</span>
+
+  if(!tasksIn || !tasksIn.length){
+    tbody.innerHTML = '<tr><td colspan="11" class="empty-note">Chưa có dữ liệu.</td></tr>';
+    document.getElementById('assignPagination').innerHTML = '';
+    updateSortArrows();
+    return;
+  }
+
+  // ── Dựng danh sách hàng phẳng: xen kẽ hàng "tiêu đề nhóm" (theo thành viên)
+  //    và hàng dữ liệu, đúng thứ tự member -> mt (giống trước đây) ──
+  const flatRows = [];
+  members.forEach(m=>{
+    const mt = tasks.filter(t=>t.nguoi===m);
+    if(!mt.length) return;
+    if(assignSort.field) mt.sort((a,b) => compareForSort(a,b,assignSort.field) * assignSort.dir);
+    const groupEntry = { type:'group', member:m, count:mt.length };
+    flatRows.push(groupEntry);
+    mt.forEach(t => flatRows.push({ type:'data', task:t }));
+  });
+
+  const totalDataRows = flatRows.filter(r=>r.type==='data').length;
+  if(!totalDataRows){
+    tbody.innerHTML = '<tr><td colspan="11" class="empty-note">Không có công việc nào khớp bộ lọc đã chọn.</td></tr>';
+    document.getElementById('assignPagination').innerHTML = '';
+    updateSortArrows();
+    return;
+  }
+
+  const totalPages = Math.max(1, Math.ceil(totalDataRows / ASSIGN_PAGE_SIZE));
+  if(assignPage > totalPages) assignPage = totalPages;
+  if(assignPage < 1) assignPage = 1;
+
+  const start = (assignPage - 1) * ASSIGN_PAGE_SIZE;
+  const end = start + ASSIGN_PAGE_SIZE;
+
+  // Chọn ra các hàng thuộc trang hiện tại — nếu 1 nhóm bị cắt ngang giữa 2 trang,
+  // hàng tiêu đề nhóm đó sẽ được LẶP LẠI ở đầu trang tiếp theo để không mất ngữ cảnh.
+  let dataIndex = 0, lastGroupSeen = null, groupShownThisPage = null;
+  const pageRows = [];
+  flatRows.forEach(entry=>{
+    if(entry.type === 'group'){ lastGroupSeen = entry; return; }
+    if(dataIndex >= start && dataIndex < end){
+      if(groupShownThisPage !== lastGroupSeen){
+        pageRows.push(lastGroupSeen);
+        groupShownThisPage = lastGroupSeen;
+      }
+      pageRows.push(entry);
+    }
+    dataIndex++;
+  });
+
+  let html = '';
+  pageRows.forEach(entry=>{
+    if(entry.type === 'group'){
+      html += `<tr class="member-sep-row" style="background:rgba(201,151,26,.09)">
+        <td colspan="11" style="font-weight:700;color:var(--gold-d);padding:8px 10px">
+          ${entry.member} <span style="font-weight:500;color:var(--muted);font-size:12px">(${entry.count} đầu việc)</span>
         </td></tr>`;
-      html += mt.map(t=>`
+      return;
+    }
+    const t = entry.task;
+    html += `
         <tr class="${t.overdue?'row-overdue':''}">
-          <td class="wrap-cell">${escapeHtml(t.ten||'')}</td><td>${escapeHtml(t.ma||'')}</td><td class="wrap-cell">${escapeHtml(t.loai||'')}</td>
+          <td class="wrap-cell ten-cell">${formatTenCongViec(t.ten)}</td><td>${escapeHtml(t.ma||'')}</td><td class="wrap-cell">${escapeHtml(t.loai||'')}</td>
           <td>${formatDateOnly(t.ngayBatDau)}</td>
           <td>${formatDateOnly(t.han)}</td>
           <td>${formatDateOnly(t.ngayXong)}</td>
@@ -960,26 +1114,119 @@ function renderAssignTable(tasksIn){
           <td>${renderDapUng(t.dapUng, t.trangThai)}</td>
           <td>${formatDateOnly(t.capNhat)}</td>
           <td class="wrap-cell">${t.baoCaoChiTiet?escapeHtml(t.baoCaoChiTiet):'<span style="color:var(--muted)">—</span>'}</td>
-        </tr>`).join('');
-    });
-    tbody.innerHTML = html || '<tr><td colspan="11" class="empty-note">Không có công việc nào khớp bộ lọc đã chọn.</td></tr>';
-  } else {
-    tbody.innerHTML = '<tr><td colspan="11" class="empty-note">Chưa có dữ liệu.</td></tr>';
-  }
+        </tr>`;
+  });
+  tbody.innerHTML = html;
+
+  renderAssignPagination(totalPages, totalDataRows, start, Math.min(end, totalDataRows));
   updateSortArrows();
+}
+
+// Danh sách số trang rút gọn kiểu "1 2 3 … 8 9 10", tránh hiển thị quá nhiều nút khi có nhiều trang
+function paginationRange(current, total){
+  const delta = 1;
+  const range = [];
+  for(let i=1;i<=total;i++){
+    if(i===1 || i===total || (i>=current-delta && i<=current+delta)) range.push(i);
+  }
+  const withEllipsis = [];
+  let prev = null;
+  range.forEach(p=>{
+    if(prev !== null && p - prev > 1) withEllipsis.push('...');
+    withEllipsis.push(p);
+    prev = p;
+  });
+  return withEllipsis;
+}
+
+function renderAssignPagination(totalPages, totalRows, fromIdx, toIdx){
+  const box = document.getElementById('assignPagination');
+  if(!box) return;
+  if(totalPages <= 1){
+    box.innerHTML = `<div class="pagination-summary">Hiển thị ${totalRows}/${totalRows} công việc</div>`;
+    return;
+  }
+  const pages = paginationRange(assignPage, totalPages);
+  const pageBtns = pages.map(p => p === '...'
+    ? `<span class="page-ellipsis">…</span>`
+    : `<button type="button" class="page-btn${p===assignPage?' active':''}" data-page="${p}">${p}</button>`
+  ).join('');
+  box.innerHTML = `
+    <div class="pagination-summary">Hiển thị ${fromIdx+1}–${toIdx} trong tổng số ${totalRows} công việc</div>
+    <div class="pagination-pages">
+      <button type="button" class="page-btn" data-page="${assignPage-1}" ${assignPage<=1?'disabled':''}>‹</button>
+      ${pageBtns}
+      <button type="button" class="page-btn" data-page="${assignPage+1}" ${assignPage>=totalPages?'disabled':''}>›</button>
+    </div>`;
+  box.querySelectorAll('.page-btn[data-page]:not([disabled])').forEach(btn=>{
+    btn.addEventListener('click', () => {
+      const p = parseInt(btn.dataset.page, 10);
+      if(!p || p === assignPage) return;
+      assignPage = p;
+      renderAssignTable(lastAssignTasks);
+      document.querySelector('.table-scroll')?.scrollIntoView({behavior:'smooth', block:'nearest'});
+    });
+  });
 }
 
 function renderCharts(tasks){
   if(typeof Chart === 'undefined') return;
-  const palette = ['#2f6fed','#7c5cf0','#0ea968','#c8790a','#e0424a','#0aa7c8','#e07f2f'];
-  const byMemberCounts = members.map(m => tasks.filter(t=>t.nguoi===m).length);
+  const palette = ['#c9971a','#7c5cf0','#0ea968','#c8790a','#e0424a','#0aa7c8','#e07f2f'];
+
+  // ==== Biểu đồ cột nhóm + chồng: Theo thành viên — Trạng thái & Đáp ứng ====
+  const trangThaiDefs = [
+    { key:'Đang thực hiện', color:'#2f6fed' },
+    { key:'Hoàn thành',     color:'#0ea968' },
+    { key:'Sắp đến hạn',    color:'#c8790a', match:t=>t.trangThai==="Đang thực hiện" && t.dapUng==="Sắp đến hạn" },
+    { key:'Trễ hạn',        color:'#e0424a', match:t=>t.trangThai==="Trễ hạn" || t.overdue },
+    { key:'Hoãn lại',       color:'#7c5cf0' },
+    { key:'Hủy bỏ',         color:'#8a8a8a' }
+  ];
+  const dapUngDefs = [
+    { key:'Đúng hạn',      color:'#5fd1a0' },
+    { key:'Chưa tới hạn',  color:'#7ea8f2' },
+    { key:'Sắp đến hạn',   color:'#f0b25a' },
+    { key:'Trễ hạn',       color:'#ef8a90' }
+  ];
+  const memberTasksMap = members.map(m => tasks.filter(t=>t.nguoi===m));
+
+  const statusDatasets = trangThaiDefs.map(def => ({
+    label: def.key,
+    stack: 'trangthai',
+    backgroundColor: def.color,
+    data: memberTasksMap.map(mt => mt.filter(t => def.match ? def.match(t) : (t.trangThai === def.key && !(t.trangThai==="Đang thực hiện" && t.dapUng==="Sắp đến hạn"))).length)
+  }));
+  const dapUngDatasets = dapUngDefs.map(def => ({
+    label: '(ĐƯ) ' + def.key,
+    stack: 'dapung',
+    backgroundColor: def.color,
+    data: memberTasksMap.map(mt => mt.filter(t => t.dapUng === def.key).length)
+  }));
+
   const ctxM = document.getElementById('chartByMember');
   if(ctxM){
     if(chartByMember) chartByMember.destroy();
     chartByMember = new Chart(ctxM, {
       type:'bar',
-      data:{ labels: members, datasets:[{ label:'Số đầu việc', data: byMemberCounts, backgroundColor: palette, borderRadius:6 }] },
-      options:{ plugins:{legend:{display:false}}, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } } }
+      data:{ labels: members, datasets:[...statusDatasets, ...dapUngDatasets] },
+      options:{
+        plugins:{
+          legend:{ position:'bottom', labels:{ boxWidth:12, font:{ size:10.5 } } },
+          tooltip:{
+            callbacks:{
+              afterBody: (items) => {
+                if(!items.length) return '';
+                const idx = items[0].dataIndex;
+                return 'Tổng đầu việc: ' + memberTasksMap[idx].length;
+              }
+            }
+          }
+        },
+        scales:{
+          x:{ stacked:true },
+          y:{ stacked:true, beginAtZero:true, ticks:{ precision:0 } }
+        }
+      }
     });
   }
   const loaiCounts = {};
