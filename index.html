@@ -90,7 +90,15 @@
   .progress-fill.cancel-fill{background:linear-gradient(90deg,#8b95a8,#c3c9d6)}
   .progress-fill.duesoon-fill{background:linear-gradient(90deg,var(--amber),#ffd07a)}
   .card-compact{padding:14px 16px}
-  .card-compact h3{font-size:13.5px;margin-bottom:10px}
+  .card-compact h3{font-size:13.5px;margin-bottom:10px;display:flex}
+  .overview-sort-bar{display:flex;align-items:center;gap:6px;font-weight:400}
+  .overview-sort-label{color:var(--muted);font-size:11.5px}
+  .overview-sort-btn{border:1px solid var(--border);background:var(--panel2);color:var(--muted);font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;transition:.15s}
+  .overview-sort-btn:hover{color:var(--text);border-color:var(--blue)}
+  .overview-sort-btn.active{background:var(--blue);border-color:var(--blue);color:#fff}
+  .kpi{cursor:pointer;transition:transform .12s ease,box-shadow .12s ease}
+  .kpi:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(30,50,100,.12)}
+  .kpi.active{border-color:var(--blue-d);box-shadow:0 0 0 3px rgba(47,111,237,.18)}
   #overviewList{max-height:250px;overflow-y:auto;padding-right:4px}
   #overviewList .overview-item{padding:5px 6px;margin:-5px -6px 2px -6px}
   #overviewList .overview-item .progress-bar{height:6px}
@@ -292,7 +300,15 @@
   <div class="panel active" id="panel-overview">
     <div class="grid-2">
       <div class="card card-compact">
-        <h3><span class="dot"></span>Tiến độ các đầu việc <span id="overviewDateLabel" style="font-weight:500;color:var(--muted);font-size:12px"></span></h3>
+        <h3 style="justify-content:space-between;flex-wrap:wrap">
+          <span style="display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="dot"></span>Tiến độ các đầu việc <span id="overviewDateLabel" style="font-weight:500;color:var(--muted);font-size:12px"></span></span>
+          <span id="overviewSortBar" class="overview-sort-bar">
+            <span class="overview-sort-label">Sắp xếp:</span>
+            <button type="button" class="overview-sort-btn active" data-sort="date">Mới nhất</button>
+            <button type="button" class="overview-sort-btn" data-sort="ma">Mã CV</button>
+            <button type="button" class="overview-sort-btn" data-sort="tienDo">Tiến độ</button>
+          </span>
+        </h3>
         <div id="overviewList" class="empty-note">Chưa có dữ liệu.</div>
       </div>
       <div class="card">
@@ -404,7 +420,6 @@
 <script>
 // ===== DATA SOURCE =====
 const SHEET_ID = "12QtQ6jJftAwRHx31DcqQn6gf8r-WQQokTjmiaKtVLj8";
-const csvUrl = (sheetName) => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
 
 const members = ["Chị Trang","Chị Ngọc","Anh Trí","Anh Sang","Anh Hòa","Chị Phúc","Anh Đạt"];
 const roles = {"Chị Trang":"Trưởng phòng"};
@@ -416,30 +431,10 @@ let tasks = [];
 let results = [];
 let chartByMember, chartByLoai;
 
-let assignFilters = {ma:'', ten:'', loai:'', trangThai:'', dapUng:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null};
+let assignFilters = {ma:'', ten:'', loai:'', trangThai:'', dapUng:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null, kpiCategory:''};
 let lastAssignTasks = [];
 let assignSort = {field:null, dir:1};
-
-function parseCSV(text){
-  const rows = [];
-  let row = [], field = '', inQuotes = false;
-  for(let i=0;i<text.length;i++){
-    const c = text[i];
-    if(inQuotes){
-      if(c==='"'){ if(text[i+1]==='"'){ field+='"'; i++; } else { inQuotes=false; } }
-      else field += c;
-    } else {
-      if(c==='"') inQuotes = true;
-      else if(c===','){ row.push(field); field=''; }
-      else if(c==='\n' || c==='\r'){
-        if(field!=='' || row.length){ row.push(field); rows.push(row); row=[]; field=''; }
-        if(c==='\r' && text[i+1]==='\n') i++;
-      } else field += c;
-    }
-  }
-  if(field!=='' || row.length){ row.push(field); rows.push(row); }
-  return rows.filter(r=>r.some(v=>v!==''));
-}
+let overviewSort = {field:'date', dir:-1}; // mặc định: mới nhất trước (giống hành vi gốc)
 
 function toPercent(v){
   if(!v) return 0;
@@ -593,11 +588,6 @@ const statusMap = {
   "Hoãn lại":"st-pending", "Hủy bỏ":"st-cancel"
 };
 
-function initials(name){
-  const p = name.replace(/^(Chị|Anh)\s+/,'').trim();
-  return p.slice(0,2).toUpperCase();
-}
-
 function populateAssignFilterOptions(tasks){
   const loaiSel = document.getElementById('filterLoai');
   const curLoai = loaiSel.value;
@@ -629,7 +619,8 @@ function populateAssignFilterOptions(tasks){
   }
 }
 
-function applyAssignFilters(list){
+function applyAssignFilters(list, includeKpiCategory){
+  if(includeKpiCategory === undefined) includeKpiCategory = true;
   return list.filter(t=>{
     if(assignFilters.ma && !String(t.ma||'').toLowerCase().includes(assignFilters.ma.toLowerCase())) return false;
     if(assignFilters.ten && !String(t.ten||'').toLowerCase().includes(assignFilters.ten.toLowerCase())) return false;
@@ -651,6 +642,15 @@ function applyAssignFilters(list){
         d.setHours(0,0,0,0);
         if(d.getTime() > assignFilters.hanCutoff.getTime()) return false;
       }
+    }
+    if(includeKpiCategory && assignFilters.kpiCategory){
+      const cat = assignFilters.kpiCategory;
+      if(cat === 'progress' && t.trangThai !== "Đang thực hiện") return false;
+      if(cat === 'done' && t.trangThai !== "Hoàn thành") return false;
+      if(cat === 'duesoon' && !t.dueSoon) return false;
+      if(cat === 'late' && !(t.trangThai === "Trễ hạn" || t.overdue)) return false;
+      if(cat === 'pending' && t.trangThai !== "Hoãn lại") return false;
+      if(cat === 'cancel' && t.trangThai !== "Hủy bỏ") return false;
     }
     return true;
   });
@@ -693,7 +693,7 @@ function setupAssignFilterBar(){
   resetBtn.addEventListener('click', () => {
     maInput.value=''; tenInput.value=''; loaiSel.value=''; ttSel.value=''; duSel.value=''; ngSel.value='';
     capNhatFromInput.value=''; capNhatToInput.value=''; hanCutoffInput.value='';
-    assignFilters = {ma:'', ten:'', loai:'', trangThai:'', dapUng:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null};
+    assignFilters = {ma:'', ten:'', loai:'', trangThai:'', dapUng:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null, kpiCategory:''};
     render();
   });
 }
@@ -727,6 +727,81 @@ function setupAssignSort(){
   });
 }
 
+// ── Sắp xếp danh sách "Tiến độ các đầu việc" (card tổng quan) ──
+// - date: theo ngày cập nhật mới nhất (mặc định, giữ đúng hành vi gốc)
+// - ma: theo Mã CV (A→Z)
+// - tienDo: theo % tiến độ (cao→thấp)
+function sortOverviewPairs(pairs){
+  const {field, dir} = overviewSort;
+  pairs.sort((a,b)=>{
+    let cmp;
+    if(field === 'ma') cmp = String(a.task.ma||'').localeCompare(String(b.task.ma||''), 'vi');
+    else if(field === 'tienDo') cmp = (a.task.tienDo||0) - (b.task.tienDo||0);
+    else cmp = a.date.getTime() - b.date.getTime(); // 'date'
+    return cmp * dir;
+  });
+}
+
+function setupOverviewSort(){
+  const bar = document.getElementById('overviewSortBar');
+  if(!bar) return;
+  bar.querySelectorAll('.overview-sort-btn').forEach(btn=>{
+    btn.addEventListener('click', () => {
+      const field = btn.dataset.sort;
+      // Mặc định hướng hợp lý cho từng tiêu chí: ngày & tiến độ ưu tiên cao/mới trước,
+      // Mã CV ưu tiên A→Z. Bấm lại lần nữa để đảo chiều.
+      if(overviewSort.field === field){
+        overviewSort.dir *= -1;
+      } else {
+        overviewSort.field = field;
+        overviewSort.dir = field === 'ma' ? 1 : -1;
+      }
+      render();
+    });
+  });
+}
+
+function updateOverviewSortButtons(){
+  const bar = document.getElementById('overviewSortBar');
+  if(!bar) return;
+  bar.querySelectorAll('.overview-sort-btn').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.sort === overviewSort.field);
+  });
+}
+
+// ── Bấm vào thẻ KPI để tự động lọc bảng "Phân công & Tiến độ" theo đúng nhóm đó ──
+const KPI_CATEGORY_MAP = {
+  kpiTotal:'', kpiProgress:'progress', kpiDone:'done', kpiDueSoon:'duesoon',
+  kpiLate:'late', kpiOnTime:'pending', kpiCancel:'cancel'
+};
+function setupKpiCardFilters(){
+  Object.keys(KPI_CATEGORY_MAP).forEach(valueId=>{
+    const valueEl = document.getElementById(valueId);
+    if(!valueEl) return;
+    const card = valueEl.closest('.kpi');
+    if(!card) return;
+    card.addEventListener('click', () => {
+      const cat = KPI_CATEGORY_MAP[valueId];
+      // Bấm lại thẻ đang active thì bỏ lọc (về lại "Tổng đầu việc")
+      assignFilters.kpiCategory = (assignFilters.kpiCategory === cat && cat !== '') ? '' : cat;
+      activateTab('assign');
+      try{ localStorage.setItem(TAB_STORAGE_KEY, 'assign'); }catch(e){}
+      render();
+    });
+  });
+}
+
+function updateKpiActiveState(){
+  Object.keys(KPI_CATEGORY_MAP).forEach(valueId=>{
+    const valueEl = document.getElementById(valueId);
+    const card = valueEl && valueEl.closest('.kpi');
+    if(!card) return;
+    const cat = KPI_CATEGORY_MAP[valueId];
+    const isActive = cat === '' ? !assignFilters.kpiCategory : assignFilters.kpiCategory === cat;
+    card.classList.toggle('active', isActive);
+  });
+}
+
 function updateSortArrows(){
   document.querySelectorAll('#panel-assign thead th.sortable').forEach(th=>{
     const field = th.dataset.field;
@@ -740,15 +815,18 @@ function render(){ renderInner(tasks, results); }
 
 function renderInner(tasks, results){
   const filteredTasks = applyAssignFilters(tasks);
+  const kpiBaseTasks = applyAssignFilters(tasks, false); // dùng riêng cho 7 số KPI: vẫn theo các bộ lọc khác, nhưng KHÔNG tự lọc theo kpiCategory đang được chọn
   const filteredResults = assignFilters.nguoi ? results.filter(r=>r.nguoi===assignFilters.nguoi) : results;
 
-  document.getElementById('kpiTotal').textContent = filteredTasks.length;
-  document.getElementById('kpiProgress').textContent = filteredTasks.filter(t=>t.trangThai==="Đang thực hiện").length;
-  document.getElementById('kpiDone').textContent = filteredTasks.filter(t=>t.trangThai==="Hoàn thành").length;
-  document.getElementById('kpiDueSoon').textContent = filteredTasks.filter(t=>t.dueSoon).length;
-  document.getElementById('kpiLate').textContent = filteredTasks.filter(t=>t.trangThai==="Trễ hạn" || t.overdue).length;
-  document.getElementById('kpiOnTime').textContent = filteredTasks.filter(t=>t.trangThai==="Hoãn lại").length;
-  document.getElementById('kpiCancel').textContent = filteredTasks.filter(t=>t.trangThai==="Hủy bỏ").length;
+  document.getElementById('kpiTotal').textContent = kpiBaseTasks.length;
+  document.getElementById('kpiProgress').textContent = kpiBaseTasks.filter(t=>t.trangThai==="Đang thực hiện").length;
+  document.getElementById('kpiDone').textContent = kpiBaseTasks.filter(t=>t.trangThai==="Hoàn thành").length;
+  document.getElementById('kpiDueSoon').textContent = kpiBaseTasks.filter(t=>t.dueSoon).length;
+  document.getElementById('kpiLate').textContent = kpiBaseTasks.filter(t=>t.trangThai==="Trễ hạn" || t.overdue).length;
+  document.getElementById('kpiOnTime').textContent = kpiBaseTasks.filter(t=>t.trangThai==="Hoãn lại").length;
+  document.getElementById('kpiCancel').textContent = kpiBaseTasks.filter(t=>t.trangThai==="Hủy bỏ").length;
+  updateKpiActiveState();
+  updateOverviewSortButtons();
 
   lastAssignTasks = tasks;
   populateAssignFilterOptions(tasks);
@@ -769,9 +847,9 @@ function renderInner(tasks, results){
       latestByMa.set(key, {task:t, date:d});
     }
   });
-  const latestTasks = Array.from(latestByMa.values())
-    .sort((a,b)=>b.date.getTime()-a.date.getTime())
-    .map(x=>x.task);
+  const latestPairs = Array.from(latestByMa.values());
+  sortOverviewPairs(latestPairs);
+  const latestTasks = latestPairs.map(x=>x.task);
   dateLabel.textContent = latestTasks.length ? '— theo báo cáo mới nhất của từng Mã CV' : '';
 
   if(latestTasks.length){
@@ -1089,11 +1167,6 @@ async function exportToPptx(){
     if(/Đúng hạn/.test(st)) return {txt:C.colGreen,bg:C.bgGreen};
     if(/Chưa tới hạn/.test(st)) return {txt:C.colBlue,bg:C.bgBlue};
     return {txt:C.muted,bg:C.bgGray};
-  }
-  function addBadge(sl, x, y, w, h, text, txtColor, bgColor){
-    if(!text) { sl.addText('—',{x,y,w,h,fontSize:8.5,color:C.muted,fontFace:FF,align:'center',valign:'middle'}); return; }
-    sl.addShape(pptx.ShapeType.roundRect,{x,y,w,h,rectRadius:0.06,fill:{type:'solid',color:bgColor},line:{color:bgColor,pt:0}});
-    sl.addText(text,{x,y,w,h,fontSize:8,bold:true,color:txtColor,fontFace:FF,align:'center',valign:'middle'});
   }
 
   // ── Thẻ KPI nổi bật: bóng đổ nhẹ, nền tint theo màu số, viền đậm màu ──
@@ -1549,6 +1622,8 @@ async function exportToExcel(){
 // ======================================================================
 setupAssignFilterBar();
 setupAssignSort();
+setupOverviewSort();
+setupKpiCardFilters();
 renderFooterLinks();
 loadData();
 </script>
