@@ -39,9 +39,11 @@
     var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden;}
   .wrap{max-width:1400px;margin:0 auto;padding:28px 32px 60px;padding-left:max(32px, env(safe-area-inset-left));padding-right:max(32px, env(safe-area-inset-right))}
   header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:24px}
-  h1{font-size:26px;margin:0 0 4px;font-weight:700;letter-spacing:.3px}
-  h1 span{background:linear-gradient(90deg,var(--gold-d),var(--gold-bright));-webkit-background-clip:text;background-clip:text;color:transparent}
-  .sub{color:var(--muted);font-size:13.5px;margin:0}
+  .brand{display:flex;align-items:center;gap:14px}
+  .brand-icon{width:52px;height:52px;flex:0 0 auto;border-radius:14px;background:linear-gradient(135deg,var(--gold-d),var(--gold-bright));display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 6px 16px rgba(143,106,0,.25)}
+  h1{font-size:28px;margin:0;font-weight:800;letter-spacing:.2px;line-height:1.15;background:linear-gradient(90deg,var(--gold-d) 15%,var(--gold-bright) 85%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--gold-d);font-size:11.5px;margin:4px 0 0;font-weight:700;letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;gap:7px}
+  .sub::before, .sub::after{content:"";width:16px;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--gold-d),var(--gold-bright));display:inline-block}
   .meta{display:flex;gap:10px;flex-wrap:wrap}
   .badge{background:var(--panel);border:1px solid var(--border);padding:8px 14px;border-radius:10px;font-size:12.5px;color:var(--muted)}
   .badge b{color:var(--text)}
@@ -166,8 +168,10 @@
 
   .avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--gold-d),var(--gold-bright));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#221f18}
 
-  #assignFilterBar{margin-bottom:18px}
+  #assignFilterBar{display:flex;flex-direction:column;gap:12px;margin-bottom:14px;padding:14px 16px;background:var(--panel);border:1px solid var(--border);border-radius:12px;box-shadow:0 3px 12px rgba(120,95,20,.06)}
   #assignFilterBar .filter-title{font-size:12.5px;font-weight:700;color:var(--gold-d);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+  #assignFilterContent .filter-row-fields{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .filter-date-group{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
   /* Desktop: date-field shows label + input side by side */
   .filter-date-group .date-field{display:inline-flex;align-items:center;gap:6px}
   .filter-date-group .date-group-title{display:none}
@@ -252,6 +256,9 @@
     .wrap{padding:14px 12px 44px;padding-left:max(12px, env(safe-area-inset-left));padding-right:max(12px, env(safe-area-inset-right))}
     header{margin-bottom:14px}
     h1{font-size:19px}
+    .brand{gap:10px}
+    .brand-icon{width:42px;height:42px;font-size:19px;border-radius:12px}
+    .sub{font-size:10px;letter-spacing:1.5px}
     .sub{font-size:12px}
     .meta{gap:7px;width:100%}
     .badge{font-size:11px;padding:7px 10px;flex:1 1 auto;text-align:center}
@@ -316,19 +323,16 @@
     }
     #assignFilterBar.open #assignFilterContent{display:block}
 
-    /* Grid 2 cột cho các select + text inputs */
+    /* Grid 2 cột cho các select + text inputs — 2 ô tìm kiếm (Mã CV, Tên công việc)
+       nằm cùng hàng đầu tiên, các select tiếp theo cũng xếp 2/hàng */
     #assignFilterContent .filter-row-fields{
       display:grid;
       grid-template-columns:1fr 1fr;
       gap:8px;
       margin-top:12px;
     }
-    /* Text inputs chiếm cả hàng */
-    #assignFilterContent .filter-row-fields input[type="text"]{
-      grid-column:1/-1;
-    }
     #assignFilterBar input, #assignFilterBar select{
-      width:100%;
+      width:100% !important;
       box-sizing:border-box;
     }
 
@@ -386,7 +390,8 @@
     .member-v2-stat b{font-size:17px}
     table{font-size:12px}
     th, td{padding:9px 8px}
-    #kpiTable, #panel-kpi table{display:block;overflow-x:auto}
+    /* Bảng KPI dùng .table-scroll để cuộn ngang, KHÔNG dùng display:block trên table/tbody
+       vì sẽ phá vỡ cấu trúc hàng-cột, khiến dữ liệu dồn sát nhau như đã xảy ra */
     .export-options{grid-template-columns:1fr}
     .modal-box{padding:24px 20px;width:94%}
   }
@@ -399,10 +404,11 @@
 <body>
 <div class="wrap">
   <header>
-    <div style="display:flex;align-items:center;gap:12px">
+    <div class="brand">
+      <div class="brand-icon">🗂️</div>
       <div>
         <h1>Ban Mua Hàng Dự Án</h1>
-        <p class="sub">BÁO CÁO CÔNG VIỆC</p>
+        <p class="sub">Báo cáo công việc</p>
       </div>
     </div>
     <div class="meta">
@@ -475,7 +481,7 @@
     <div class="tab" data-tab="kpi">Đánh giá hiệu suất</div>
   </div>
 
-  <div id="assignFilterBar" style="display:flex;flex-direction:column;gap:12px;margin-bottom:14px;padding:14px 16px;background:var(--panel);border:1px solid var(--border);border-radius:12px;box-shadow:0 3px 12px rgba(120,95,20,.06)">
+  <div id="assignFilterBar">
     <div class="filter-title">🔎 Bộ lọc chung — áp dụng cho tất cả các tab</div>
     <div id="assignFilterToggle">
       <div class="aft-left">
@@ -486,7 +492,7 @@
       <span class="aft-chevron">▼</span>
     </div>
     <div id="assignFilterContent">
-      <div class="filter-row-fields" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <div class="filter-row-fields">
         <input type="text" id="filterMa" placeholder="🔍 Tìm Mã CV..." style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;width:140px">
         <input type="text" id="filterTen" list="tenSuggestList" placeholder="🔍 Tìm tên công việc..." autocomplete="off" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;width:220px">
         <datalist id="tenSuggestList"></datalist>
@@ -503,8 +509,8 @@
           <option value="">Thành viên: Tất cả</option>
         </select>
       </div>
-      <div class="filter-date-group" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px">
-        <span class="date-group-title" style="display:none">📅 Lọc theo ngày</span>
+      <div class="filter-date-group">
+        <span class="date-group-title">📅 Lọc theo ngày</span>
         <div class="date-field">
           <label style="font-size:12.5px;color:var(--muted)">Báo cáo từ</label>
           <input type="date" id="filterCapNhatFrom" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
@@ -627,10 +633,12 @@
       <div id="kpiEmptyNote" style="display:none;font-size:12.5px;color:var(--red);background:rgba(224,66,74,.08);border:1px solid rgba(224,66,74,.25);border-radius:8px;padding:8px 12px;margin-bottom:10px">
         Không đọc được dữ liệu từ sheet <b>"KPI_DanhGia"</b>. Vui lòng kiểm tra: tên tab sheet đúng là "KPI_DanhGia", sheet có dữ liệu, và các cột "Người phụ trách", "Tổng CV hoàn thành", "Số CV đúng hạn", "Tỷ lệ đúng hạn", "Xếp loại" đã được điền.
       </div>
+      <div class="table-scroll">
       <table>
         <thead><tr><th>Thành viên</th><th>Tổng CV hoàn thành</th><th>Đúng hạn</th><th>Tỷ lệ</th><th>Xếp loại</th></tr></thead>
         <tbody id="kpiTable"></tbody>
       </table>
+      </div>
     </div>
   </div>
 
@@ -2478,6 +2486,30 @@ setupOverviewSort();
 setupKpiCardFilters();
 renderFooterLinks();
 loadData();
+</script>
+<script>
+// ⚠️ Lưu ý: đây chỉ là cản trở cơ bản phía trình duyệt, KHÔNG phải bảo mật thật sự.
+// Người dùng vẫn có thể tắt JavaScript hoặc dùng công cụ khác để xem mã nguồn.
+(function(){
+  // Chặn chuột phải (menu ngữ cảnh)
+  document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+
+  // Chặn các phím tắt mở DevTools / xem mã nguồn
+  document.addEventListener('keydown', function(e){
+    const key = e.key ? e.key.toUpperCase() : '';
+    // F12
+    if(e.keyCode === 123 || key === 'F12'){ e.preventDefault(); return false; }
+    // Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+Shift+C (DevTools, Console, Inspect)
+    if(e.ctrlKey && e.shiftKey && ['I','J','C'].includes(key)){ e.preventDefault(); return false; }
+    // Ctrl+U (View Source)
+    if(e.ctrlKey && key === 'U'){ e.preventDefault(); return false; }
+    // Ctrl+S (Save Page)
+    if(e.ctrlKey && key === 'S'){ e.preventDefault(); return false; }
+  });
+
+  // Chặn kéo-thả / bôi đen chọn văn bản để copy khó hơn (tuỳ chọn nhẹ nhàng, không ảnh hưởng nhập liệu)
+  document.addEventListener('dragstart', function(e){ e.preventDefault(); });
+})();
 </script>
 </body>
 </html>
