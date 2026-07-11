@@ -145,7 +145,32 @@
   .overview-sort-btn.active{background:var(--gold-d);border-color:var(--gold-d);color:#fff}
   .kpi{cursor:pointer;transition:transform .12s ease,box-shadow .12s ease}
   .kpi:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(120,95,20,.14)}
-  .kpi.active{border-color:var(--gold-d);box-shadow:0 0 0 3px rgba(143,106,0,.18)}
+  /* FIX: tăng độ tương phản khi thẻ KPI đang được chọn làm bộ lọc — đổi màu viền tương phản mạnh (xanh dương đậm)
+     thay vì cùng tông vàng/be với nền, tăng độ đậm bóng đổ, thêm nền sáng nhẹ và icon dấu tick góc thẻ để không
+     phụ thuộc hoàn toàn vào màu sắc. */
+  .kpi.active{
+    border-color:#1d4ed8;
+    box-shadow:0 0 0 3px rgba(29,78,216,.35), 0 4px 12px rgba(29,78,216,.25);
+    background:linear-gradient(180deg, rgba(29,78,216,.07), var(--panel) 60%);
+    transform:translateY(-1px);
+  }
+  .kpi.active::after{
+    content:"✓";
+    position:absolute;
+    top:8px;
+    right:10px;
+    width:20px;
+    height:20px;
+    border-radius:50%;
+    background:#1d4ed8;
+    color:#fff;
+    font-size:12px;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    line-height:1;
+  }
   #overviewList{max-height:250px;overflow-y:auto;padding-right:4px}
   #overviewList .overview-item{padding:5px 6px;margin:-5px -6px 2px -6px}
   #overviewList .overview-item .progress-bar{height:6px}
@@ -817,7 +842,11 @@ function restoreAssignFiltersFromStorage(){
     assignFilters.ten = s.ten || '';
     assignFilters.loai = s.loai || '';
     // Tương thích ngược: bản cũ lưu trangThai dạng chuỗi đơn -> chuyển thành mảng 1 phần tử.
-    assignFilters.trangThai = Array.isArray(s.trangThai) ? s.trangThai : (s.trangThai ? [s.trangThai] : []);
+    const rawTrangThai = Array.isArray(s.trangThai) ? s.trangThai : (s.trangThai ? [s.trangThai] : []);
+    // FIX: loại bỏ giá trị không hợp lệ (không còn tồn tại trong danh mục hiện tại) và loại trùng,
+    // để tránh lệch số lượng giữa "n đã chọn" và số checkbox thực sự được tick.
+    const validCats = Object.keys(TRANGTHAI_CATEGORY_LABELS);
+    assignFilters.trangThai = Array.from(new Set(rawTrangThai.filter(v => validCats.includes(v))));
     assignFilters.dapUng = s.dapUng || '';
     assignFilters.nguoi = s.nguoi || '';
     assignFilters.capNhatFrom = s.capNhatFrom ? new Date(s.capNhatFrom) : null;
@@ -1186,7 +1215,10 @@ function populateAssignFilterOptions(tasks){
 function updateTrangThaiFilterButtonLabel(){
   const btn = document.getElementById('filterTrangThaiBtn');
   if(!btn) return;
-  const arr = assignFilters.trangThai || [];
+  // FIX: chỉ tính các giá trị hợp lệ (tồn tại trong danh mục hiện tại) và loại trùng,
+  // để số hiển thị trên nút luôn khớp với số checkbox thực sự đang được tick.
+  const validCats = Object.keys(TRANGTHAI_CATEGORY_LABELS);
+  const arr = Array.from(new Set((assignFilters.trangThai || []).filter(v => validCats.includes(v))));
   if(!arr.length){ btn.textContent = 'Trạng thái: Tất cả'; return; }
   if(arr.length === 1){ btn.textContent = 'Trạng thái: ' + (TRANGTHAI_CATEGORY_LABELS[arr[0]] || arr[0]); return; }
   btn.textContent = `Trạng thái: ${arr.length} đã chọn`;
@@ -1304,8 +1336,11 @@ function setupAssignFilterBar(){
   }
   updateFilterCountBadge();
 
-  maInput.addEventListener('input', applyAndRender);
-  tenInput.addEventListener('input', applyAndRender);
+  // FIX: debounce 300ms — gõ chữ không còn kích hoạt render()/vẽ lại biểu đồ ngay theo từng ký tự,
+  // chỉ vẽ lại sau khi người dùng ngừng gõ 300ms, giảm hẳn hiện tượng giật/lag khi tìm kiếm.
+  const debouncedApplyAndRender = debounce(applyAndRender, 300);
+  maInput.addEventListener('input', debouncedApplyAndRender);
+  tenInput.addEventListener('input', debouncedApplyAndRender);
   loaiSel.addEventListener('change', applyAndRender);
   duSel.addEventListener('change', applyAndRender);
   ngSel.addEventListener('change', applyAndRender);
@@ -1328,11 +1363,19 @@ function setupAssignFilterBar(){
         let arr = (assignFilters.trangThai || []).slice();
         if(cb.checked){ if(!arr.includes(val)) arr.push(val); }
         else{ arr = arr.filter(v => v !== val); }
+        // FIX: nếu người dùng tick ĐỦ tất cả các trạng thái, kết quả lọc sẽ giống hệt như không lọc gì
+        // (= bấm "Tổng đầu việc") vì mọi đầu việc đều thuộc 1 trong các nhóm đó. Để tránh gây hiểu lầm
+        // ("6 đã chọn" nhưng thực chất không lọc), tự động quy về mảng rỗng — đồng bộ với thẻ "Tổng đầu việc".
+        const validCats = Object.keys(TRANGTHAI_CATEGORY_LABELS);
+        if(arr.length >= validCats.length && validCats.every(c => arr.includes(c))){
+          arr = [];
+        }
         assignFilters.trangThai = arr;
         assignPage = 1;
         saveAssignFiltersToStorage();
         updateFilterCountBadge();
         updateTrangThaiFilterButtonLabel();
+        syncTrangThaiCheckboxes();
         render();
       });
     });
@@ -1442,10 +1485,14 @@ function setupKpiCardFilters(){
         const idx = arr.indexOf(cat);
         if(idx >= 0) arr.splice(idx, 1); // đang chọn -> bấm lại để bỏ chọn thẻ này
         else arr.push(cat); // chưa chọn -> thêm vào danh sách đang chọn (cho phép chọn nhiều thẻ cùng lúc)
-        assignFilters.trangThai = arr;
+        // FIX: nếu đã chọn ĐỦ tất cả các thẻ trạng thái, kết quả lọc giống hệt "Tổng đầu việc"
+        // (không lọc gì) — tự động quy về mảng rỗng để tránh trạng thái "6 đã chọn" gây hiểu lầm.
+        const validCats = Object.keys(TRANGTHAI_CATEGORY_LABELS);
+        assignFilters.trangThai = (arr.length >= validCats.length && validCats.every(c => arr.includes(c))) ? [] : arr;
       }
       assignPage = 1;
       saveAssignFiltersToStorage();
+      syncTrangThaiCheckboxes();
       // Chỉ áp dụng bộ lọc và vẽ lại, KHÔNG tự động chuyển tab —
       // người dùng đang ở tab nào (Biểu đồ, Tổng quan, ...) thì vẫn ở nguyên tab đó.
       render();
@@ -1475,6 +1522,15 @@ function updateSortArrows(){
 }
 
 function render(){ renderInner(tasks, results); }
+// FIX: debounce dùng chung — trì hoãn việc thực thi hàm cho đến khi người dùng ngừng gõ/thao tác
+// trong khoảng "wait" ms, để tránh render() / vẽ lại biểu đồ liên tục theo từng ký tự gõ.
+function debounce(fn, wait){
+  let t;
+  return function(...args){
+    clearTimeout(t);
+    t = setTimeout(() => fn.apply(this, args), wait);
+  };
+}
 
 function renderInner(tasks, results){
   const filteredTasks = applyAssignFilters(tasks);
@@ -1817,6 +1873,11 @@ function renderCharts(tasks){
       type:'bar',
       data:{ labels: members, datasets: memberDatasets },
       options:{
+        // FIX: tắt animation "vẽ dựng từ đầu" (cột mọc lên/xoay) — vì biểu đồ này bị destroy + tạo lại
+        // rất thường xuyên (mỗi lần đổi bộ lọc, tick trạng thái, bấm thẻ KPI, hay tự động làm mới mỗi 60s),
+        // animation mặc định 1000ms lặp lại liên tục chính là nguyên nhân gây cảm giác giật/lag rõ nhất.
+        animation:{ duration:200 },
+        resizeDelay:0,
         // Chỉ lọc biểu đồ "theo loại mua hàng" khi người dùng BẤM CHỌN vào cột của
         // một thành viên — không còn tự động lọc theo di chuyển chuột (hover) nữa.
         onClick: (evt, activeElements) => {
@@ -1874,6 +1935,8 @@ function renderCharts(tasks){
         type:'bar',
         data:{ labels: loaiLabels, datasets:[{ label:'Số đầu việc', data: loaiLabels.map(l=>loaiCounts[l]), backgroundColor: palette }] },
         options:{
+          // FIX: giảm animation vì chart bị destroy/tạo lại thường xuyên (xem ghi chú ở chartByMember)
+          animation:{ duration:200 },
           plugins:{ legend:{ display:false } },
           scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } }
         }
@@ -1882,7 +1945,8 @@ function renderCharts(tasks){
       chartByLoai = new Chart(ctxL, {
         type:'pie',
         data:{ labels: loaiLabels, datasets:[{ data: loaiLabels.map(l=>loaiCounts[l]), backgroundColor: palette }] },
-        options:{ plugins:{legend:{position:'bottom'}} }
+        // FIX: giảm animation vì chart bị destroy/tạo lại thường xuyên (xem ghi chú ở chartByMember)
+        options:{ animation:{ duration:200 }, plugins:{legend:{position:'bottom'}} }
       });
     }
   }
