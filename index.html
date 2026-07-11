@@ -98,6 +98,13 @@
   .chart-toggle button{border:none;background:transparent;padding:6px 11px;font-size:11.5px;font-weight:600;color:var(--muted);border-radius:6px;cursor:pointer;transition:.15s;white-space:nowrap}
   .chart-toggle button:hover:not(.active){color:var(--gold-d)}
   .chart-toggle button.active{background:var(--gold-d);color:#fff}
+  /* FIX: canvas Chart.js cần một khung cha có position:relative + chiều cao cố định,
+     nếu không sẽ bị vòng lặp tự phình to (canvas ngày càng cao) gây tràn layout. */
+  .chart-canvas-wrap{position:relative;width:100%;height:260px}
+  .chart-canvas-wrap canvas{width:100% !important;height:100% !important}
+  @media (max-width:560px){
+    .chart-canvas-wrap{height:220px}
+  }
   @media (max-width:560px){
     .card-header-row{flex-direction:column;align-items:flex-start;margin-bottom:12px}
     .chart-toggle{flex-wrap:wrap}
@@ -657,7 +664,7 @@
           </div>
         </div>
         <div style="font-size:11.5px;color:var(--muted);margin:0 0 10px" id="memberChartDesc">Mỗi thành viên có 2 cột: <b>cột trái</b> = phân bổ theo Trạng thái, <b>cột phải</b> = phân bổ theo Đáp ứng. Chiều cao mỗi cột = tổng đầu việc tương ứng.</div>
-        <canvas id="chartByMember" height="260"></canvas>
+        <div class="chart-canvas-wrap"><canvas id="chartByMember"></canvas></div>
       </div>
       <div class="card">
         <div class="card-header-row">
@@ -667,8 +674,31 @@
             <button type="button" data-mode="bar">Biểu đồ cột</button>
           </div>
         </div>
-        <canvas id="chartByLoai" height="220"></canvas>
+        <div class="chart-canvas-wrap"><canvas id="chartByLoai"></canvas></div>
       </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="card-header-row">
+        <h3><span class="dot"></span>Xu hướng tổng công việc theo thời gian (theo thành viên)</h3>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <div class="chart-toggle" id="memberTrendModeToggle" role="group" aria-label="Chế độ xem biểu đồ xu hướng theo thời gian">
+            <button type="button" data-mode="month">Xem theo tháng</button>
+            <button type="button" data-mode="year">Xem theo năm</button>
+          </div>
+          <span id="memberTrendMonthWrap" style="display:flex;align-items:center;gap:8px">
+            <label for="memberTrendMonthSelect" style="font-size:12.5px;color:var(--muted)">Tháng</label>
+            <select id="memberTrendMonthSelect" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px"></select>
+          </span>
+          <span id="memberTrendYearWrap" style="display:flex;align-items:center;gap:8px">
+            <label for="memberTrendYearSelect" style="font-size:12.5px;color:var(--muted)">Năm</label>
+            <select id="memberTrendYearSelect" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px"></select>
+          </span>
+        </div>
+      </div>
+      <div style="font-size:11.5px;color:var(--muted);margin:0 0 10px" id="memberTrendDesc">
+        Số đầu việc theo <b>Ngày cập nhật (Báo cáo)</b> của từng thành viên. Áp dụng theo bộ lọc "Báo cáo từ...đến" ở Bộ lọc chung phía trên (nếu có).
+      </div>
+      <div class="chart-canvas-wrap" style="height:340px"><canvas id="chartMemberTrend"></canvas></div>
     </div>
   </div>
 
@@ -755,6 +785,11 @@ let tasks = [];
 let results = [];
 let kpiEval = []; // dữ liệu đã tổng hợp sẵn từ sheet "KPI_DanhGia"
 let chartByMember, chartByLoai;
+// Lưu lại nhãn (label) của các đường/cột đã bị người dùng BẤM ẨN trên chú thích (legend),
+// để khi biểu đồ bị destroy + vẽ lại (do đổi bộ lọc, tự động làm mới mỗi 60s, v.v.) thì
+// vẫn giữ nguyên lựa chọn ẩn/hiện đó — tránh tình trạng đường vừa tắt lại tự hiện lại.
+let chartByMemberHiddenLabels = new Set();
+let chartByLoaiHiddenLabels = new Set();
 let lastChartTasks = [];
 // Cờ đánh dấu: dữ liệu biểu đồ hiện tại (lastChartTasks) đã được vẽ ra Chart.js thực sự hay chưa.
 // Mục đích: KHÔNG vẽ Chart.js khi tab "Biểu đồ" đang ẩn (display:none) — vì canvas lúc đó có
@@ -772,6 +807,56 @@ let memberChartTasksMap = [];     // mảng đầu việc tương ứng từng t
 let loaiChartAllLabels = [];      // danh sách loại mua hàng cố định (để giữ thứ tự/màu khi lọc theo thành viên)
 let loaiChartPalette = ['#c9971a','#7c5cf0','#0ea968','#c8790a','#e0424a','#0aa7c8','#e07f2f'];
 let loaiSelectedMemberIdx = null;  // index thành viên đang được CHỌN (bấm) trên biểu đồ cột, null = không lọc
+let chartMemberTrend = null;
+let chartMemberTrendHiddenLabels = new Set();
+const MEMBER_TREND_YEAR_KEY = 'bmhda_member_trend_year'; // năm đang chọn cho biểu đồ xu hướng theo thành viên
+function getMemberTrendYear(){
+  try{
+    const v = localStorage.getItem(MEMBER_TREND_YEAR_KEY);
+    return v ? parseInt(v, 10) : null;
+  }catch(e){ return null; }
+}
+function setMemberTrendYear(y){
+  try{ localStorage.setItem(MEMBER_TREND_YEAR_KEY, String(y)); }catch(e){}
+}
+const MEMBER_TREND_MODE_KEY = 'bmhda_member_trend_mode'; // 'month' | 'year'
+function getMemberTrendMode(){
+  try{
+    const v = localStorage.getItem(MEMBER_TREND_MODE_KEY);
+    return (v === 'month' || v === 'year') ? v : 'year';
+  }catch(e){ return 'year'; }
+}
+function setMemberTrendMode(mode){
+  try{ localStorage.setItem(MEMBER_TREND_MODE_KEY, mode); }catch(e){}
+}
+const MEMBER_TREND_MONTH_KEY = 'bmhda_member_trend_month'; // dạng "yyyy-m" (m: 0-11) — tháng cụ thể đang chọn ở chế độ xem theo tháng
+function getMemberTrendMonth(){
+  try{ return localStorage.getItem(MEMBER_TREND_MONTH_KEY) || null; }catch(e){ return null; }
+}
+function setMemberTrendMonth(key){
+  try{ localStorage.setItem(MEMBER_TREND_MONTH_KEY, key); }catch(e){}
+}
+// Bảng màu RIÊNG cho biểu đồ xu hướng theo thành viên — được chọn để các màu tách biệt rõ ràng
+// (khác hẳn tông màu nhau), tránh tình trạng nhiều thành viên có màu na ná giống nhau (ví dụ
+// nhiều sắc cam/vàng liền kề). Nếu số thành viên nhiều hơn bảng màu, tự sinh thêm màu bằng HSL
+// với các bước hue cách đều nhau để đảm bảo luôn phân biệt được.
+const MEMBER_TREND_BASE_COLORS = [
+  '#1f77b4', // xanh dương
+  '#e0424a', // đỏ
+  '#0ea968', // xanh lá
+  '#c9971a', // vàng gold
+  '#7c5cf0', // tím
+  '#0aa7c8', // xanh cyan
+  '#e07f2f', // cam
+  '#d84fa0', // hồng magenta
+  '#5b6b73', // xám xanh
+  '#8a5a2b'  // nâu
+];
+function getMemberTrendColor(idx, total){
+  if(idx < MEMBER_TREND_BASE_COLORS.length) return MEMBER_TREND_BASE_COLORS[idx];
+  const hue = Math.round((360 / Math.max(total, 1)) * idx) % 360;
+  return `hsl(${hue}, 68%, 45%)`;
+}
 
 // ── Chế độ xem biểu đồ: lưu lựa chọn của người dùng vào localStorage
 // để F5 / mở lại trình duyệt vẫn giữ nguyên chế độ đã chọn.
@@ -1857,6 +1942,16 @@ function renderCharts(tasks){
     : memberMode === 'dapung' ? dapUngDatasets
     : [...statusDatasets, ...dapUngDatasets];
 
+  // Ghi nhớ những dataset đang bị ẩn (do người dùng bấm vào chú thích) trước khi destroy,
+  // để áp dụng lại ngay sau khi vẽ chart mới — tránh bị tự động hiện lại khi dữ liệu làm mới.
+  if(chartByMember){
+    chartByMember.data.datasets.forEach((ds, i) => {
+      if(chartByMember.isDatasetVisible(i)) chartByMemberHiddenLabels.delete(ds.label);
+      else chartByMemberHiddenLabels.add(ds.label);
+    });
+  }
+  memberDatasets.forEach(ds => { ds.hidden = chartByMemberHiddenLabels.has(ds.label); });
+
   const memberDescEl = document.getElementById('memberChartDesc');
   if(memberDescEl){
     memberDescEl.innerHTML = memberMode === 'status'
@@ -1877,6 +1972,7 @@ function renderCharts(tasks){
         // rất thường xuyên (mỗi lần đổi bộ lọc, tick trạng thái, bấm thẻ KPI, hay tự động làm mới mỗi 60s),
         // animation mặc định 1000ms lặp lại liên tục chính là nguyên nhân gây cảm giác giật/lag rõ nhất.
         animation:{ duration:200 },
+        maintainAspectRatio:false,
         resizeDelay:0,
         // Chỉ lọc biểu đồ "theo loại mua hàng" khi người dùng BẤM CHỌN vào cột của
         // một thành viên — không còn tự động lọc theo di chuyển chuột (hover) nữa.
@@ -1927,6 +2023,15 @@ function renderCharts(tasks){
   const loaiFilterNoteEl = document.getElementById('loaiChartFilterNote');
   if(loaiFilterNoteEl) loaiFilterNoteEl.textContent = '';
   const loaiMode = getChartLoaiMode();
+  // Ghi nhớ những lát (loại mua hàng) đang bị người dùng ẨN trên chú thích biểu đồ tròn,
+  // trước khi destroy — để khôi phục lại ngay sau khi vẽ chart mới.
+  if(chartByLoai && chartByLoai.config.type === 'pie'){
+    const prevLabels = chartByLoai.data.labels || [];
+    prevLabels.forEach((lbl, i) => {
+      if(chartByLoai.getDataVisibility(i)) chartByLoaiHiddenLabels.delete(lbl);
+      else chartByLoaiHiddenLabels.add(lbl);
+    });
+  }
   const ctxL = document.getElementById('chartByLoai');
   if(ctxL){
     if(chartByLoai) chartByLoai.destroy();
@@ -1937,6 +2042,7 @@ function renderCharts(tasks){
         options:{
           // FIX: giảm animation vì chart bị destroy/tạo lại thường xuyên (xem ghi chú ở chartByMember)
           animation:{ duration:200 },
+          maintainAspectRatio:false,
           plugins:{ legend:{ display:false } },
           scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } }
         }
@@ -1946,11 +2052,275 @@ function renderCharts(tasks){
         type:'pie',
         data:{ labels: loaiLabels, datasets:[{ data: loaiLabels.map(l=>loaiCounts[l]), backgroundColor: palette }] },
         // FIX: giảm animation vì chart bị destroy/tạo lại thường xuyên (xem ghi chú ở chartByMember)
-        options:{ animation:{ duration:200 }, plugins:{legend:{position:'bottom'}} }
+        options:{ animation:{ duration:200 }, maintainAspectRatio:false, plugins:{legend:{position:'bottom'}} }
       });
+      // Áp dụng lại trạng thái ẩn đã ghi nhớ (nếu loại mua hàng đó vẫn còn tồn tại trong dữ liệu mới).
+      loaiLabels.forEach((lbl, i) => {
+        if(chartByLoaiHiddenLabels.has(lbl)) chartByLoai.toggleDataVisibility(i);
+      });
+      chartByLoai.update('none');
     }
   }
+  renderMemberTrendChart(tasks);
 }
+
+// ==== Biểu đồ đường: Xu hướng tổng công việc theo thời gian, mỗi thành viên 1 màu ====
+// Trục hoành = 12 tháng của năm đang chọn; trục tung = số đầu việc có "Ngày cập nhật" (capNhat)
+// rơi vào tháng đó. Dữ liệu đầu vào "tasks" đã được áp dụng toàn bộ Bộ lọc chung phía trên,
+// bao gồm cả "Báo cáo từ...đến" (capNhatFrom/capNhatTo) — nên việc chọn năm ở đây chỉ là chọn
+// NĂM NÀO để xem trong phạm vi đã lọc, không thay thế bộ lọc ngày chung.
+function renderMemberTrendChart(tasks){
+  const yearSelect = document.getElementById('memberTrendYearSelect');
+  const monthSelect = document.getElementById('memberTrendMonthSelect');
+  const canvas = document.getElementById('chartMemberTrend');
+  const descEl = document.getElementById('memberTrendDesc');
+  if(!yearSelect || !monthSelect || !canvas) return;
+
+  const mode = getMemberTrendMode(); // 'month' = xem theo ngày trong 1 tháng cụ thể; 'year' = xem theo 12 tháng của 1 năm
+
+  // Thu thập danh sách năm có xuất hiện trong dữ liệu (dựa trên capNhat), để đổ vào dropdown năm.
+  const yearsSet = new Set();
+  tasks.forEach(t=>{
+    const d = parseVNDate(t.capNhat);
+    if(d) yearsSet.add(d.getFullYear());
+  });
+  const years = Array.from(yearsSet).sort((a,b)=>b-a); // mới nhất trước
+  const nowYear = new Date().getFullYear();
+  if(!years.length) years.push(nowYear);
+
+  // Giữ lựa chọn năm hiện tại nếu vẫn còn hợp lệ; nếu không, chọn năm mới nhất có dữ liệu.
+  let selectedYear = getMemberTrendYear();
+  if(!selectedYear || !years.includes(selectedYear)) selectedYear = years[0];
+
+  const prevOptionsKey = yearSelect.getAttribute('data-years') || '';
+  const newOptionsKey = years.join(',');
+  if(prevOptionsKey !== newOptionsKey){
+    yearSelect.innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join('');
+    yearSelect.setAttribute('data-years', newOptionsKey);
+  }
+  yearSelect.value = String(selectedYear);
+
+  let labels, memberCounts, totalCounts = null;
+
+  if(mode === 'month'){
+    // CHẾ ĐỘ "Xem theo tháng": người dùng chọn 1 tháng cụ thể (dropdown "Tháng" tự động phát
+    // hiện những tháng nào có dữ liệu), biểu đồ hiển thị theo TỪNG NGÀY từ ngày 1 đến ngày cuối
+    // cùng của tháng đó (28/29/30/31 — hệ thống tự detect theo đúng tháng/năm, không cố định 31).
+    const allDates = tasks.map(t=>parseVNDate(t.capNhat)).filter(Boolean);
+
+    // Danh sách các tháng (yyyy-m) thực sự có dữ liệu, mới nhất trước.
+    const monthKeySet = new Set();
+    allDates.forEach(d=> monthKeySet.add(d.getFullYear()+'-'+d.getMonth()));
+    let monthKeys = Array.from(monthKeySet).sort((a,b)=>{
+      const [ay,am] = a.split('-').map(Number), [by,bm] = b.split('-').map(Number);
+      return (by*12+bm) - (ay*12+am);
+    });
+    if(!monthKeys.length){
+      const now = new Date();
+      monthKeys = [now.getFullYear()+'-'+now.getMonth()];
+    }
+
+    const prevMonthOptionsKey = monthSelect.getAttribute('data-months') || '';
+    const newMonthOptionsKey = monthKeys.join(',');
+    if(prevMonthOptionsKey !== newMonthOptionsKey){
+      monthSelect.innerHTML = monthKeys.map(k=>{
+        const [yy, mm] = k.split('-').map(Number);
+        return `<option value="${k}">Tháng ${mm+1}/${yy}</option>`;
+      }).join('');
+      monthSelect.setAttribute('data-months', newMonthOptionsKey);
+    }
+    let selectedMonthKey = getMemberTrendMonth();
+    if(!selectedMonthKey || !monthKeys.includes(selectedMonthKey)) selectedMonthKey = monthKeys[0];
+    monthSelect.value = selectedMonthKey;
+
+    const [selYear, selMonth] = selectedMonthKey.split('-').map(Number);
+    const daysInMonth = new Date(selYear, selMonth + 1, 0).getDate(); // tự detect 28/29/30/31
+
+    if(descEl) descEl.innerHTML = `Số đầu việc theo <b>Ngày cập nhật (Báo cáo)</b> của từng thành viên, hiển thị theo từng ngày trong tháng đã chọn (từ ngày 1 đến ngày ${daysInMonth} — hệ thống tự phát hiện số ngày của tháng). Áp dụng theo bộ lọc "Báo cáo từ...đến" ở Bộ lọc chung phía trên (nếu có).`;
+
+    labels = Array.from({length: daysInMonth}, (_, i) => String(i + 1));
+    memberCounts = members.map(m2=>{
+      const counts = new Array(daysInMonth).fill(0);
+      tasks.forEach(t=>{
+        if(t.nguoi !== m2) return;
+        const d = parseVNDate(t.capNhat);
+        if(!d || d.getFullYear() !== selYear || d.getMonth() !== selMonth) return;
+        counts[d.getDate() - 1]++;
+      });
+      return counts;
+    });
+  }else{
+    // CHẾ ĐỘ "Xem theo năm": giữ nguyên hành vi cũ — 12 tháng của năm đang chọn (dropdown Năm),
+    // hệ thống tự phát hiện những năm nào có dữ liệu để đổ vào dropdown.
+    if(descEl) descEl.innerHTML = 'Số đầu việc theo <b>Ngày cập nhật (Báo cáo)</b> của từng thành viên, gộp theo tháng trong năm đã chọn. Áp dụng theo bộ lọc "Báo cáo từ...đến" ở Bộ lọc chung phía trên (nếu có).';
+    labels = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+    memberCounts = members.map(m=>{
+      const counts = new Array(12).fill(0);
+      tasks.forEach(t=>{
+        if(t.nguoi !== m) return;
+        const d = parseVNDate(t.capNhat);
+        if(!d || d.getFullYear() !== selectedYear) return;
+        counts[d.getMonth()]++;
+      });
+      return counts;
+    });
+    // Đường "Tổng": cộng dồn số đầu việc của tất cả thành viên theo từng tháng, chỉ áp dụng
+    // ở chế độ xem theo năm theo đúng yêu cầu.
+    totalCounts = labels.map((_, i) => memberCounts.reduce((sum, arr) => sum + arr[i], 0));
+  }
+
+  // Trước khi vẽ lại (destroy chart cũ), ghi nhớ những đường nào đang bị người dùng ẩn
+  // trên chú thích, để áp dụng lại ngay sau khi tạo chart mới (không bị tự động hiện lại
+  // mỗi khi dữ liệu được làm mới — kể cả tự động làm mới mỗi 60s).
+  if(chartMemberTrend){
+    chartMemberTrend.data.datasets.forEach((ds, i) => {
+      if(chartMemberTrend.isDatasetVisible(i)) chartMemberTrendHiddenLabels.delete(ds.label);
+      else chartMemberTrendHiddenLabels.add(ds.label);
+    });
+  }
+
+  const ZERO_LINE_COLOR = '#c9c9c9'; // màu xám dùng cho các điểm/đoạn có giá trị = 0 (không có công việc nào)
+
+  const trendDatasets = members.map((m, idx)=>{
+    const color = getMemberTrendColor(idx, members.length);
+    return {
+      label: m,
+      data: memberCounts[idx],
+      borderColor: color,
+      backgroundColor: color,
+      fill: false,
+      tension: 0.3,
+      pointRadius: 3,
+      pointHoverRadius: 5,
+      borderWidth: 2,
+      hidden: chartMemberTrendHiddenLabels.has(m),
+      // Điểm có giá trị = 0 -> hiển thị màu xám (không có công việc nào), thay vì màu của thành viên.
+      pointBackgroundColor: (ctx) => (ctx.parsed && ctx.parsed.y === 0) ? ZERO_LINE_COLOR : color,
+      pointBorderColor: (ctx) => (ctx.parsed && ctx.parsed.y === 0) ? ZERO_LINE_COLOR : color,
+      // Đoạn nối giữa 2 điểm đều bằng 0 -> tô màu xám để nhấn mạnh "không có việc" trong khoảng đó.
+      segment: {
+        borderColor: (ctx) => (ctx.p0.parsed.y === 0 && ctx.p1.parsed.y === 0) ? ZERO_LINE_COLOR : color
+      }
+    };
+  });
+
+  if(totalCounts){
+    const totalLabel = 'Tổng (tất cả thành viên)';
+    trendDatasets.push({
+      label: totalLabel,
+      data: totalCounts,
+      borderColor: '#222222',
+      backgroundColor: '#222222',
+      fill: false,
+      tension: 0.3,
+      pointRadius: 3,
+      pointHoverRadius: 5,
+      borderWidth: 3,
+      borderDash: [6, 3],
+      hidden: chartMemberTrendHiddenLabels.has(totalLabel),
+      pointBackgroundColor: (ctx) => (ctx.parsed && ctx.parsed.y === 0) ? ZERO_LINE_COLOR : '#222222',
+      pointBorderColor: (ctx) => (ctx.parsed && ctx.parsed.y === 0) ? ZERO_LINE_COLOR : '#222222',
+      segment: {
+        borderColor: (ctx) => (ctx.p0.parsed.y === 0 && ctx.p1.parsed.y === 0) ? ZERO_LINE_COLOR : '#222222'
+      }
+    });
+  }
+
+  if(chartMemberTrend) chartMemberTrend.destroy();
+  chartMemberTrend = new Chart(canvas, {
+    type: 'line',
+    data: { labels: labels, datasets: trendDatasets },
+    options: {
+      // Giảm animation vì chart bị destroy/tạo lại thường xuyên (xem ghi chú ở chartByMember)
+      animation: { duration: 200 },
+      maintainAspectRatio: false,
+      // FIX: trước đây dùng mode:'index' nên khi rê chuột vào bất kỳ điểm nào, tooltip hiện
+      // TẤT CẢ thành viên tại cùng thời điểm đó (rất rối mắt). Đổi sang mode:'nearest' +
+      // intersect:true để tooltip chỉ hiện đúng 1 giá trị của đường đang được trỏ tới.
+      interaction: { mode: 'nearest', intersect: true },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          align: 'center',
+          labels: {
+            usePointStyle: true,
+            pointStyle: 'circle',
+            boxWidth: 8,
+            boxHeight: 8,
+            padding: 14,
+            font: { size: 11.5 },
+            color: '#4a4235',
+            // FIX: mặc định Chart.js lấy màu chú thích từ style của ĐIỂM DỮ LIỆU ĐẦU TIÊN
+            // (dataIndex 0). Vì ta đang tô điểm = 0 màu xám (yêu cầu trước), nên khi điểm đầu
+            // tiên của 1 thành viên bằng 0, cả ô chú thích của người đó cũng bị lây màu xám.
+            // Ở đây tự dựng lại danh sách chú thích, lấy đúng màu GỐC (borderColor cố định)
+            // của từng đường thay vì suy ra từ điểm dữ liệu.
+            // LƯU Ý: không truyền lineDash/lineWidth của đường "Tổng" (nét đứt, dày 3px) vào icon
+            // chú thích — vì ở kích thước chấm tròn rất nhỏ (8px), nét đứt bị vẽ chồng lên nhau
+            // biến thành 1 cục đen loang lổ (lỗi UI/UX). Icon chú thích luôn vẽ 1 chấm tròn đặc,
+            // nét liền, để dễ nhìn — nét đứt vẫn giữ nguyên khi vẽ trên biểu đồ.
+            generateLabels: (chart) => chart.data.datasets.map((ds, i) => ({
+              text: ds.label,
+              fillStyle: ds.borderColor,
+              strokeStyle: ds.borderColor,
+              hidden: !chart.isDatasetVisible(i),
+              lineWidth: 0,
+              pointStyle: 'circle',
+              datasetIndex: i
+            }))
+          }
+        },
+        tooltip: {
+          // Chỉ hiển thị đúng thành viên đang trỏ tới, không kèm số của các thành viên khác.
+          mode: 'nearest',
+          intersect: true,
+          titleFont: { size: 12, weight: 'bold' },
+          bodyFont: { size: 12 },
+          padding: 10,
+          cornerRadius: 6,
+          displayColors: true,
+          // Giá trị = 0 nghĩa là không có công việc nào -> không cần hiển thị tooltip.
+          filter: (tooltipItem) => tooltipItem.parsed.y !== 0,
+          callbacks: {
+            // Ở chế độ "Xem theo tháng", trục hoành chỉ là số ngày (1, 2, 3...) nên tooltip
+            // hiển thị thêm chữ "Ngày" phía trước cho rõ nghĩa (VD: "Ngày 9" thay vì chỉ "9").
+            // Ở chế độ "Xem theo năm", nhãn đã là "Tháng X" sẵn nên giữ nguyên.
+            title: (items) => {
+              if(!items.length) return '';
+              const raw = items[0].label;
+              return (getMemberTrendMode() === 'month') ? `Ngày ${raw}` : raw;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { autoSkip: true, maxRotation: 0 } },
+        y: { beginAtZero: true, ticks: { precision: 0 } }
+      }
+    }
+  });
+}
+
+// Đổi năm -> chỉ vẽ lại biểu đồ xu hướng (dùng lastChartTasks đã lọc sẵn), không render() lại toàn bộ.
+(function setupMemberTrendYearSelect(){
+  const yearSelect = document.getElementById('memberTrendYearSelect');
+  if(!yearSelect) return;
+  yearSelect.addEventListener('change', () => {
+    const y = parseInt(yearSelect.value, 10);
+    if(y) setMemberTrendYear(y);
+    if(isChartsTabActive()) renderMemberTrendChart(lastChartTasks);
+  });
+})();
+
+// Đổi tháng (chế độ "Xem theo tháng") -> chỉ vẽ lại biểu đồ xu hướng, không render() lại toàn bộ.
+(function setupMemberTrendMonthSelect(){
+  const monthSelect = document.getElementById('memberTrendMonthSelect');
+  if(!monthSelect) return;
+  monthSelect.addEventListener('change', () => {
+    if(monthSelect.value) setMemberTrendMonth(monthSelect.value);
+    if(isChartsTabActive()) renderMemberTrendChart(lastChartTasks);
+  });
+})();
 
 // ── Khi người dùng BẤM CHỌN cột của 1 thành viên trên biểu đồ "theo thành viên",
 // biểu đồ "theo loại mua hàng" bên cạnh sẽ lọc theo đúng thành viên đó.
@@ -2004,6 +2374,26 @@ function initChartModeToggles(){
         setChartLoaiMode(btn.dataset.mode);
         sync();
         renderCharts(lastChartTasks);
+      });
+    });
+  }
+  const trendToggle = document.getElementById('memberTrendModeToggle');
+  if(trendToggle){
+    const sync = () => {
+      const mode = getMemberTrendMode();
+      trendToggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+      const yearWrap = document.getElementById('memberTrendYearWrap');
+      const monthWrap = document.getElementById('memberTrendMonthWrap');
+      if(yearWrap) yearWrap.style.display = (mode === 'year') ? '' : 'none';
+      if(monthWrap) monthWrap.style.display = (mode === 'month') ? '' : 'none';
+    };
+    sync();
+    trendToggle.querySelectorAll('button').forEach(btn=>{
+      btn.addEventListener('click', () => {
+        if(btn.classList.contains('active')) return;
+        setMemberTrendMode(btn.dataset.mode);
+        sync();
+        renderMemberTrendChart(lastChartTasks);
       });
     });
   }
