@@ -171,6 +171,16 @@
   #assignFilterBar{display:flex;flex-direction:column;gap:12px;margin-bottom:14px;padding:14px 16px;background:var(--panel);border:1px solid var(--border);border-radius:12px;box-shadow:0 3px 12px rgba(120,95,20,.06)}
   #assignFilterBar .filter-title{font-size:12.5px;font-weight:700;color:var(--gold-d);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
   #assignFilterContent .filter-row-fields{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  /* ── Bộ lọc "Trạng thái" dạng multi-select (cho phép chọn nhiều trạng thái cùng lúc,
+     đồng bộ 2 chiều với các thẻ KPI phía trên) ── */
+  .ms-dropdown{position:relative;display:inline-block}
+  .ms-toggle{padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--panel);color:var(--text);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+  .ms-toggle::after{content:"▾";font-size:10px;color:var(--muted)}
+  .ms-panel{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:60;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:8px 6px;box-shadow:0 8px 22px rgba(120,95,20,.16);min-width:190px;max-height:280px;overflow-y:auto}
+  .ms-panel.open{display:block}
+  .ms-panel label{display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 8px;white-space:nowrap;cursor:pointer;border-radius:6px}
+  .ms-panel label:hover{background:rgba(143,106,0,.08)}
+  .ms-panel input[type="checkbox"]{cursor:pointer}
   .filter-date-group{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
   /* Desktop: date-field shows label + input side by side */
   .filter-date-group .date-field{display:inline-flex;align-items:center;gap:6px}
@@ -331,10 +341,11 @@
       gap:8px;
       margin-top:12px;
     }
-    #assignFilterBar input, #assignFilterBar select{
+    #assignFilterBar input, #assignFilterBar select, #assignFilterBar .ms-dropdown, #assignFilterBar .ms-toggle{
       width:100% !important;
       box-sizing:border-box;
     }
+    #assignFilterBar .ms-panel{left:0;right:0;min-width:0}
 
     /* Nhóm ngày: nền riêng, layout 2 cột */
     #assignFilterContent .filter-date-group{
@@ -500,9 +511,17 @@
         <select id="filterLoai" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
           <option value="">Loại: Tất cả</option>
         </select>
-        <select id="filterTrangThai" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-          <option value="">Trạng thái: Tất cả</option>
-        </select>
+        <div class="ms-dropdown" id="filterTrangThaiWrap">
+          <button type="button" class="ms-toggle" id="filterTrangThaiBtn">Trạng thái: Tất cả</button>
+          <div class="ms-panel" id="filterTrangThaiPanel">
+            <label><input type="checkbox" value="progress"> Đang thực hiện</label>
+            <label><input type="checkbox" value="done"> Hoàn thành</label>
+            <label><input type="checkbox" value="duesoon"> Sắp đến hạn</label>
+            <label><input type="checkbox" value="late"> Trễ hạn</label>
+            <label><input type="checkbox" value="pending"> Hoãn lại</label>
+            <label><input type="checkbox" value="cancel"> Hủy bỏ</label>
+          </div>
+        </div>
         <select id="filterDapUng" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
           <option value="">Đáp ứng: Tất cả</option>
         </select>
@@ -712,6 +731,17 @@ let results = [];
 let kpiEval = []; // dữ liệu đã tổng hợp sẵn từ sheet "KPI_DanhGia"
 let chartByMember, chartByLoai;
 let lastChartTasks = [];
+// Cờ đánh dấu: dữ liệu biểu đồ hiện tại (lastChartTasks) đã được vẽ ra Chart.js thực sự hay chưa.
+// Mục đích: KHÔNG vẽ Chart.js khi tab "Biểu đồ" đang ẩn (display:none) — vì canvas lúc đó có
+// kích thước 0x0, Chart.js sẽ vẽ sai kích thước rồi phải resize + vẽ lại khi tab hiện ra, gây
+// hiện tượng giật/lag thấy rõ nhất khi F5 (do trang tải xong, có dữ liệu, gọi render() ngay
+// trong khi tab "Biểu đồ" vẫn đang ẩn). Thay vào đó: chỉ đánh dấu "cần vẽ lại", và thực sự vẽ
+// khi người dùng chuyển sang đúng tab "Biểu đồ" (xem activateTab()).
+let chartsNeedRedraw = true;
+function isChartsTabActive(){
+  const p = document.getElementById('panel-charts');
+  return !!(p && p.classList.contains('active'));
+}
 let memberChartMembers = [];      // danh sách thành viên hiện đang hiển thị trên biểu đồ cột theo thành viên
 let memberChartTasksMap = [];     // mảng đầu việc tương ứng từng thành viên (cùng thứ tự với memberChartMembers)
 let loaiChartAllLabels = [];      // danh sách loại mua hàng cố định (để giữ thứ tự/màu khi lọc theo thành viên)
@@ -741,7 +771,28 @@ function setChartLoaiMode(mode){
   try{ localStorage.setItem(CHART_LOAI_MODE_KEY, mode); }catch(e){}
 }
 
-let assignFilters = {ma:'', ten:'', loai:'', trangThai:'', dapUng:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null, kpiCategory:''};
+// Lưu ý: assignFilters.trangThai giờ là MẢNG các mã nhóm trạng thái (progress/done/duesoon/late/pending/cancel),
+// dùng CHUNG cho cả 7 thẻ KPI phía trên và ô lọc "Trạng thái" trong Bộ lọc chung — cho phép chọn NHIỀU giá trị
+// cùng lúc, và 2 nơi này luôn đồng bộ 2 chiều với nhau (đổi ở đâu cũng phản ánh sang chỗ còn lại).
+let assignFilters = {ma:'', ten:'', loai:'', trangThai:[], dapUng:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null};
+
+// Nhãn hiển thị cho từng mã nhóm trạng thái (dùng cho nút bấm của ô lọc multi-select)
+const TRANGTHAI_CATEGORY_LABELS = {
+  progress:'Đang thực hiện', done:'Hoàn thành', duesoon:'Sắp đến hạn',
+  late:'Trễ hạn', pending:'Hoãn lại', cancel:'Hủy bỏ'
+};
+
+// Hàm dùng chung: 1 đầu việc có thuộc nhóm trạng thái "cat" hay không —
+// dùng cả cho việc lọc bảng và cho việc tính số hiển thị trên các thẻ KPI.
+function taskMatchesStatusCategory(t, cat){
+  if(cat === 'progress') return t.trangThai === "Đang thực hiện";
+  if(cat === 'done') return t.trangThai === "Hoàn thành";
+  if(cat === 'duesoon') return !!t.dueSoon;
+  if(cat === 'late') return t.trangThai === "Trễ hạn" || t.overdue;
+  if(cat === 'pending') return t.trangThai === "Hoãn lại";
+  if(cat === 'cancel') return t.trangThai === "Hủy bỏ";
+  return false;
+}
 
 // ── Lưu/khôi phục bộ lọc chung qua localStorage — để bộ lọc không bị mất khi F5 ──
 const ASSIGN_FILTERS_KEY = 'bmhda_assign_filters';
@@ -749,11 +800,11 @@ function saveAssignFiltersToStorage(){
   try{
     localStorage.setItem(ASSIGN_FILTERS_KEY, JSON.stringify({
       ma: assignFilters.ma, ten: assignFilters.ten, loai: assignFilters.loai,
-      trangThai: assignFilters.trangThai, dapUng: assignFilters.dapUng, nguoi: assignFilters.nguoi,
+      trangThai: Array.isArray(assignFilters.trangThai) ? assignFilters.trangThai : [],
+      dapUng: assignFilters.dapUng, nguoi: assignFilters.nguoi,
       capNhatFrom: assignFilters.capNhatFrom ? assignFilters.capNhatFrom.toISOString() : null,
       capNhatTo: assignFilters.capNhatTo ? assignFilters.capNhatTo.toISOString() : null,
-      hanCutoff: assignFilters.hanCutoff ? assignFilters.hanCutoff.toISOString() : null,
-      kpiCategory: assignFilters.kpiCategory
+      hanCutoff: assignFilters.hanCutoff ? assignFilters.hanCutoff.toISOString() : null
     }));
   }catch(e){}
 }
@@ -765,13 +816,13 @@ function restoreAssignFiltersFromStorage(){
     assignFilters.ma = s.ma || '';
     assignFilters.ten = s.ten || '';
     assignFilters.loai = s.loai || '';
-    assignFilters.trangThai = s.trangThai || '';
+    // Tương thích ngược: bản cũ lưu trangThai dạng chuỗi đơn -> chuyển thành mảng 1 phần tử.
+    assignFilters.trangThai = Array.isArray(s.trangThai) ? s.trangThai : (s.trangThai ? [s.trangThai] : []);
     assignFilters.dapUng = s.dapUng || '';
     assignFilters.nguoi = s.nguoi || '';
     assignFilters.capNhatFrom = s.capNhatFrom ? new Date(s.capNhatFrom) : null;
     assignFilters.capNhatTo = s.capNhatTo ? new Date(s.capNhatTo) : null;
     assignFilters.hanCutoff = s.hanCutoff ? new Date(s.hanCutoff) : null;
-    assignFilters.kpiCategory = s.kpiCategory || '';
   }catch(e){}
 }
 // Đổi Date -> chuỗi 'yyyy-mm-dd' để gán vào input[type=date]
@@ -1109,11 +1160,9 @@ function populateAssignFilterOptions(tasks){
   loaiSel.innerHTML = '<option value="">Loại: Tất cả</option>' + loaiSet.map(l=>`<option value="${l}">${l}</option>`).join('');
   loaiSel.value = loaiSet.includes(curLoai) ? curLoai : '';
 
-  const ttSel = document.getElementById('filterTrangThai');
-  const curTT = assignFilters.trangThai;
-  const ttSet = Object.keys(statusMap);
-  ttSel.innerHTML = '<option value="">Trạng thái: Tất cả</option>' + ttSet.map(s=>`<option value="${s}">${s}</option>`).join('');
-  ttSel.value = ttSet.includes(curTT) ? curTT : '';
+  // Ô lọc "Trạng thái" giờ là multi-select cố định 6 nhóm (đồng bộ với 7 thẻ KPI),
+  // không cần dựng lại theo dữ liệu — chỉ cần đồng bộ trạng thái tick/nhãn hiển thị.
+  syncTrangThaiCheckboxes();
 
   const duSel = document.getElementById('filterDapUng');
   const curDu = assignFilters.dapUng;
@@ -1133,13 +1182,39 @@ function populateAssignFilterOptions(tasks){
   }
 }
 
+// Cập nhật chữ trên nút bấm của ô lọc "Trạng thái" (Tất cả / tên trạng thái / "n đã chọn")
+function updateTrangThaiFilterButtonLabel(){
+  const btn = document.getElementById('filterTrangThaiBtn');
+  if(!btn) return;
+  const arr = assignFilters.trangThai || [];
+  if(!arr.length){ btn.textContent = 'Trạng thái: Tất cả'; return; }
+  if(arr.length === 1){ btn.textContent = 'Trạng thái: ' + (TRANGTHAI_CATEGORY_LABELS[arr[0]] || arr[0]); return; }
+  btn.textContent = `Trạng thái: ${arr.length} đã chọn`;
+}
+
+// Đồng bộ trạng thái tick của các checkbox trong ô lọc "Trạng thái" theo assignFilters.trangThai —
+// gọi mỗi khi assignFilters.trangThai bị thay đổi từ nơi khác (ví dụ: bấm thẻ KPI) để 2 nơi luôn khớp nhau.
+function syncTrangThaiCheckboxes(){
+  const panel = document.getElementById('filterTrangThaiPanel');
+  if(!panel) return;
+  const arr = assignFilters.trangThai || [];
+  panel.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
+    cb.checked = arr.includes(cb.value);
+  });
+  updateTrangThaiFilterButtonLabel();
+}
+
 function applyAssignFilters(list, includeKpiCategory){
   if(includeKpiCategory === undefined) includeKpiCategory = true;
   return list.filter(t=>{
     if(assignFilters.ma && !String(t.ma||'').toLowerCase().includes(assignFilters.ma.toLowerCase())) return false;
     if(assignFilters.ten && !String(t.ten||'').toLowerCase().includes(assignFilters.ten.toLowerCase())) return false;
     if(assignFilters.loai && t.loai !== assignFilters.loai) return false;
-    if(assignFilters.trangThai && t.trangThai !== assignFilters.trangThai) return false;
+    // Lọc theo (các) nhóm trạng thái đã chọn — từ thẻ KPI và/hoặc ô lọc chung, chọn NHIỀU nhóm = khớp 1 trong các nhóm đó (OR).
+    if(includeKpiCategory && assignFilters.trangThai && assignFilters.trangThai.length){
+      const cats = assignFilters.trangThai;
+      if(!cats.some(cat => taskMatchesStatusCategory(t, cat))) return false;
+    }
     if(assignFilters.dapUng && t.dapUng !== assignFilters.dapUng) return false;
     if(assignFilters.nguoi && t.nguoi !== assignFilters.nguoi) return false;
     if(assignFilters.capNhatFrom || assignFilters.capNhatTo){
@@ -1157,15 +1232,6 @@ function applyAssignFilters(list, includeKpiCategory){
         if(d.getTime() > assignFilters.hanCutoff.getTime()) return false;
       }
     }
-    if(includeKpiCategory && assignFilters.kpiCategory){
-      const cat = assignFilters.kpiCategory;
-      if(cat === 'progress' && t.trangThai !== "Đang thực hiện") return false;
-      if(cat === 'done' && t.trangThai !== "Hoàn thành") return false;
-      if(cat === 'duesoon' && !t.dueSoon) return false;
-      if(cat === 'late' && !(t.trangThai === "Trễ hạn" || t.overdue)) return false;
-      if(cat === 'pending' && t.trangThai !== "Hoãn lại") return false;
-      if(cat === 'cancel' && t.trangThai !== "Hủy bỏ") return false;
-    }
     return true;
   });
 }
@@ -1174,7 +1240,8 @@ function setupAssignFilterBar(){
   const maInput = document.getElementById('filterMa');
   const tenInput = document.getElementById('filterTen');
   const loaiSel = document.getElementById('filterLoai');
-  const ttSel = document.getElementById('filterTrangThai');
+  const ttBtn = document.getElementById('filterTrangThaiBtn');
+  const ttPanel = document.getElementById('filterTrangThaiPanel');
   const duSel = document.getElementById('filterDapUng');
   const ngSel = document.getElementById('filterNguoi');
   const capNhatFromInput = document.getElementById('filterCapNhatFrom');
@@ -1191,6 +1258,7 @@ function setupAssignFilterBar(){
   capNhatFromInput.value = dateToInputValue(assignFilters.capNhatFrom);
   capNhatToInput.value = dateToInputValue(assignFilters.capNhatTo);
   hanCutoffInput.value = dateToInputValue(assignFilters.hanCutoff);
+  syncTrangThaiCheckboxes(); // phản ánh trạng thái đã lưu (nếu có) lên ô lọc multi-select ngay từ đầu
 
   const updateFilterCountBadge = () => {
     const badge = document.getElementById('assignFilterCount');
@@ -1199,7 +1267,7 @@ function setupAssignFilterBar(){
     if(maInput.value.trim()) n++;
     if(tenInput.value.trim()) n++;
     if(loaiSel.value) n++;
-    if(ttSel.value) n++;
+    if(assignFilters.trangThai && assignFilters.trangThai.length) n++;
     if(duSel.value) n++;
     if(ngSel.value) n++;
     if(capNhatFromInput.value) n++;
@@ -1213,7 +1281,8 @@ function setupAssignFilterBar(){
     assignFilters.ma = maInput.value.trim();
     assignFilters.ten = tenInput.value.trim();
     assignFilters.loai = loaiSel.value;
-    assignFilters.trangThai = ttSel.value;
+    // assignFilters.trangThai KHÔNG gán ở đây — được cập nhật riêng bởi các checkbox
+    // trong ô lọc "Trạng thái" và bởi việc bấm thẻ KPI (xem bên dưới / setupKpiCardFilters).
     assignFilters.dapUng = duSel.value;
     assignFilters.nguoi = ngSel.value;
     assignFilters.capNhatFrom = capNhatFromInput.value ? new Date(capNhatFromInput.value+'T00:00:00') : null;
@@ -1238,16 +1307,42 @@ function setupAssignFilterBar(){
   maInput.addEventListener('input', applyAndRender);
   tenInput.addEventListener('input', applyAndRender);
   loaiSel.addEventListener('change', applyAndRender);
-  ttSel.addEventListener('change', applyAndRender);
   duSel.addEventListener('change', applyAndRender);
   ngSel.addEventListener('change', applyAndRender);
   capNhatFromInput.addEventListener('change', applyAndRender);
   capNhatToInput.addEventListener('change', applyAndRender);
   hanCutoffInput.addEventListener('change', applyAndRender);
+
+  // Ô lọc "Trạng thái" dạng multi-select: bấm nút để mở/đóng panel, tick checkbox để chọn/bỏ chọn
+  // nhiều trạng thái cùng lúc — đồng bộ 2 chiều với các thẻ KPI phía trên (xem setupKpiCardFilters).
+  if(ttBtn && ttPanel){
+    ttBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      ttPanel.classList.toggle('open');
+    });
+    ttPanel.addEventListener('click', (e) => e.stopPropagation());
+    document.addEventListener('click', () => ttPanel.classList.remove('open'));
+    ttPanel.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
+      cb.addEventListener('change', () => {
+        const val = cb.value;
+        let arr = (assignFilters.trangThai || []).slice();
+        if(cb.checked){ if(!arr.includes(val)) arr.push(val); }
+        else{ arr = arr.filter(v => v !== val); }
+        assignFilters.trangThai = arr;
+        assignPage = 1;
+        saveAssignFiltersToStorage();
+        updateFilterCountBadge();
+        updateTrangThaiFilterButtonLabel();
+        render();
+      });
+    });
+  }
+
   resetBtn.addEventListener('click', () => {
-    maInput.value=''; tenInput.value=''; loaiSel.value=''; ttSel.value=''; duSel.value=''; ngSel.value='';
+    maInput.value=''; tenInput.value=''; loaiSel.value=''; duSel.value=''; ngSel.value='';
     capNhatFromInput.value=''; capNhatToInput.value=''; hanCutoffInput.value='';
-    assignFilters = {ma:'', ten:'', loai:'', trangThai:'', dapUng:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null, kpiCategory:''};
+    assignFilters = {ma:'', ten:'', loai:'', trangThai:[], dapUng:'', nguoi:'', capNhatFrom:null, capNhatTo:null, hanCutoff:null};
+    syncTrangThaiCheckboxes();
     assignPage = 1;
     saveAssignFiltersToStorage();
     render();
@@ -1339,8 +1434,16 @@ function setupKpiCardFilters(){
     if(!card) return;
     card.addEventListener('click', () => {
       const cat = KPI_CATEGORY_MAP[valueId];
-      // Bấm lại thẻ đang active thì bỏ lọc (về lại "Tổng đầu việc")
-      assignFilters.kpiCategory = (assignFilters.kpiCategory === cat && cat !== '') ? '' : cat;
+      const arr = (assignFilters.trangThai || []).slice();
+      if(cat === ''){
+        // Thẻ "Tổng đầu việc" luôn nghĩa là bỏ hết bộ lọc trạng thái đang chọn (dù đang chọn 1 hay nhiều thẻ)
+        assignFilters.trangThai = [];
+      }else{
+        const idx = arr.indexOf(cat);
+        if(idx >= 0) arr.splice(idx, 1); // đang chọn -> bấm lại để bỏ chọn thẻ này
+        else arr.push(cat); // chưa chọn -> thêm vào danh sách đang chọn (cho phép chọn nhiều thẻ cùng lúc)
+        assignFilters.trangThai = arr;
+      }
       assignPage = 1;
       saveAssignFiltersToStorage();
       // Chỉ áp dụng bộ lọc và vẽ lại, KHÔNG tự động chuyển tab —
@@ -1356,7 +1459,8 @@ function updateKpiActiveState(){
     const card = valueEl && valueEl.closest('.kpi');
     if(!card) return;
     const cat = KPI_CATEGORY_MAP[valueId];
-    const isActive = cat === '' ? !assignFilters.kpiCategory : assignFilters.kpiCategory === cat;
+    const selected = assignFilters.trangThai || [];
+    const isActive = cat === '' ? selected.length === 0 : selected.includes(cat);
     card.classList.toggle('active', isActive);
   });
 }
@@ -1374,7 +1478,7 @@ function render(){ renderInner(tasks, results); }
 
 function renderInner(tasks, results){
   const filteredTasks = applyAssignFilters(tasks);
-  const kpiBaseTasks = applyAssignFilters(tasks, false); // dùng riêng cho 7 số KPI: vẫn theo các bộ lọc khác, nhưng KHÔNG tự lọc theo kpiCategory đang được chọn
+  const kpiBaseTasks = applyAssignFilters(tasks, false); // dùng riêng cho 7 số KPI: vẫn theo các bộ lọc khác, nhưng KHÔNG tự lọc theo (các) nhóm trạng thái đang được chọn — để số trên thẻ luôn phản ánh đầy đủ, cho phép chọn thêm/bớt nhiều thẻ cùng lúc
   const filteredResults = assignFilters.nguoi ? results.filter(r=>r.nguoi===assignFilters.nguoi) : results;
 
   document.getElementById('kpiTotal').textContent = kpiBaseTasks.length;
@@ -1385,6 +1489,7 @@ function renderInner(tasks, results){
   document.getElementById('kpiOnTime').textContent = kpiBaseTasks.filter(t=>t.trangThai==="Hoãn lại").length;
   document.getElementById('kpiCancel').textContent = kpiBaseTasks.filter(t=>t.trangThai==="Hủy bỏ").length;
   updateKpiActiveState();
+  syncTrangThaiCheckboxes(); // đảm bảo ô lọc "Trạng thái" luôn khớp với trạng thái đang chọn trên các thẻ KPI
   updateOverviewSortButtons();
 
   lastAssignTasks = tasks;
@@ -1496,7 +1601,17 @@ function renderInner(tasks, results){
     return `<tr><td>${m}</td><td>${total}</td><td>${onTime}</td><td>${pctText}</td><td>${rank}</td></tr>`;
   }).join('');
 
-  renderCharts(filteredTasks);
+  // Chỉ thực sự vẽ Chart.js khi tab "Biểu đồ" đang hiển thị — nếu đang ở tab khác thì chỉ
+  // lưu lại dữ liệu mới nhất (lastChartTasks) và đánh dấu cần vẽ lại; việc vẽ thật sự sẽ diễn ra
+  // khi người dùng chuyển sang tab "Biểu đồ" (xem activateTab()). Giúp trang không bị giật/lag
+  // do vẽ biểu đồ trong lúc canvas đang ẩn (đặc biệt rõ khi F5 lại trang).
+  lastChartTasks = filteredTasks;
+  if(isChartsTabActive()){
+    renderCharts(filteredTasks);
+    chartsNeedRedraw = false;
+  }else{
+    chartsNeedRedraw = true;
+  }
 }
 
 function renderAssignTable(tasksIn){
@@ -1860,10 +1975,19 @@ function activateTab(tabName){
   // vẽ ra trống rỗng. Khi tab "Biểu đồ" được kích hoạt (panel vừa hiện ra), cần
   // resize lại để Chart.js tính đúng kích thước canvas theo khung hiển thị thực tế.
   if(tabName === 'charts'){
-    requestAnimationFrame(() => {
-      if(chartByMember) chartByMember.resize();
-      if(chartByLoai) chartByLoai.resize();
-    });
+    if(chartsNeedRedraw){
+      // Chưa vẽ Chart.js cho dữ liệu hiện tại (vì lúc render() gần nhất tab này đang ẩn) —
+      // vẽ ngay bây giờ, lúc canvas đã có kích thước thực tế nên không bị lệch/giật.
+      renderCharts(lastChartTasks);
+      chartsNeedRedraw = false;
+    }else{
+      // Đã vẽ rồi (dữ liệu không đổi từ lần cuối tab này hiển thị) — chỉ cần resize lại cho khớp
+      // khung hiển thị hiện tại, không cần destroy/tạo lại toàn bộ chart (mượt hơn).
+      requestAnimationFrame(() => {
+        if(chartByMember) chartByMember.resize();
+        if(chartByLoai) chartByLoai.resize();
+      });
+    }
   }
   return true;
 }
