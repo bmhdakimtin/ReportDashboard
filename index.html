@@ -1125,7 +1125,7 @@
     <div class="login-error" id="loginError">Mật khẩu không đúng. Vui lòng thử lại.</div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('loginModal')">Hủy</button>
-      <button class="btn btn-primary" onclick="submitLogin()">Đăng nhập</button>
+      <button class="btn btn-primary" id="loginSubmitBtn" onclick="submitLogin()">Đăng nhập</button>
     </div>
   </div>
 </div>
@@ -1234,7 +1234,6 @@ const SUPABASE_URL      = window.SUPABASE_CONFIG['index.html'].url;
 const SUPABASE_ANON_KEY = window.SUPABASE_CONFIG['index.html'].key;
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const ADMIN_PASSWORD_HASH = '8b85ce9a68ea550e7cd7417fc9c94fe9e53cb6e151bc094d0c3053bb2533e9e3';
 const STORAGE_KEY = 'itHub_apps_v2';
 
 const COLORS = [
@@ -1842,23 +1841,30 @@ function handleAdminBtn() {
   }
 }
 
-async function sha256(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
-
 async function submitLogin() {
   const pw = document.getElementById('adminPassword').value;
-  const hash = await sha256(pw);
-  if (hash === ADMIN_PASSWORD_HASH) {
-    sessionStorage.setItem('itHub_admin', '1');
-    setAdminUI(true);
-    closeModal('loginModal');
-    document.getElementById('adminPassword').value = '';
-    document.getElementById('loginError').style.display = 'none';
-  } else {
+  const loginBtn = document.getElementById('loginSubmitBtn');
+  if (loginBtn) loginBtn.disabled = true;
+  try {
+    const { data, error } = await sb.rpc('verify_admin_password', { password: pw });
+    if (error) throw error;
+    if (data === true) {
+      sessionStorage.setItem('itHub_admin', '1');
+      setAdminUI(true);
+      closeModal('loginModal');
+      document.getElementById('adminPassword').value = '';
+      document.getElementById('loginError').style.display = 'none';
+    } else {
+      document.getElementById('loginError').textContent = 'Mật khẩu không đúng. Vui lòng thử lại.';
+      document.getElementById('loginError').style.display = 'block';
+      document.getElementById('adminPassword').select();
+    }
+  } catch (e) {
+    console.error('[Admin] Kiểm tra mật khẩu thất bại:', e);
+    document.getElementById('loginError').textContent = 'Không kết nối được máy chủ, thử lại sau.';
     document.getElementById('loginError').style.display = 'block';
-    document.getElementById('adminPassword').select();
+  } finally {
+    if (loginBtn) loginBtn.disabled = false;
   }
 }
 
