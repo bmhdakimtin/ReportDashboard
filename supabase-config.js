@@ -6,7 +6,7 @@
  * ============================================================ */
 (function (root) {
   var CONFIG = {
-  "CAT_Tracking.html": {
+  "index.html": {
     "url": "https://hlnxepbsmlzmvtaruklv.supabase.co",
     "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsbnhlcGJzbWx6bXZ0YXJ1a2x2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyMzM4NzUsImV4cCI6MjEwMjgwOTg3NX0.ERd1WBzu2xLC3RHqW1D46ZUb3AENyP35KUs9cfBFAHM"
   }
