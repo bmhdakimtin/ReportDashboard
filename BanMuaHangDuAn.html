@@ -10,15 +10,7 @@
 <meta name="format-detection" content="telephone=no">
 <title>Báo Cáo Ban Mua Hàng Dự Án</title>
 <link rel="shortcut icon" href="https://kimtingroup.com/Data/Sites/3/skins/kimtingroup-site3/favicon.ico" />
-<!-- Google Tag Manager -->
-<!--
-  Đã tạm gỡ 3 file CSS của website công ty (global.min.css, main.min.css, custom.css):
-  các file này dùng nhiều tên class rất phổ biến trùng với dashboard (.label, .badge,
-  .card, .tab, header, table, th, td...) nên đè mất toàn bộ style của dashboard, gây vỡ
-  layout header và làm mờ/chìm chữ trên các thẻ KPI, tab, thanh lọc như đã xảy ra.
-  Nếu công ty có sẵn 1 file CSS RIÊNG chỉ chứa biến thương hiệu (font, màu chủ đạo...)
-  và không style các thẻ HTML chung chung, có thể thêm lại an toàn hơn.
--->
+
 <style>
   :root{
     /* Nền & trung tính: tông vàng ấm theo màu logo Kim Tín (#FFDD00) */
@@ -1517,7 +1509,7 @@ function sortOverviewPairs(pairs){
     let cmp;
     if(field === 'ma') cmp = String(a.task.ma||'').localeCompare(String(b.task.ma||''), 'vi');
     else if(field === 'tienDo') cmp = (a.task.tienDo||0) - (b.task.tienDo||0);
-    else cmp = a.date.getTime() - b.date.getTime(); // 'date'
+    else cmp = (a.date ? a.date.getTime() : 0) - (b.date ? b.date.getTime() : 0); // 'date' — Mã CV chưa có ngày cập nhật hợp lệ được coi là cũ nhất, không bị loại khỏi danh sách
     return cmp * dir;
   });
 }
@@ -1617,9 +1609,31 @@ function debounce(fn, wait){
   };
 }
 
+// FIX: các thẻ KPI (Tổng đầu việc/Đang thực hiện/Hoàn thành/...) phải đếm theo SỐ MÃ CV DUY NHẤT,
+// không đếm theo số dòng báo cáo (1 Mã CV có thể có nhiều dòng báo cáo tiến độ theo thời gian).
+// Hàm này gom các dòng cùng Mã CV lại, chỉ giữ lại dòng có "Ngày cập nhật" (capNhat) mới nhất
+// để đại diện cho trạng thái hiện tại của Mã CV đó trước khi đếm.
+function dedupeLatestByMa(list){
+  const map = new Map();
+  list.forEach(t=>{
+    const key = t.ma || t.ten;
+    if(!key) return;
+    const d = parseVNDate(t.capNhat);
+    const existing = map.get(key);
+    if(!existing){ map.set(key, {task:t, date:d}); return; }
+    if(d && (!existing.date || d.getTime() > existing.date.getTime())){
+      map.set(key, {task:t, date:d});
+    }
+  });
+  return Array.from(map.values()).map(x=>x.task);
+}
+
 function renderInner(tasks, results){
   const filteredTasks = applyAssignFilters(tasks);
-  const kpiBaseTasks = applyAssignFilters(tasks, false); // dùng riêng cho 7 số KPI: vẫn theo các bộ lọc khác, nhưng KHÔNG tự lọc theo (các) nhóm trạng thái đang được chọn — để số trên thẻ luôn phản ánh đầy đủ, cho phép chọn thêm/bớt nhiều thẻ cùng lúc
+  // dùng riêng cho 7 số KPI: vẫn theo các bộ lọc khác, nhưng KHÔNG tự lọc theo (các) nhóm trạng thái đang được chọn
+  // — để số trên thẻ luôn phản ánh đầy đủ, cho phép chọn thêm/bớt nhiều thẻ cùng lúc.
+  // Đồng thời dedupe theo Mã CV để mỗi Mã CV chỉ tính 1 lần (theo trạng thái mới nhất của nó).
+  const kpiBaseTasks = dedupeLatestByMa(applyAssignFilters(tasks, false));
   const filteredResults = assignFilters.nguoi ? results.filter(r=>r.nguoi===assignFilters.nguoi) : results;
 
   document.getElementById('kpiTotal').textContent = kpiBaseTasks.length;
@@ -1639,16 +1653,27 @@ function renderInner(tasks, results){
 
   const ov = document.getElementById('overviewList');
   const dateLabel = document.getElementById('overviewDateLabel');
+  // FIX: trước đây nếu 1 Mã CV không có "Ngày cập nhật" hợp lệ (capNhat rỗng/không parse được)
+  // hoặc có ngày cập nhật rơi vào tương lai, dòng "return" bên dưới sẽ BỎ QUA hoàn toàn Mã CV đó
+  // khỏi danh sách "Tiến độ các đầu việc" — khiến danh sách bị thiếu so với "Tổng đầu việc".
+  // Nay: mọi Mã CV đều được đưa vào danh sách; trong các bản ghi trùng Mã CV, ưu tiên bản ghi
+  // có ngày cập nhật hợp lệ và mới nhất; nếu không bản ghi nào có ngày hợp lệ, giữ bản ghi cuối cùng
+  // gặp được (theo đúng thứ tự dữ liệu từ sheet).
   const today = new Date(); today.setHours(0,0,0,0);
   const latestByMa = new Map();
   filteredTasks.forEach(t=>{
-    const d = parseVNDate(t.capNhat);
-    if(!d) return;
-    d.setHours(0,0,0,0);
-    if(d.getTime() > today.getTime()) return;
     const key = t.ma || t.ten;
+    if(!key) return;
+    let d = parseVNDate(t.capNhat);
+    if(d){ d = new Date(d); d.setHours(0,0,0,0); }
     const existing = latestByMa.get(key);
-    if(!existing || d.getTime() > existing.date.getTime()){
+    if(!existing){
+      latestByMa.set(key, {task:t, date:d});
+      return;
+    }
+    if(d && (!existing.date || d.getTime() > existing.date.getTime())){
+      latestByMa.set(key, {task:t, date:d});
+    } else if(!d && !existing.date){
       latestByMa.set(key, {task:t, date:d});
     }
   });
