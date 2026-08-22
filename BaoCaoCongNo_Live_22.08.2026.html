@@ -318,7 +318,10 @@ footer a:hover{text-decoration:underline}
     </div>
   </div>
   <div class="fgrid">
-    <div><label for="fSearch">Tìm số HĐ</label><input type="search" id="fSearch" placeholder="Gõ để lọc…"></div>
+    <div class="combo"><label for="fSearch">Tìm số HĐ</label>
+      <input type="text" id="fSearch" placeholder="Gõ để tìm số hợp đồng…" autocomplete="off">
+      <div class="list" id="fSearchList"></div>
+    </div>
     <div><label for="fNm">Nhà máy</label><select id="fNm"></select></div>
     <div><label for="fNs">Nhân sự phụ trách</label><select id="fNs"></select></div>
     <div class="combo"><label for="fNcc">Nhà cung cấp</label>
@@ -2068,36 +2071,61 @@ function refresh() {
     .forEach((fn) => { try { fn(VIEW); } catch (e) { console.error(fn.name, e); } });
 }
 
-function initCombo() {
-  const all = Array.from(new Set(DATA.map((c) => c.ncc).filter(Boolean)))
+/* ==================== COMBOBOX GÕ-ĐỂ-TÌM (dùng chung) ====================
+ * Một hàm cho mọi ô có gợi ý sổ xuống. Hai ô đang dùng có hành vi khác nhau
+ * ở đúng một điểm, nên tách thành tham số thay vì viết trùng code:
+ *
+ *   Nhà cung cấp — lọc KHỚP CHÍNH XÁC một tên NCC. Rời ô mà gõ dở thì ép về
+ *                  rỗng, vì một chuỗi không khớp tên nào là vô nghĩa.
+ *   Số hợp đồng  — lọc CHỨA CHUỖI. Rời ô phải GIỮ NGUYÊN chữ đang gõ, vì gõ
+ *                  "NP" để xem cả nhóm hợp đồng là cách dùng hợp lệ. Nếu ép
+ *                  về rỗng như ô NCC thì mất hẳn khả năng lọc theo tiền tố.
+ * ------------------------------------------------------------------------- */
+let NCC_ALL = [];      // danh sách NCC, sắp theo bảng chữ cái
+let HD_LIST = [];      // danh sách số hợp đồng
+let HD_DATE = {};      // số hợp đồng -> ngày ký, dùng để xếp hợp đồng mới lên trên
+
+function refreshComboData() {
+  NCC_ALL = Array.from(new Set(DATA.map((c) => c.ncc).filter(Boolean)))
     .sort((a, b) => a.localeCompare(b, "vi"));
-  const inp = $("#fNcc"), list = $("#fNccList");
+  HD_DATE = {};
+  DATA.forEach((c) => { if (c.hd && !(c.hd in HD_DATE)) HD_DATE[c.hd] = c.ngayky || ""; });
+  HD_LIST = Object.keys(HD_DATE);
+}
+
+function makeCombo(cfg) {
+  const inp = $(cfg.input), list = $(cfg.list);
+  if (!inp || !list) return;
   let hl = -1;
+
+  const pick = (v) => {
+    inp.value = v;
+    cfg.onPick(v);
+    list.classList.remove("on");
+    page = 1;
+    refresh();
+  };
+
   const draw = () => {
     const q = inp.value.trim().toLowerCase();
-    const hits = (q ? all.filter((v) => v.toLowerCase().includes(q)) : all).slice(0, 60);
-    list.innerHTML = `<div data-v="">— Tất cả NCC —</div>` + hits.map((v) => {
-      if (!q) return `<div data-v="${esc(v)}">${esc(v)}</div>`;
-      const i = v.toLowerCase().indexOf(q);
+    const hits = cfg.match(q).slice(0, 60);
+    list.innerHTML = `<div data-v="">${cfg.allLabel}</div>` + hits.map((v) => {
+      const i = q ? v.toLowerCase().indexOf(q) : -1;
+      if (i < 0) return `<div data-v="${esc(v)}">${esc(v)}</div>`;
       return `<div data-v="${esc(v)}">${esc(v.slice(0, i))}<b>${esc(v.slice(i, i + q.length))}</b>${esc(v.slice(i + q.length))}</div>`;
     }).join("");
     hl = -1;
-    $$("#fNccList div").forEach((d) => d.onmousedown = (e) => {
-      e.preventDefault();
-      inp.value = d.dataset.v; F.ncc = d.dataset.v; list.classList.remove("on"); refresh();
-    });
+    $$(cfg.list + " div").forEach((d) => d.onmousedown = (e) => { e.preventDefault(); pick(d.dataset.v); });
   };
+
   inp.onfocus = () => { draw(); list.classList.add("on"); };
   inp.oninput = () => { draw(); list.classList.add("on"); };
   inp.onblur = () => setTimeout(() => {
     list.classList.remove("on");
-    const v = inp.value.trim();
-    const exact = all.find((x) => x.toLowerCase() === v.toLowerCase());
-    F.ncc = exact || ""; inp.value = exact || "";
-    refresh();
+    if (cfg.onBlur) cfg.onBlur(inp);
   }, 120);
   inp.onkeydown = (e) => {
-    const items = $$("#fNccList div");
+    const items = $$(cfg.list + " div");
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       e.preventDefault();
       hl = Math.max(0, Math.min(items.length - 1, hl + (e.key === "ArrowDown" ? 1 : -1)));
@@ -2105,10 +2133,41 @@ function initCombo() {
       if (items[hl]) items[hl].scrollIntoView({ block: "nearest" });
     } else if (e.key === "Enter" && items[hl]) {
       e.preventDefault();
-      inp.value = items[hl].dataset.v; F.ncc = items[hl].dataset.v;
-      list.classList.remove("on"); refresh();
+      pick(items[hl].dataset.v);
     } else if (e.key === "Escape") list.classList.remove("on");
   };
+}
+
+function initCombos() {
+  /* --- Nhà cung cấp: khớp chính xác --- */
+  makeCombo({
+    input: "#fNcc", list: "#fNccList", allLabel: "— Tất cả NCC —",
+    match: (q) => (q ? NCC_ALL.filter((v) => v.toLowerCase().includes(q)) : NCC_ALL),
+    onPick: (v) => { F.ncc = v; },
+    onBlur: (inp) => {
+      const v = inp.value.trim();
+      const exact = NCC_ALL.find((x) => x.toLowerCase() === v.toLowerCase());
+      F.ncc = exact || ""; inp.value = exact || "";
+      refresh();
+    }
+  });
+
+  /* --- Số hợp đồng: chứa chuỗi, khớp đầu chuỗi ưu tiên, hợp đồng mới lên trên --- */
+  makeCombo({
+    input: "#fSearch", list: "#fSearchList", allLabel: "— Tất cả hợp đồng —",
+    match: (q) => {
+      const moiTruoc = (a, b) => (HD_DATE[b] || "").localeCompare(HD_DATE[a] || "") || a.localeCompare(b, "vi");
+      if (!q) return HD_LIST.slice().sort(moiTruoc);
+      const dau = [], giua = [];
+      HD_LIST.forEach((v) => {
+        const i = v.toLowerCase().indexOf(q);
+        if (i === 0) dau.push(v); else if (i > 0) giua.push(v);
+      });
+      return dau.sort(moiTruoc).concat(giua.sort(moiTruoc));
+    },
+    onPick: (v) => { F.search = v; }
+    /* Cố ý KHÔNG có onBlur: giữ nguyên chuỗi người dùng đang gõ. */
+  });
 }
 
 function fillSelect(id, key, allLabel) {
@@ -2134,7 +2193,7 @@ function applyData() {
     if (el && keep[k] && Array.from(el.options).some((o) => o.value === keep[k] || o.text === keep[k])) el.value = keep[k];
     else F[k] = "";
   });
-  initCombo();
+  refreshComboData();
   renderFuWarn();
   refresh();
 }
@@ -2152,6 +2211,7 @@ function init() {
   });
   bind("#fSearch", "search"); bind("#fNm", "nm"); bind("#fNs", "ns");
   bind("#fCur", "cur"); bind("#fSt", "st"); bind("#fFrom", "from"); bind("#fTo", "to");
+  initCombos();
 
   $$(".quick .chip").forEach((b) => b.onclick = () => {
     if (F.quick === b.dataset.q && b.dataset.q !== "tuychon") {
