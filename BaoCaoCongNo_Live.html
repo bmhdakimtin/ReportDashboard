@@ -294,12 +294,11 @@ footer a:hover{text-decoration:underline}
       <span class="fold-sum" id="fxSum">—</span>
     </div>
     <div class="fbody">
-      <div class="cap">Tỷ giá <b>dùng chung cho cả phòng</b> — sửa ở đây là sửa cho mọi người. Nhập theo <b>giá bán</b>.
-        Nút lấy tự động dùng nguồn <b>Vietcombank</b> (VietinBank chặn truy cập tự động).
+      <div class="cap">Tỷ giá <b>dùng chung cho cả phòng</b> — sửa ở đây là sửa cho mọi người. Nhập theo <b>giá bán</b>
+        của ngân hàng đang dùng làm chuẩn (Vietcombank hoặc VietinBank, tùy quy ước của phòng).
         <a href="https://portal.vietcombank.com.vn/Personal/TG/Pages/ty-gia.aspx" target="_blank" rel="noopener">Vietcombank →</a> ·
         <a href="https://www.vietinbank.vn/doanh-nghiep/ty-gia-khdn" target="_blank" rel="noopener">VietinBank →</a></div>
       <div class="wbar">
-        <button class="chip chip-sm" id="btnFxFetch">⤓ Lấy tỷ giá hôm nay</button>
         <button class="chip chip-sm" id="btnFxLog">🕘 Lịch sử thay đổi</button>
       </div>
       <div class="fxgrid" id="fx"></div>
@@ -515,19 +514,6 @@ footer a:hover{text-decoration:underline}
   <button class="mclose" id="mCloseBtn">✕ Đóng</button>
   <h2 id="dTitle"></h2><div class="cap" id="dSub"></div>
   <div class="kv" id="dKv"></div><div id="dBody"></div>
-</div></div>
-
-<div class="modal" id="fxModal"><div class="mbx" style="max-width:640px">
-  <button class="mclose" id="fxCloseBtn">✕ Đóng</button>
-  <h2>⤓ Lấy tỷ giá từ ngân hàng</h2>
-  <div class="cap" id="fxFetchCap">Đang gọi…</div>
-  <div id="fxFetchBody"></div>
-  <div style="margin-top:15px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
-    <button class="btn btn-ghost" id="fxForce" title="Bỏ qua bản đã lưu, gọi thẳng ra ngân hàng lấy bảng mới nhất">⟳ Lấy lại mới từ ngân hàng</button>
-    <span style="flex:1"></span>
-    <button class="btn btn-ghost" id="fxCancel">Hủy</button>
-    <button class="btn btn-main" id="fxApply" disabled>✓ Duyệt và ghi cho cả phòng</button>
-  </div>
 </div></div>
 
 <div class="modal" id="expModal"><div class="mbx" style="max-width:460px">
@@ -945,34 +931,6 @@ async function fxCall(params, timeoutMs) {
   return data;
 }
 
-/* Giải thích lỗi bằng tiếng Việt dễ hiểu + việc cần làm, thay cho "Failed to fetch". */
-function fxDiagHtml(err) {
-  const link = err && err.url
-    ? `<div style="margin-top:9px"><a href="${esc(err.url)}" target="_blank" rel="noopener"><b>👉 Mở thẳng đường dẫn này trong tab mới để xem máy chủ trả về gì</b></a></div>` : "";
-  if (!err) return link;
-  if (err.diag === "timeout") {
-    return `<b>Máy chủ không trả lời kịp.</b> Nút này gọi ra trang tỷ giá ngân hàng; nếu ngân hàng chặn hoặc bỏ lửng kết nối thì Apps Script sẽ chờ rất lâu rồi mới bỏ cuộc.
-      <br>Cách xử lý chắc chắn: mở <b>Apps Script</b> → chọn hàm <b>LAY_TY_GIA_NGAN_HANG</b> → bấm ▷ Chạy → xem <b>Nhật ký thực thi</b>. Chạy ở đó không bị giới hạn thời gian, và nếu thành công thì nút này sẽ hiện kết quả ngay lập tức (vì chỉ đọc bản đã lưu).${link}`;
-  }
-  if (err.diag === "network" || err.diag === "notjson") {
-    return `<b>Trình duyệt không nhận được phản hồi hợp lệ từ Web App.</b> Đây gần như luôn là một trong 4 nguyên nhân sau — kiểm tra theo đúng thứ tự:
-      <ol style="margin:8px 0 0 18px;padding:0">
-        <li><b>Chưa deploy phiên bản mới.</b> Code có nhánh <code>action=fxfetch</code> mới chỉ nằm trong trình soạn thảo, bản đang chạy vẫn là code cũ. Vào <b>Triển khai → Quản lý các bản triển khai → ✏️ → Phiên bản mới → Triển khai</b>.</li>
-        <li><b>Chưa cấp quyền gọi ra Internet.</b> Code mới cần quyền <code>script.external_request</code>. Vào Apps Script chạy tay hàm <b>LAY_TY_GIA_NGAN_HANG</b> một lần và bấm <b>Cho phép</b> ở hộp thoại cấp quyền.</li>
-        <li><b>Sai quyền truy cập.</b> Bản deploy phải đặt <b>Người có quyền truy cập = Bất kỳ ai</b>. Nếu đặt "chỉ tôi" thì trình duyệt bị chuyển sang trang đăng nhập và báo đúng lỗi này.</li>
-        <li><b>Đường dẫn API đã cũ.</b> Nếu bạn tạo <i>Triển khai mới</i> thì URL đã đổi — phải dán URL mới vào dòng <code>const API_URL</code> trong <code>index.html</code> rồi tải lại lên GitHub.</li>
-      </ol>
-      ${DATA.length ? `<div style="margin-top:9px;padding-top:8px;border-top:1px dashed var(--rule)">
-        💡 <b>Đã tự khoanh vùng giúp bạn:</b> dashboard vẫn tải được <b>${DATA.length} hợp đồng</b> từ chính đường dẫn này,
-        nên đường dẫn và quyền truy cập đang <b>ĐÚNG</b> — loại trừ nguyên nhân 3 và 4.
-        Hãy tập trung vào <b>nguyên nhân 1 (chưa deploy phiên bản mới)</b> và <b>nguyên nhân 2 (chưa cấp quyền gọi Internet)</b>.</div>` : ""}${link}`;
-  }
-  if (err.diag === "http") {
-    return `<b>Máy chủ trả về mã lỗi.</b> Thường do bản deploy đặt sai quyền truy cập, hoặc đường dẫn Web App không còn đúng.${link}`;
-  }
-  return link;
-}
-
 /* Ghi 1 hoặc nhiều tỷ giá lên máy chủ. payload = { USD:{rate,date,src}, ... } */
 async function fxPush(payload) {
   const data = await fxCall({ action: "fxset", rev: FX_REV, fx: JSON.stringify(payload) });
@@ -1057,74 +1015,6 @@ function fxNote() {
   const parts = Object.keys(FX).filter((k) => !FX[k].base && FX[k].rate)
     .map((k) => `${k} ${fmtN(FX[k].rate, 0)} (${fmtD(FX[k].date)})`);
   return parts.length ? parts.join(" · ") : "chưa nhập tỷ giá nào";
-}
-
-/* ---- Lấy tỷ giá tự động từ ngân hàng: LẤY VỀ -> ĐỐI CHIẾU -> NGƯỜI DÙNG DUYỆT ---- */
-let FX_FETCHED = null;
-function openFxFetch(force) {
-  FX_FETCHED = null;
-  $("#fxApply").disabled = true;
-  $("#fxFetchCap").textContent = force
-    ? "Đang gọi thẳng ra ngân hàng để lấy bảng mới… (có thể mất tới 1–2 phút)"
-    : "Đang lấy bảng tỷ giá ngân hàng…";
-  $("#fxFetchBody").innerHTML = "";
-  $("#fxModal").classList.add("on");
-  const p = force ? { action: "fxfetch", force: "1" } : { action: "fxfetch" };
-  fxCall(p, force ? 150000 : 45000).then((d) => renderFxFetch(d)).catch((err) => {
-    $("#fxFetchCap").innerHTML = `<span style="color:var(--st-late)"><b>Không gọi được:</b> ${esc(err.message || err)}</span>`;
-    $("#fxFetchBody").innerHTML = `<div class="note bad" style="margin-top:11px">${fxDiagHtml(err)}</div>`;
-  });
-}
-function renderFxFetch(d) {
-  const tried = d.tried || [];
-  const triedHtml = `<div style="font-size:11px;color:var(--ink-2);margin-top:12px">
-    Đã thử ${tried.length} nguồn:<br>${tried.map((t) =>
-      `• ${esc(t.name)} — ${t.ok ? "<b style='color:var(--m-paid)'>đọc được</b>" : esc(t.note || ("mã " + t.code))}`).join("<br>")}</div>`;
-
-  if (!d.rates || !Object.keys(d.rates).length) {
-    $("#fxFetchCap").innerHTML = `<span style="color:var(--st-late)"><b>Chưa đọc được tỷ giá từ nguồn nào.</b></span>
-      Trang tỷ giá của ngân hàng có thể đã đổi địa chỉ hoặc chặn truy cập tự động.
-      Hãy mở Apps Script, chạy hàm <b>TIM_NGUON_TY_GIA</b> rồi gửi lại "Nhật ký thực thi" để cập nhật đường dẫn đúng.
-      Trong lúc đó vẫn nhập tay bình thường được.`;
-    $("#fxFetchBody").innerHTML = triedHtml;
-    return;
-  }
-  FX_FETCHED = d;
-  $("#fxFetchCap").innerHTML = `Nguồn: <b>${esc(d.source || "—")}</b> — lấy cột <b>giá bán</b>${
-    d.bankStamp ? `, ngân hàng công bố lúc <b>${esc(d.bankStamp)}</b>` : ""} · máy chủ đọc lúc ${esc(d.fetchedAt || "—")}${
-    d.cached ? ` <span class="pill">bản đã lưu</span>` : ""}.
-    <b>Chưa ghi gì cả</b> — xem đối chiếu bên dưới rồi bấm Duyệt thì mới ghi cho cả phòng.
-    ${d.staleNote ? `<br><span style="color:var(--st-soon)">⚠️ ${esc(d.staleNote)}</span>` : ""}`;
-  const keys = Object.keys(d.rates);
-  $("#fxFetchBody").innerHTML = `<table class="fxcmp"><thead><tr>
-      <th>Loại tiền</th><th>Đang dùng</th><th>Lấy về</th><th>Chênh lệch</th></tr></thead><tbody>${
-    keys.map((k) => {
-      const cur = FX[k] ? FX[k].rate : null;
-      const nw = d.rates[k];
-      const same = cur != null && Math.abs(cur - nw) < 0.0001;
-      const diff = cur == null ? null : nw - cur;
-      return `<tr><td><b>${esc(k)}</b></td>
-        <td class="num">${cur == null ? "—" : fmtN(cur, 0)}</td>
-        <td class="num"><b>${fmtN(nw, 0)}</b></td>
-        <td class="num ${same ? "same" : "diff"}">${diff == null ? "mới" : (same ? "không đổi" : (diff > 0 ? "+" : "") + fmtN(diff, 0))}</td></tr>`;
-    }).join("")}</tbody></table>
-    <div class="note" style="margin-top:11px;margin-bottom:0;font-size:11.5px">⚠️ Giá <b>Vietcombank</b> khác giá <b>VietinBank</b> (cùng ngày 21/08/2026: USD bán 26.280 so với 26.380). Nếu phòng vẫn lấy chuẩn VietinBank thì chỉ nên dùng số này để tham khảo, hoặc nhập tay theo VietinBank. Nguồn sẽ được ghi kèm từng loại tiền.</div>${triedHtml}`;
-  $("#fxApply").disabled = false;
-}
-async function applyFxFetch() {
-  if (!FX_FETCHED || !FX_FETCHED.rates) return;
-  const src = "tự động từ " + (FX_FETCHED.source || "ngân hàng") + " " + (FX_FETCHED.fetchedAt || "");
-  const payload = {};
-  Object.keys(FX_FETCHED.rates).forEach((k) => {
-    if (!FX[k] || FX[k].base) return;
-    payload[k] = { rate: FX_FETCHED.rates[k], date: SNAPSHOT, src: src };
-  });
-  $("#fxApply").disabled = true;
-  FX_MSG = "⏳ đang ghi tỷ giá lấy về…"; FX_MSG_KIND = "load"; renderFxState();
-  try { await fxPush(payload); }
-  catch (err) { FX_MSG = "⚠ không ghi được: " + (err.message || err); FX_MSG_KIND = "err"; }
-  $("#fxModal").classList.remove("on");
-  renderFx(); renderFxState(); refresh();
 }
 
 /* ==================== KPI ==================== */
@@ -2245,13 +2135,7 @@ function init() {
   $("#pgNext").onclick = () => { page++; renderTable(VIEW); };
   $("#pgSize").onchange = () => { page = 1; renderTable(VIEW); };
 
-  $("#btnFxFetch").onclick = (e) => { e.stopPropagation(); openFxFetch(false); };
-  $("#fxForce").onclick = () => openFxFetch(true);
   $("#btnFxLog").onclick = (e) => { e.stopPropagation(); $("#fxLog").classList.toggle("on"); };
-  $("#fxCloseBtn").onclick = () => $("#fxModal").classList.remove("on");
-  $("#fxCancel").onclick = () => $("#fxModal").classList.remove("on");
-  $("#fxApply").onclick = applyFxFetch;
-  $("#fxModal").onclick = (e) => { if (e.target.id === "fxModal") $("#fxModal").classList.remove("on"); };
 
   $("#mCloseBtn").onclick = () => $("#modal").classList.remove("on");
   $("#modal").onclick = (e) => { if (e.target.id === "modal") $("#modal").classList.remove("on"); };
@@ -2259,7 +2143,7 @@ function init() {
   $("#eCloseBtn").onclick = () => $("#expModal").classList.remove("on");
   $("#expModal").onclick = (e) => { if (e.target.id === "expModal") $("#expModal").classList.remove("on"); };
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") { $("#modal").classList.remove("on"); $("#expModal").classList.remove("on"); $("#fxModal").classList.remove("on"); }
+    if (e.key === "Escape") { $("#modal").classList.remove("on"); $("#expModal").classList.remove("on"); }
   });
   $("#eXlsx").onclick = exportXlsx;
   $("#ePptx").onclick = exportPptx;
@@ -2464,7 +2348,7 @@ function exportPptx() {
  * Dữ liệu lấy qua Apps Script Web App (file CongNoApi.gs).
  * Dán đường dẫn Web App vào API_URL bên dưới sau khi Deploy.
  * ------------------------------------------------------------------------- */
-const API_URL = "https://script.google.com/macros/s/AKfycbwQDe2Ug2OwWLQ00U6Bua1p75CudkNArrkJwLYTVuWXKikBndqn9726afaLVxjSZ9LHNQ/exec";
+const API_URL = "https://script.google.com/macros/library/d/1dCEs6LB0BwH1VYFQAGoTkQte4hfJtkXOedPyvM732iaSquOqXxx9Bk0w/9";
 
 const AUTO_MS = 60000;
 let autoOn = true;
