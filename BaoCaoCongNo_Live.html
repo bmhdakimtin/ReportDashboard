@@ -381,7 +381,7 @@ footer a:hover{text-decoration:underline}
 <section class="panel" id="p2">
   <div class="card">
     <h3>Danh sách hợp đồng &amp; tiến độ thanh toán</h3>
-    <div class="cap">Bấm vào một dòng để xem chi tiết 10 đợt kế hoạch, 10 đợt thực tế và thông tin L/C.</div>
+    <div class="cap">Bấm vào một dòng để xem chi tiết 15 đợt kế hoạch, 15 đợt thực tế và thông tin L/C.</div>
     <div class="tblwrap"><table id="tbMain">
       <thead><tr>
         <th class="sortable" data-s="hd">Số hợp đồng</th>
@@ -503,7 +503,7 @@ footer a:hover{text-decoration:underline}
 </section>
 
 <footer>
-  Nguồn dữ liệu: <a id="srcLink" href="https://docs.google.com/spreadsheets/d/1akYdetdgGijV-QUjM8fSxs3DO68m3r0fkV0Dy5ukaIQ/edit" target="_blank" rel="noopener">Google Sheet "FOLLOW UP SIGNED FOREIGN SPARE PARTS CONTRACTS_BMHDA"</a> — sheet <b>Database Cong no</b> (cột A–CS, 97 cột) và sheet <b>Follow up</b>. Dashboard tự động lấy dữ liệu mới nhất từ 2 sheet này mỗi 60 giây.
+  Nguồn dữ liệu: <a id="srcLink" href="https://docs.google.com/spreadsheets/d/1akYdetdgGijV-QUjM8fSxs3DO68m3r0fkV0Dy5ukaIQ/edit" target="_blank" rel="noopener">Google Sheet "FOLLOW UP SIGNED FOREIGN SPARE PARTS CONTRACTS_BMHDA"</a> — sheet <b>Database Cong no</b> (cột A–EB, 132 cột) và sheet <b>Follow up</b>. Dashboard tự động lấy dữ liệu mới nhất từ 2 sheet này mỗi 60 giây.
   Logic trạng thái thanh toán giữ đúng như dashboard <b>Test Claude</b>. Màu trạng thái lấy theo quy định của web báo cáo Ban Mua Hàng Dự Án.
   <br>Tỷ giá quy đổi được lưu tập trung trên máy chủ Apps Script nên <b>mọi người trong phòng dùng chung một bộ số</b>. Vì Web App đang mở quyền cho bất kỳ ai có link, hệ thống <b>không ghi nhận được ai đã sửa tỷ giá</b> — nhật ký chỉ lưu được thời điểm và giá trị cũ → mới.
   <br><br>Author: PHAM DANG TRI
@@ -703,8 +703,8 @@ function recalcVnd() {
 /* ==================== PHÁT HIỆN LỆCH DÒNG ====================
  * Mỗi hợp đồng gồm 3 khối độc lập trên cùng một dòng của Database Cong no:
  *   A–L  : thông tin gốc (được đồng bộ tự động từ Follow up -> coi là tin cậy)
- *   M–BJ : kế hoạch thanh toán (nhập tay)
- *   BK–CD: thanh toán thực tế (nhập tay)
+ *   M–CI : kế hoạch thanh toán (nhập tay, 15 đợt — mở rộng 25/09/2026)
+ *   CJ–DM: thanh toán thực tế (nhập tay, 15 đợt — mở rộng 25/09/2026)
  * Nếu ai đó chèn/xóa dòng ở khối A–L mà không dịch 2 khối kia, dữ liệu nhập tay
  * sẽ bị gán nhầm sang hợp đồng khác. Ta dò riêng từng khối.
  * Dashboard CHỈ cảnh báo, TUYỆT ĐỐI không tự dịch dữ liệu.
@@ -1332,7 +1332,7 @@ function openDetail(hd) {
   const warn = [];
   if (c.shiftPlan) warn.push(`<div class="note bad">🚨 <b>Khối KẾ HOẠCH nghi bị lệch dòng +${c.shiftPlan.k}.</b> Dữ liệu kế hoạch đang hiển thị nhiều khả năng thuộc về hợp đồng <b>${esc(c.shiftPlan.owner.hd)}</b> (dòng ${c.shiftPlan.owner.row}). Căn cứ: ${esc(c.shiftPlan.how)}.</div>`);
   if (c.shiftAct) warn.push(`<div class="note bad">🚨 <b>Khối THANH TOÁN THỰC TẾ nghi bị lệch dòng +${c.shiftAct.k}.</b> Số đã trả đang hiển thị nhiều khả năng thuộc về hợp đồng <b>${esc(c.shiftAct.owner.hd)}</b> (dòng ${c.shiftAct.owner.row}). Căn cứ: ${esc(c.shiftAct.how)}.</div>`);
-  if (c.overPlan) warn.push(`<div class="note">① <b>Tổng kế hoạch vượt tổng giá hợp đồng.</b> Tổng 10 đợt kế hoạch ${money(c.planTotal, c.cur)} > tổng giá ${money(c.tong, c.cur)} — vượt ${money(c.overPlan.diff, c.cur)} (${c.overPlan.pct.toFixed(1)}%).</div>`);
+  if (c.overPlan) warn.push(`<div class="note">① <b>Tổng kế hoạch vượt tổng giá hợp đồng.</b> Tổng 15 đợt kế hoạch ${money(c.planTotal, c.cur)} > tổng giá ${money(c.tong, c.cur)} — vượt ${money(c.overPlan.diff, c.cur)} (${c.overPlan.pct.toFixed(1)}%).</div>`);
   if (c.overAct) warn.push(`<div class="note ${c.overAct.level === "high" ? "bad" : ""}">② <b>Tổng thanh toán thực tế vượt tổng giá hợp đồng.</b> Tổng đã ghi ${money(c.paidAll, c.cur)} > tổng giá ${money(c.tong, c.cur)} — vượt ${money(c.overAct.diff, c.cur)} (${c.overAct.pct.toFixed(1)}%)${c.overAct.level === "high" ? " — mức này thường do nhập nhầm đơn vị tiền tệ." : "."}</div>`);
 
   $("#dBody").innerHTML = warn.join("") +
@@ -1702,7 +1702,7 @@ function buildShiftBlock() {
   const nBoth = SHIFTED.filter((c) => c.shiftPlan && c.shiftAct).length;
 
   if (!SHIFTED.length) {
-    return `<div class="note ok" style="margin-top:11px">✅ Không phát hiện dấu hiệu lệch dòng ở cả khối Kế hoạch (M–BJ) lẫn khối Thanh toán thực tế (BK–CD).</div>`;
+    return `<div class="note ok" style="margin-top:11px">✅ Không phát hiện dấu hiệu lệch dòng ở cả khối Kế hoạch (M–CI) lẫn khối Thanh toán thực tế (CJ–DM).</div>`;
   }
 
   const list = SHIFTED.filter((c) => {
@@ -1736,7 +1736,7 @@ function buildShiftBlock() {
     }
     let verdict;
     if (sp && sa) verdict = sp.k === sa.k
-      ? `<span class="tag g-late">cả khối M–CS lệch +${sp.k}</span>`
+      ? `<span class="tag g-late">cả khối M–DM lệch +${sp.k}</span>`
       : `<span class="tag g-late">lệch KHÔNG đồng nhất (+${sp.k} / +${sa.k})</span>`;
     else if (sp) verdict = `<span class="tag g-soon">chỉ khối Kế hoạch</span>`;
     else verdict = `<span class="tag g-soon">chỉ khối Thực tế</span>`;
@@ -1826,14 +1826,14 @@ function renderWarnTree(rows) {
 
   /* ----- Nhóm A ----- */
   const gA = wgroup("A", "🚨 A. Lỗi cấu trúc dữ liệu — nghi LỆCH DÒNG", SHIFTED.length + " hợp đồng", true,
-    `<div class="cap" style="padding-top:10px">Theo thiết kế, mỗi dòng của <b>Database Cong no</b> chứa 3 khối: thông tin gốc <b>A–L</b> (tự động từ Follow up), kế hoạch thanh toán <b>M–BJ</b> và thanh toán thực tế <b>BK–CD</b> (đều nhập tay). Nếu có ai chèn/xóa dòng ở khối A–L mà không dịch 2 khối kia, dữ liệu nhập tay sẽ gán nhầm sang hợp đồng khác. Bảng dưới đây dò riêng từng khối và gộp lại thành <b>một dòng cho mỗi hợp đồng</b>.</div>`
+    `<div class="cap" style="padding-top:10px">Theo thiết kế, mỗi dòng của <b>Database Cong no</b> chứa 3 khối: thông tin gốc <b>A–L</b> (tự động từ Follow up), kế hoạch thanh toán <b>M–CI</b> và thanh toán thực tế <b>CJ–DM</b> (đều nhập tay). Nếu có ai chèn/xóa dòng ở khối A–L mà không dịch 2 khối kia, dữ liệu nhập tay sẽ gán nhầm sang hợp đồng khác. Bảng dưới đây dò riêng từng khối và gộp lại thành <b>một dòng cho mỗi hợp đồng</b>.</div>`
     + buildShiftBlock());
 
   /* ----- Nhóm B ----- */
   const gB = wgroup("B", "① B. Kế hoạch thanh toán",
     (overPlan.length + noPlan.length + noDl.length) + " mục", overPlan.length > 0,
     wsub("B1. 🔴 Tổng kế hoạch VƯỢT tổng giá hợp đồng",
-      `Tổng giá trị 10 đợt kế hoạch lớn hơn <b>Tổng giá A+B (cột K)</b> quá ${(OVER_TOL * 100).toFixed(1)}%. Nghĩa là phòng đang <b>cam kết chi nhiều hơn giá trị hợp đồng</b> — hoặc nhập thừa đợt, hoặc gõ sai giá trị một đợt. Cột <b>Quy đổi VND phần vượt</b> cho biết rủi ro tiền thật, dùng để xếp thứ tự xử lý.`
+      `Tổng giá trị 15 đợt kế hoạch lớn hơn <b>Tổng giá A+B (cột K)</b> quá ${(OVER_TOL * 100).toFixed(1)}%. Nghĩa là phòng đang <b>cam kết chi nhiều hơn giá trị hợp đồng</b> — hoặc nhập thừa đợt, hoặc gõ sai giá trị một đợt. Cột <b>Quy đổi VND phần vượt</b> cho biết rủi ro tiền thật, dùng để xếp thứ tự xử lý.`
       + noteSkip(skipPlan, "kế hoạch"), overTable(overPlan, "plan"), true)
     + wsub("B2. Hợp đồng chưa có kế hoạch thanh toán",
       "Không có đợt nào điền giá trị kế hoạch — không thể theo dõi deadline hay dự báo dòng tiền.",
@@ -1860,7 +1860,7 @@ function renderWarnTree(rows) {
   const nHigh = overAct.filter((c) => c.overAct.level === "high").length;
   const gC = wgroup("C", "② C. Thanh toán thực tế", overAct.length + " mục", overAct.length > 0,
     wsub("C1. 🔴 Tổng thanh toán thực tế VƯỢT tổng giá hợp đồng",
-      `Tổng cột "Trị giá" của 10 đợt thực tế (kể cả đợt ghi ngày trong tương lai) lớn hơn <b>Tổng giá A+B (cột K)</b> quá ${(OVER_TOL * 100).toFixed(1)}%.
+      `Tổng cột "Trị giá" của 15 đợt thực tế (kể cả đợt ghi ngày trong tương lai) lớn hơn <b>Tổng giá A+B (cột K)</b> quá ${(OVER_TOL * 100).toFixed(1)}%.
        Chia 2 mức: <b>nhẹ</b> (vượt dưới 50% — thường do chênh tỷ giá, phí ngân hàng gộp nhầm vào trị giá, hoặc chi thừa thật);
        <b>nặng</b> (vượt trên 50% — ${nHigh} hợp đồng, thường do hợp đồng ngoại tệ nhưng ô "Trị giá" lại gõ số VND).
        Mục "nghi sai đơn vị tiền tệ" của bản cũ nay nằm ở đây, ở mức nặng — để một hợp đồng không bị đếm 2 lần ở 2 chỗ.`
